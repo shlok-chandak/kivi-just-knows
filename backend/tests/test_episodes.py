@@ -164,8 +164,21 @@ def assigned():
 
 def test_fixture_produces_the_expected_partition(assigned):
     episodes, members = snapshot()
-    assert len(episodes) == 13
-    assert len(members) == 15
+    assert len(episodes) == 14
+    assert len(members) == 20
+
+
+def test_a_dense_thread_stays_one_episode(assigned):
+    """Five dictations inside 17 minutes are one sitting, not five."""
+    session = SessionLocal()
+    try:
+        counts = session.execute(
+            select(Episode.event_count)
+            .where(Episode.group_key == "t:slack:slack:channel:pricing")
+        ).scalars().all()
+        assert list(counts) == [5]
+    finally:
+        session.close()
 
 
 def test_every_event_belongs_to_exactly_one_episode(assigned):

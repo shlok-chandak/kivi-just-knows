@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 
 from app.config import settings
 from app.db.session import SessionLocal
@@ -206,7 +206,31 @@ def test_run_once_processes_a_job(session):
     assert run_once() is True
 
     session.expire_all()
-    assert session.scalar(select(Job.status)) == "done"
+    assert (
+        session.scalar(select(Job.status).where(Job.stage == STAGE)) == "done"
+    )
+
+
+def test_assignment_queues_summaries_for_closed_episodes(session):
+    """Closing an episode is what triggers the next stage of the pipeline."""
+    from scripts.import_corpus import main
+
+    main(["corpus/fixture.jsonl", "--truncate"])
+    session.expire_all()
+
+    while run_once():
+        pass
+
+    session.expire_all()
+    stages = dict(
+        session.execute(
+            select(Job.stage, func.count()).group_by(Job.stage)
+        ).all()
+    )
+    assert stages.get("episode_summarise", 0) > 0
+    assert not session.scalars(
+        select(Job).where(Job.status.in_(["pending", "failed"]))
+    ).all()
 
 
 def test_an_unknown_stage_is_recorded_rather_than_crashing(session):

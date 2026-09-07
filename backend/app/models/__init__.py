@@ -11,6 +11,14 @@ from app.models.episode import (
 )
 from app.models.event import INGEST_STATUSES, Event
 from app.models.job import JOB_STATUSES, SUBJECT_TYPES, Job
+from app.models.trace import (
+    INGEST_STAGES,
+    QUERY_STAGES,
+    TRACE_KINDS,
+    TRACE_OUTCOMES,
+    Trace,
+    TraceStep,
+)
 
 __all__ = [
     "Base",
@@ -26,4 +34,10 @@ __all__ = [
     "Job",
     "JOB_STATUSES",
     "SUBJECT_TYPES",
+    "Trace",
+    "TraceStep",
+    "TRACE_KINDS",
+    "TRACE_OUTCOMES",
+    "INGEST_STAGES",
+    "QUERY_STAGES",
 ]

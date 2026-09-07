@@ -141,7 +141,7 @@ def test_import_is_idempotent():
     first = count()
     main(["corpus/fixture.jsonl"])
 
-    assert first == 15
+    assert first == 20
     assert count() == first
 
 
@@ -160,7 +160,7 @@ def test_import_stores_every_record_with_its_content():
         rows = session.scalars(
             select(Event).where(Event.user_id == settings.default_user_id)
         ).all()
-        assert len(rows) == 15
+        assert len(rows) == 20
         assert all(row.ingest_status == "pending" for row in rows)
         assert all(row.raw_asr for row in rows)
     finally:

@@ -148,6 +148,25 @@ def rebuild_group(
     now = now or datetime.now(timezone.utc)
     events = events_in_group(session, user_id, group_key)
 
+    # Summaries cost a model call, so carry them across the rebuild. Episode
+    # ids are derived from their contents, which means an unchanged sitting
+    # keeps its id and can keep its summary; a genuinely changed one gets a
+    # new id and is resummarised, which is correct.
+    preserved = {
+        row.id: row
+        for row in session.scalars(
+            select(Episode).where(
+                Episode.user_id == user_id,
+                Episode.group_key == group_key,
+                Episode.summary_status.is_not(None),
+            )
+        )
+    }
+    carried = {
+        episode_id: (row.title, row.summary, row.summary_status, row.topic_tags)
+        for episode_id, row in preserved.items()
+    }
+
     session.execute(
         delete(Episode).where(
             Episode.user_id == user_id, Episode.group_key == group_key
@@ -155,18 +174,30 @@ def rebuild_group(
     )
 
     if not events:
-        return {"group_key": group_key, "episodes": 0, "events": 0, "open": 0}
+        return {
+            "group_key": group_key,
+            "episodes": 0,
+            "events": 0,
+            "open": 0,
+            "needs_summary": [],
+        }
 
     sittings = partition(events)
     open_count = 0
+    needs_summary: list[uuid.UUID] = []
 
     for index, sitting in enumerate(sittings):
         first, last = sitting[0], sitting[-1]
         closed = _is_closed(sitting, index == len(sittings) - 1, now)
         open_count += 0 if closed else 1
 
+        episode_id = episode_id_for(user_id, group_key, first.id)
+        title, summary, summary_status, topic_tags = carried.get(
+            episode_id, (None, None, None, None)
+        )
+
         episode = Episode(
-            id=episode_id_for(user_id, group_key, first.id),
+            id=episode_id,
             user_id=user_id,
             group_key=group_key,
             started_at=first.occurred_at,
@@ -175,6 +206,10 @@ def rebuild_group(
             thread_id=first.thread_id,
             event_count=len(sitting),
             status="closed" if closed else "open",
+            title=title,
+            summary=summary,
+            summary_status=summary_status,
+            topic_tags=topic_tags,
         )
         session.add(episode)
         session.flush()
@@ -184,10 +219,16 @@ def rebuild_group(
             for seq, event in enumerate(sitting)
         )
 
+        # Only closed episodes are summarised: an open one is still growing,
+        # and would be resummarised on every new event.
+        if closed and summary_status is None:
+            needs_summary.append(episode_id)
+
     session.flush()
     return {
         "group_key": group_key,
         "episodes": len(sittings),
         "events": len(events),
         "open": open_count,
+        "needs_summary": needs_summary,
     }
