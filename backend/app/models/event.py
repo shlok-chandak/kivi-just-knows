@@ -24,6 +24,9 @@ class Event(UserOwnedMixin, Base):
 
     app: Mapped[str | None] = mapped_column(Text)
     thread_id: Mapped[str | None] = mapped_column(Text)
+
+    # Reserved; populated only if a corpus supplies it. Not captured, never
+    # inferred, and not used for grouping or filtering.
     recipients: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
 
     # Nullable so an ignored event can be recorded without storing its
@@ -49,7 +52,6 @@ class Event(UserOwnedMixin, Base):
         Index("ix_events_user_occurred", "user_id", occurred_at.desc()),
         Index("ix_events_user_app_occurred", "user_id", "app", occurred_at.desc()),
         Index("ix_events_user_thread", "user_id", "thread_id"),
-        Index("ix_events_recipients", "recipients", postgresql_using="gin"),
         Index("ix_events_user_external_id", "user_id", "external_id", unique=True),
     )
 

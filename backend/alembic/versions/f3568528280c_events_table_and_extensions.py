@@ -41,7 +41,6 @@ def upgrade():
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('ix_events_recipients', 'events', ['recipients'], unique=False, postgresql_using='gin')
     op.create_index('ix_events_user_app_occurred', 'events', ['user_id', 'app', sa.text('occurred_at DESC')], unique=False)
     op.create_index('ix_events_user_external_id', 'events', ['user_id', 'external_id'], unique=True)
     op.create_index(op.f('ix_events_user_id'), 'events', ['user_id'], unique=False)
@@ -55,7 +54,6 @@ def downgrade():
     op.drop_index(op.f('ix_events_user_id'), table_name='events')
     op.drop_index('ix_events_user_external_id', table_name='events')
     op.drop_index('ix_events_user_app_occurred', table_name='events')
-    op.drop_index('ix_events_recipients', table_name='events', postgresql_using='gin')
     op.drop_table('events')
     # Extensions are left in place: other databases may share them, and
     # dropping them would cascade into any dependent object.

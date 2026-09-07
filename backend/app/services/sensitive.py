@@ -1,8 +1,8 @@
 """Content categories that must never become a memory.
 
-Distinct from the app denylist: that rule blocks a *source*, this one blocks a
-*topic*. An event on a sensitive topic is still stored, so the user can find
-their own dictation, but nothing is extracted from it.
+The rule blocks a topic, not a source. An event on a sensitive topic is still
+stored, so the user can find their own dictation, but nothing is extracted
+from it and no memory is formed.
 """
 
 SENSITIVE_CATEGORIES: tuple[str, ...] = (

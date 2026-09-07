@@ -31,9 +31,14 @@ from sqlalchemy.dialects.postgresql import insert
 
 from app.config import settings
 from app.db.session import SessionLocal
+from app.models.episode import Episode
 from app.models.event import Event
+from app.models.job import Job
 from app.schemas.event import EventCreate
+from app.services import queue
+from app.services.episodes import group_key
 from app.services.ingest import build_event_values
+from app.worker.handlers import STAGE_EPISODE_ASSIGN
 
 # Fields the importer understands. Anything else is dropped.
 KNOWN_FIELDS = set(EventCreate.model_fields)
@@ -151,18 +156,28 @@ def main(argv: list[str] | None = None) -> int:
     ingested_at = datetime.now(timezone.utc)
     started = time.perf_counter()
 
-    counts = {"read": 0, "written": 0, "ignored": 0, "invalid": 0}
+    counts = {"read": 0, "written": 0, "invalid": 0}
     failures: list[str] = []
     batch: list[dict[str, Any]] = []
+    touched_groups: set[str] = set()
 
     session = SessionLocal()
     try:
         if args.truncate and not args.dry_run:
+            # Episodes are derived from events, and jobs refer to groups that
+            # are about to disappear. Clearing all three keeps the database
+            # consistent instead of leaving orphaned episodes behind.
             deleted = session.execute(
                 delete(Event).where(Event.user_id == settings.default_user_id)
             ).rowcount
+            session.execute(
+                delete(Episode).where(Episode.user_id == settings.default_user_id)
+            )
+            session.execute(
+                delete(Job).where(Job.user_id == settings.default_user_id)
+            )
             session.commit()
-            print(f"truncated {deleted} existing events")
+            print(f"truncated {deleted} existing events, plus episodes and jobs")
 
         for record in load_records(args.path, args.format):
             counts["read"] += 1
@@ -189,9 +204,9 @@ def main(argv: list[str] | None = None) -> int:
                 source_batch_id=batch_id,
                 ingested_at=ingested_at,
             )
-            if values["ingest_status"] == "ignored":
-                counts["ignored"] += 1
-
+            touched_groups.add(
+                group_key(values["app"], values["thread_id"], values["id"])
+            )
             batch.append(values)
             if len(batch) >= args.batch_size:
                 if not args.dry_run:
@@ -204,7 +219,14 @@ def main(argv: list[str] | None = None) -> int:
                 upsert(session, batch)
             counts["written"] += len(batch)
 
+        queued = 0
         if not args.dry_run:
+            queued = queue.enqueue_many(
+                session,
+                user_id=settings.default_user_id,
+                stage=STAGE_EPISODE_ASSIGN,
+                subject_keys=sorted(touched_groups),
+            )
             session.commit()
 
         total = session.scalar(
@@ -221,8 +243,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"batch        {batch_id}")
     print(f"read         {counts['read']}")
     print(f"{verb:<12} {counts['written']}")
-    print(f"  ignored    {counts['ignored']} (denylisted app, content not stored)")
     print(f"invalid      {counts['invalid']}")
+    print(f"groups       {len(touched_groups)} touched, {queued} jobs queued")
     print(f"elapsed      {elapsed:.2f}s ({counts['read'] / max(elapsed, 1e-9):.0f} rec/s)")
     print(f"table total  {total}")
 

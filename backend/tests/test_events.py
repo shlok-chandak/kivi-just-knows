@@ -1,4 +1,4 @@
-"""Ingest tests: denylist enforcement, validation, importer idempotency."""
+"""Ingest tests: validation, storage, and importer idempotency."""
 
 import uuid
 
@@ -10,11 +10,8 @@ from app.config import settings
 from app.db.session import SessionLocal
 from app.main import app
 from app.models.event import Event
-from app.services.denylist import is_denylisted, normalise_app
 
 client = TestClient(app)
-
-SECRET = "correct-horse-battery-staple"
 
 
 def payload(**overrides):
@@ -46,67 +43,10 @@ def post(body, created):
     return response
 
 
-# --- denylist ---------------------------------------------------------------
+# --- storage ----------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "app_name",
-    ["1password", "1Password", "  BANKING  ", "password-manager", "Password Manager"],
-)
-def test_denylist_matches_across_spellings(app_name):
-    assert is_denylisted(app_name)
-
-
-@pytest.mark.parametrize("app_name", ["slack", "gmail", "notion", None, "", "lastpass"])
-def test_denylist_allows_other_apps(app_name):
-    assert not is_denylisted(app_name)
-
-
-def test_normalise_app_handles_none():
-    assert normalise_app(None) == ""
-
-
-def test_denylisted_event_stores_no_content(db):
-    session, created = db
-
-    response = post(payload(app="1Password", raw_asr=SECRET, formatted_text=SECRET), created)
-    assert response.status_code == 201
-
-    body = response.json()
-    assert body["ingest_status"] == "ignored"
-    assert body["ignore_reason"] == "denylisted_app:1password"
-    assert body["raw_asr"] is None
-
-    # The response hiding the content is not the same claim as the database
-    # not holding it. Assert the stronger one.
-    row = session.get(Event, uuid.UUID(body["id"]))
-    session.refresh(row)
-    assert row.raw_asr is None
-    assert row.formatted_text is None
-    assert row.committed_text is None
-
-    leaked = session.scalar(
-        select(func.count())
-        .select_from(Event)
-        .where(Event.raw_asr.ilike(f"%{SECRET}%"))
-    )
-    assert leaked == 0
-
-
-def test_denylisted_event_keeps_auditable_metadata(db):
-    """The ignore must be provable: the row exists, minus the content."""
-    session, created = db
-
-    response = post(payload(app="banking", duration_ms=3200), created)
-    row = session.get(Event, uuid.UUID(response.json()["id"]))
-
-    assert row.app == "banking"
-    assert row.duration_ms == 3200
-    assert row.occurred_at is not None
-    assert row.ingest_status == "ignored"
-
-
-def test_allowed_event_is_stored_and_pending(db):
+def test_every_event_is_stored_and_pending(db):
     session, created = db
 
     response = post(payload(), created)
@@ -205,18 +145,23 @@ def test_import_is_idempotent():
     assert count() == first
 
 
-def test_import_stores_no_content_for_denylisted_records():
+def test_import_stores_every_record_with_its_content():
+    """Ingestion is unconditional: no app is filtered at the write path.
+
+    Sensitive content is handled downstream, on the memory candidate, so the
+    dictation itself stays findable.
+    """
     from scripts.import_corpus import main
 
     main(["corpus/fixture.jsonl", "--truncate"])
 
     session = SessionLocal()
     try:
-        ignored = session.scalars(
-            select(Event).where(Event.ingest_status == "ignored")
+        rows = session.scalars(
+            select(Event).where(Event.user_id == settings.default_user_id)
         ).all()
-        assert {row.external_id for row in ignored} == {"f_005", "f_006"}
-        assert all(row.raw_asr is None for row in ignored)
-        assert all(row.app is not None for row in ignored)
+        assert len(rows) == 15
+        assert all(row.ingest_status == "pending" for row in rows)
+        assert all(row.raw_asr for row in rows)
     finally:
         session.close()
