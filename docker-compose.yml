@@ -25,6 +25,8 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./corpus:/app/corpus
+      - ./scripts:/app/scripts
 
   worker:
     build: ./backend
@@ -35,6 +37,8 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
+      - ./corpus:/app/corpus
+      - ./scripts:/app/scripts
 
 volumes:
   kivi_pgdata:
