@@ -28,15 +28,15 @@ TRACE_KINDS = ("ingest", "query")
 TRACE_OUTCOMES = ("answered", "abstained", "partial", "error")
 
 INGEST_STAGES = (
+    "junk_gate",
+    "embed",
     "episode_assign",
-    "episode_summarise",
-    "extract",
+    "episode_consolidate",
     "ignore_filter",
     "entity_resolve",
-    "dedupe",
+    "claim_identity",
     "supersede",
     "belief_update",
-    "embed",
 )
 QUERY_STAGES = (
     "parse",

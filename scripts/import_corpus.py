@@ -34,10 +34,17 @@ from app.db.session import SessionLocal
 from app.models.episode import Episode
 from app.models.event import Event
 from app.models.job import Job
+from app.models.memory import Memory, MemoryEvidence
+from app.models.rejected import RejectedCandidate
 from app.schemas.event import EventCreate
 from app.services import queue
-from app.services.episodes import group_key
-from app.services.ingest import build_event_values
+from app.services.apps import normalise_app
+from app.services.episodes import ASSIGN_SUBJECT
+from app.services.ingest import (
+    PreviousDictation,
+    build_event_values,
+    refuse_if_sensitive,
+)
 from app.worker.handlers import STAGE_EPISODE_ASSIGN
 
 # Fields the importer understands. Anything else is dropped.
@@ -45,6 +52,11 @@ KNOWN_FIELDS = set(EventCreate.model_fields)
 
 # Values a CSV uses to mean "absent".
 EMPTY_VALUES = {"", "null", "none", "nan", "na", "-"}
+
+# Fields where an empty string is a value, not a missing one. An empty
+# committed_text means the user threw the dictation away, which is the
+# strongest signal the junk gate has -- cleaning it to null would erase it.
+MEANINGFULLY_EMPTY = {"committed_text"}
 
 
 def load_records(path: Path, fmt: str) -> Iterator[dict[str, Any]]:
@@ -89,17 +101,13 @@ def normalise(record: dict[str, Any], mapping: dict[str, str]) -> dict[str, Any]
     for key, value in renamed.items():
         if key not in KNOWN_FIELDS:
             continue
-        if isinstance(value, str) and value.strip().lower() in EMPTY_VALUES:
+        if (
+            isinstance(value, str)
+            and key not in MEANINGFULLY_EMPTY
+            and value.strip().lower() in EMPTY_VALUES
+        ):
             continue
         cleaned[key] = value
-
-    # CSV has no lists: accept "Aditya; Priya" or "Aditya, Priya".
-    recipients = cleaned.get("recipients")
-    if isinstance(recipients, str):
-        separator = ";" if ";" in recipients else ","
-        cleaned["recipients"] = [
-            part.strip() for part in recipients.split(separator) if part.strip()
-        ]
 
     return cleaned
 
@@ -156,10 +164,13 @@ def main(argv: list[str] | None = None) -> int:
     ingested_at = datetime.now(timezone.utc)
     started = time.perf_counter()
 
-    counts = {"read": 0, "written": 0, "invalid": 0}
+    counts = {"read": 0, "written": 0, "invalid": 0, "refused": 0}
     failures: list[str] = []
     batch: list[dict[str, Any]] = []
-    touched_groups: set[str] = set()
+    # The last dictation seen in each place, so a re-dictation inside the
+    # import is recognised as a retry. Keyed on app and context because the
+    # same sentence in two conversations is a repetition, not a failed take.
+    last_in_place: dict[tuple[str | None, str | None], PreviousDictation] = {}
 
     session = SessionLocal()
     try:
@@ -176,8 +187,30 @@ def main(argv: list[str] | None = None) -> int:
             session.execute(
                 delete(Job).where(Job.user_id == settings.default_user_id)
             )
+            # Everything derived from those events goes too. A memory whose
+            # evidence has been deleted is unfounded, and the spec treats a
+            # memory without evidence as a bug rather than a weak belief.
+            session.execute(
+                delete(MemoryEvidence).where(
+                    MemoryEvidence.user_id == settings.default_user_id
+                )
+            )
+            session.execute(
+                delete(Memory).where(Memory.user_id == settings.default_user_id)
+            )
+            # The ignore log too: it records decisions about the events being
+            # replaced, so keeping it would accumulate a refusal per re-import
+            # and misstate how much was actually declined.
+            session.execute(
+                delete(RejectedCandidate).where(
+                    RejectedCandidate.user_id == settings.default_user_id
+                )
+            )
             session.commit()
-            print(f"truncated {deleted} existing events, plus episodes and jobs")
+            print(
+                f"truncated {deleted} existing events, "
+                "plus episodes, memories, jobs and the ignore log"
+            )
 
         for record in load_records(args.path, args.format):
             counts["read"] += 1
@@ -198,14 +231,26 @@ def main(argv: list[str] | None = None) -> int:
             if not payload.external_id:
                 payload.external_id = synthetic_external_id(payload)
 
+            # Refused before anything else: a dictation we are not keeping
+            # must not reach storage, and must not become the "previous"
+            # dictation that a later retry check compares against.
+            category = refuse_if_sensitive(
+                session, payload, settings.default_user_id
+            )
+            if category is not None:
+                counts["refused"] += 1
+                continue
+
+            place = (normalise_app(payload.app) or None, payload.context_hash)
             values = build_event_values(
                 payload,
                 user_id=settings.default_user_id,
                 source_batch_id=batch_id,
                 ingested_at=ingested_at,
+                previous=last_in_place.get(place),
             )
-            touched_groups.add(
-                group_key(values["app"], values["thread_id"], values["id"])
+            last_in_place[place] = PreviousDictation(
+                text=payload.formatted_text, occurred_at=payload.occurred_at
             )
             batch.append(values)
             if len(batch) >= args.batch_size:
@@ -225,7 +270,7 @@ def main(argv: list[str] | None = None) -> int:
                 session,
                 user_id=settings.default_user_id,
                 stage=STAGE_EPISODE_ASSIGN,
-                subject_keys=sorted(touched_groups),
+                subject_keys=[ASSIGN_SUBJECT],
             )
             session.commit()
 
@@ -244,7 +289,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"read         {counts['read']}")
     print(f"{verb:<12} {counts['written']}")
     print(f"invalid      {counts['invalid']}")
-    print(f"groups       {len(touched_groups)} touched, {queued} jobs queued")
+    print(f"refused      {counts['refused']} (sensitive, not stored)")
+    print(f"places       {len(last_in_place)} app/context pairs")
+    print(f"queued       {queued} assignment job(s)")
     print(f"elapsed      {elapsed:.2f}s ({counts['read'] / max(elapsed, 1e-9):.0f} rec/s)")
     print(f"table total  {total}")
 

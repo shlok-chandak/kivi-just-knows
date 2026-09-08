@@ -30,6 +30,8 @@ class Settings(BaseSettings):
     # Zone that wall-clock expressions ("around 5 PM") resolve in.
     user_timezone: str = "Asia/Kolkata"
 
+    store_sensitive_content: bool = False
+
     llm_api_key: str = ""
     llm_small_model: str = DEFAULT_SMALL_MODEL
     llm_large_model: str = DEFAULT_LARGE_MODEL

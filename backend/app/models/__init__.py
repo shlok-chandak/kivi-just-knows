@@ -3,14 +3,22 @@
 from app.models.base import Base, UserOwnedMixin
 from app.models.episode import (
     EPISODE_STATUSES,
+    IDLE_MINUTES,
     MAX_EVENTS_PER_EPISODE,
-    MAX_GAP_MINUTES,
+    MAX_SPAN_HOURS,
     SUMMARY_STATUSES,
     Episode,
-    EpisodeEvent,
 )
-from app.models.event import INGEST_STATUSES, Event
+from app.models.event import IGNORE_REASONS, INGEST_STATUSES, Event
 from app.models.job import JOB_STATUSES, SUBJECT_TYPES, Job
+from app.models.memory import (
+    MEMORY_STATUSES,
+    MEMORY_TYPES,
+    STANCES,
+    Memory,
+    MemoryEvidence,
+)
+from app.models.rejected import REJECTION_RULES, RejectedCandidate
 from app.models.trace import (
     INGEST_STAGES,
     QUERY_STAGES,
@@ -25,11 +33,12 @@ __all__ = [
     "UserOwnedMixin",
     "Event",
     "INGEST_STATUSES",
+    "IGNORE_REASONS",
     "Episode",
-    "EpisodeEvent",
     "EPISODE_STATUSES",
     "SUMMARY_STATUSES",
-    "MAX_GAP_MINUTES",
+    "IDLE_MINUTES",
+    "MAX_SPAN_HOURS",
     "MAX_EVENTS_PER_EPISODE",
     "Job",
     "JOB_STATUSES",
@@ -40,4 +49,11 @@ __all__ = [
     "TRACE_OUTCOMES",
     "INGEST_STAGES",
     "QUERY_STAGES",
+    "Memory",
+    "MemoryEvidence",
+    "MEMORY_TYPES",
+    "MEMORY_STATUSES",
+    "STANCES",
+    "RejectedCandidate",
+    "REJECTION_RULES",
 ]

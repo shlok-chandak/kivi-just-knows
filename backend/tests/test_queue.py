@@ -16,6 +16,45 @@ USER = settings.default_user_id
 STAGE = "episode_assign"
 
 
+class _Stub:
+    """Returns a fixed structured result, whatever it is asked."""
+
+    def __init__(self, value, usage):
+        self._value = value
+        self._usage = usage
+
+    def structured(self, **kwargs):
+        from app.llm.client import Completion
+
+        return Completion(value=self._value, usage=self._usage)
+
+
+def _usage():
+    from app.llm.client import Usage
+
+    return Usage(
+        model="stub-model",
+        input_tokens=10,
+        output_tokens=5,
+        latency_ms=1,
+        cost_usd=0.0,
+    )
+
+
+def _stub_consolidator():
+    from app.schemas.consolidation import ConsolidationOut
+
+    return _Stub(
+        ConsolidationOut(
+            title="Stub",
+            summary="Stub summary.",
+            topic_tags=["stub"],
+            memories=[],
+        ),
+        _usage(),
+    )
+
+
 @pytest.fixture
 def session():
     db = SessionLocal()
@@ -202,7 +241,7 @@ def test_run_once_reports_an_empty_queue(session):
 
 
 def test_run_once_processes_a_job(session):
-    add(session, "a:notion")
+    add(session, "events")
     assert run_once() is True
 
     session.expire_all()
@@ -211,9 +250,16 @@ def test_run_once_processes_a_job(session):
     )
 
 
-def test_assignment_queues_summaries_for_closed_episodes(session):
-    """Closing an episode is what triggers the next stage of the pipeline."""
+def test_assignment_queues_consolidation_for_closed_episodes(session, monkeypatch):
+    """Closing an episode is what triggers the next stage of the pipeline.
+
+    The model-backed stage is stubbed: this asserts the chain runs to
+    completion, not what any provider returns for it.
+    """
+    from app.services import consolidate as consolidate_module
     from scripts.import_corpus import main
+
+    monkeypatch.setattr(consolidate_module, "get_client", _stub_consolidator)
 
     main(["corpus/fixture.jsonl", "--truncate"])
     session.expire_all()
@@ -227,10 +273,31 @@ def test_assignment_queues_summaries_for_closed_episodes(session):
             select(Job.stage, func.count()).group_by(Job.stage)
         ).all()
     )
-    assert stages.get("episode_summarise", 0) > 0
+    assert stages.get("episode_consolidate", 0) > 0
     assert not session.scalars(
         select(Job).where(Job.status.in_(["pending", "failed"]))
     ).all()
+
+
+def test_every_event_ends_up_in_an_episode_after_a_full_run(session, monkeypatch):
+    """An event reachable from no episode is unsearchable."""
+    from app.models.event import Event
+    from app.services import consolidate as consolidate_module
+    from scripts.import_corpus import main
+
+    monkeypatch.setattr(consolidate_module, "get_client", _stub_consolidator)
+
+    main(["corpus/fixture.jsonl", "--truncate"])
+    while run_once():
+        pass
+
+    session.expire_all()
+    orphans = session.scalar(
+        select(func.count())
+        .select_from(Event)
+        .where(Event.user_id == USER, Event.episode_id.is_(None))
+    )
+    assert orphans == 0
 
 
 def test_an_unknown_stage_is_recorded_rather_than_crashing(session):

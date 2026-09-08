@@ -1,110 +1,79 @@
-"""Deterministic episode assignment.
+"""Episode assembly: grouping events into stretches of activity.
 
-An episode is one sitting: a continuous stretch of dictation in one app and
-one thread. Boundaries come from time and place only -- never from a model,
-never from semantic similarity, which would make assignment depend on
-ingest order and destroy the time and participant filters retrieval needs.
+Assembly is append-only. Each unassigned event either extends a nearby
+episode or starts a new one, and an episode closes when the user has been
+idle long enough or the stretch has run too long. Nothing here consults a
+model, and nothing is re-partitioned from scratch.
 
-Assignment rebuilds a whole group from its sorted events, so the result is a
-pure function of the event set. Two runs over the same data agree exactly,
-including on episode ids.
+Reproducibility is a property of boundaries and membership, not of row ids:
+two imports of the same corpus produce the same episodes over the same
+events. Episode ids are random, deliberately -- deriving an id from a member
+event is what previously made identity depend on which event happened to
+arrive first.
 """
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.models.episode import (
+    IDLE_GAP,
     MAX_EVENTS_PER_EPISODE,
-    MAX_GAP_MINUTES,
+    MAX_SPAN,
+    SITTING_GAP_APP_ONLY,
+    SITTING_GAP_WITH_CONTEXT,
     Episode,
-    EpisodeEvent,
 )
 from app.models.event import Event
-from app.services.apps import normalise_app
 
-# Fixed namespace for deriving episode ids. Changing it re-keys every episode.
-EPISODE_NAMESPACE = uuid.UUID("8f3a1c52-6b7d-4e19-9c84-2d0f5a7b1e33")
-
-MAX_GAP = timedelta(minutes=MAX_GAP_MINUTES)
+# Assignment is not scoped to a conversation any more, so there is one
+# subject per user and pending jobs coalesce onto it.
+ASSIGN_SUBJECT = "events"
 
 
-def group_key(app: str | None, thread_id: str | None, event_id: uuid.UUID) -> str:
-    """Which sitting-group an event belongs to.
-
-    Thread when available, else app, else the event alone. Recipient plays no
-    part: it is not captured, and an unreliable grouping key would silently
-    merge unrelated conversations.
-    """
-    canonical = normalise_app(app)
-
-    if thread_id:
-        return f"t:{canonical}:{thread_id}"
-    if canonical:
-        return f"a:{canonical}"
-    return f"e:{event_id}"
-
-
-def group_key_for(event: Event) -> str:
-    return group_key(event.app, event.thread_id, event.id)
-
-
-def group_keys_for(events: list[Event]) -> list[str]:
-    """Distinct group keys touched by these events, in first-seen order."""
-    return list(dict.fromkeys(group_key_for(event) for event in events))
-
-
-def _normalised_app_column():
-    """SQL equivalent of normalise_app, for filtering by canonical name."""
-    return func.replace(
-        func.replace(func.lower(func.coalesce(Event.app, "")), " ", "_"), "-", "_"
-    )
-
-
-def events_in_group(
-    session: Session, user_id: uuid.UUID, group_key: str
-) -> list[Event]:
-    """Every event in a group, oldest first.
+def events_in_episode(session: Session, episode_id: uuid.UUID) -> list[Event]:
+    """An episode's events, oldest first.
 
     Ordered by (occurred_at, id): the id breaks ties so two events sharing a
     timestamp always sort the same way, which reproducibility depends on.
     """
-    kind, _, rest = group_key.partition(":")
-    query = select(Event).where(Event.user_id == user_id)
-
-    if kind == "t":
-        app, _, thread_id = rest.partition(":")
-        query = query.where(
-            Event.thread_id == thread_id, _normalised_app_column() == app
+    return list(
+        session.scalars(
+            select(Event)
+            .where(Event.episode_id == episode_id)
+            .order_by(Event.occurred_at, Event.id)
         )
-    elif kind == "a":
-        query = query.where(
-            Event.thread_id.is_(None), _normalised_app_column() == rest
-        )
-    elif kind == "e":
-        query = query.where(Event.id == uuid.UUID(rest))
-    else:
-        raise ValueError(f"unrecognised group key: {group_key!r}")
-
-    return list(session.scalars(query.order_by(Event.occurred_at, Event.id)))
+    )
 
 
-def partition(events: list[Event]) -> list[list[Event]]:
-    """Split time-ordered events into sittings.
+def partition_into_sittings(events: list[Event]) -> list[list[Event]]:
+    """Split an episode's events into sittings, for prompt structure only.
 
-    Pure: no clock, no database. A new sitting starts when the gap from the
-    previous event exceeds the window, or when the current one is full.
+    Pure, and never persisted. A sitting is a run of events in the same app
+    and the same window context, close together in time. The gap depends on
+    how much evidence there is for grouping: a shared context is holding the
+    conversation together, whereas app alone is weak and needs proximity --
+    half an hour of app-only grouping would merge unrelated conversations.
     """
     sittings: list[list[Event]] = []
     current: list[Event] = []
 
     for event in events:
         if current:
-            gap = event.occurred_at - current[-1].occurred_at
-            if gap > MAX_GAP or len(current) >= MAX_EVENTS_PER_EPISODE:
+            previous = current[-1]
+            same_place = (
+                event.app == previous.app
+                and event.context_hash == previous.context_hash
+            )
+            limit = (
+                SITTING_GAP_WITH_CONTEXT
+                if event.context_hash
+                else SITTING_GAP_APP_ONLY
+            )
+            if not same_place or event.occurred_at - previous.occurred_at > limit:
                 sittings.append(current)
                 current = []
         current.append(event)
@@ -114,121 +83,148 @@ def partition(events: list[Event]) -> list[list[Event]]:
     return sittings
 
 
-def episode_id_for(
-    user_id: uuid.UUID, group_key: str, first_event_id: uuid.UUID
-) -> uuid.UUID:
-    """Derive a stable id, so rebuilding produces the same episode rows."""
-    return uuid.uuid5(EPISODE_NAMESPACE, f"{user_id}|{group_key}|{first_event_id}")
+def _episode_for(
+    session: Session, user_id: uuid.UUID, occurred_at: datetime
+) -> Episode | None:
+    """The episode this event belongs to, if one is near enough.
 
-
-def _is_closed(sitting: list[Event], is_last: bool, now: datetime) -> bool:
-    """Only the most recent sitting can still be open.
-
-    Earlier ones are closed by definition: a later sitting exists only because
-    the gap rule already fired.
+    Adjacency is checked at both ends so an event that arrives late -- an
+    offline client flushing its queue -- joins the stretch it actually
+    happened in rather than starting a duplicate episode overlapping it.
     """
-    if not is_last:
-        return True
-    if len(sitting) >= MAX_EVENTS_PER_EPISODE:
-        return True
-    return (now - sitting[-1].occurred_at) > MAX_GAP
+    candidate = session.scalars(
+        select(Episode)
+        .where(
+            Episode.user_id == user_id,
+            Episode.started_at - IDLE_GAP <= occurred_at,
+            Episode.ended_at + IDLE_GAP >= occurred_at,
+        )
+        .order_by(Episode.started_at.desc())
+        .limit(1)
+    ).first()
+
+    if candidate is None:
+        return None
+
+    started = min(candidate.started_at, occurred_at)
+    ended = max(candidate.ended_at, occurred_at)
+    if ended - started > MAX_SPAN:
+        return None
+    if candidate.event_count >= MAX_EVENTS_PER_EPISODE:
+        return None
+    return candidate
 
 
-def rebuild_group(
+def _refresh(session: Session, episode: Episode) -> None:
+    """Recompute an episode's bounds from its events.
+
+    Derived from the rows rather than accumulated, so attaching a late event
+    cannot leave the range disagreeing with what the episode contains.
+    """
+    started, ended, count = session.execute(
+        select(
+            func.min(Event.occurred_at),
+            func.max(Event.occurred_at),
+            func.count(),
+        ).where(Event.episode_id == episode.id)
+    ).one()
+
+    if count:
+        episode.started_at = started
+        episode.ended_at = ended
+    episode.event_count = count
+
+
+def _should_close(episode: Episode, now: datetime) -> bool:
+    """Whether the user has stopped, or the stretch has run long enough."""
+    if episode.event_count >= MAX_EVENTS_PER_EPISODE:
+        return True
+    if episode.ended_at - episode.started_at >= MAX_SPAN:
+        return True
+    return now - episode.ended_at > IDLE_GAP
+
+
+def assign_events(
     session: Session,
     user_id: uuid.UUID,
-    group_key: str,
     now: datetime | None = None,
 ) -> dict[str, Any]:
-    """Recompute every episode in a group from scratch.
-
-    Deleting first is what keeps this idempotent: a late event that bridges
-    two sittings produces one merged episode rather than a stale split.
-    """
+    """Attach unassigned events to episodes, then close the ones that are done."""
     now = now or datetime.now(timezone.utc)
-    events = events_in_group(session, user_id, group_key)
 
-    # Summaries cost a model call, so carry them across the rebuild. Episode
-    # ids are derived from their contents, which means an unchanged sitting
-    # keeps its id and can keep its summary; a genuinely changed one gets a
-    # new id and is resummarised, which is correct.
-    preserved = {
-        row.id: row
-        for row in session.scalars(
-            select(Episode).where(
-                Episode.user_id == user_id,
-                Episode.group_key == group_key,
-                Episode.summary_status.is_not(None),
-            )
-        )
-    }
-    carried = {
-        episode_id: (row.title, row.summary, row.summary_status, row.topic_tags)
-        for episode_id, row in preserved.items()
-    }
-
-    session.execute(
-        delete(Episode).where(
-            Episode.user_id == user_id, Episode.group_key == group_key
+    pending = list(
+        session.scalars(
+            select(Event)
+            .where(Event.user_id == user_id, Event.episode_id.is_(None))
+            .order_by(Event.occurred_at, Event.id)
         )
     )
 
-    if not events:
-        return {
-            "group_key": group_key,
-            "episodes": 0,
-            "events": 0,
-            "open": 0,
-            "needs_summary": [],
-        }
+    touched: dict[uuid.UUID, Episode] = {}
 
-    sittings = partition(events)
-    open_count = 0
-    needs_summary: list[uuid.UUID] = []
+    for event in pending:
+        episode = _episode_for(session, user_id, event.occurred_at)
+        if episode is None:
+            episode = Episode(
+                id=uuid.uuid4(),
+                user_id=user_id,
+                started_at=event.occurred_at,
+                ended_at=event.occurred_at,
+                event_count=0,
+                status="open",
+            )
+            session.add(episode)
+            session.flush()
 
-    for index, sitting in enumerate(sittings):
-        first, last = sitting[0], sitting[-1]
-        closed = _is_closed(sitting, index == len(sittings) - 1, now)
-        open_count += 0 if closed else 1
+        event.episode_id = episode.id
+        # Keep the in-memory bounds current so the next event in this batch
+        # is measured against where the episode now ends.
+        episode.started_at = min(episode.started_at, event.occurred_at)
+        episode.ended_at = max(episode.ended_at, event.occurred_at)
+        episode.event_count += 1
+        touched[episode.id] = episode
 
-        episode_id = episode_id_for(user_id, group_key, first.id)
-        title, summary, summary_status, topic_tags = carried.get(
-            episode_id, (None, None, None, None)
+    session.flush()
+
+    # An episode that already had a summary and has since gained events must
+    # be summarised again: the old summary describes a smaller episode.
+    needs_consolidation: list[uuid.UUID] = []
+    closed_count = 0
+
+    for episode in touched.values():
+        _refresh(session, episode)
+        if episode.summary_status is None:
+            continue
+
+        episode.title = None
+        episode.summary = None
+        episode.topic_tags = None
+        episode.summary_status = None
+        session.execute(
+            update(Event)
+            .where(Event.episode_id == episode.id)
+            .values(consolidated_at=None)
         )
+        # A closed episode is not revisited by the loop below, so queueing it
+        # here is what stops a cleared summary from never being rewritten.
+        if episode.status == "closed":
+            needs_consolidation.append(episode.id)
 
-        episode = Episode(
-            id=episode_id,
-            user_id=user_id,
-            group_key=group_key,
-            started_at=first.occurred_at,
-            ended_at=last.occurred_at,
-            app=first.app,
-            thread_id=first.thread_id,
-            event_count=len(sitting),
-            status="closed" if closed else "open",
-            title=title,
-            summary=summary,
-            summary_status=summary_status,
-            topic_tags=topic_tags,
-        )
-        session.add(episode)
-        session.flush()
-
-        session.add_all(
-            EpisodeEvent(episode_id=episode.id, event_id=event.id, seq=seq)
-            for seq, event in enumerate(sitting)
-        )
-
-        # Only closed episodes are summarised: an open one is still growing,
-        # and would be resummarised on every new event.
-        if closed and summary_status is None:
-            needs_summary.append(episode_id)
+    # Any episode still open may have become idle since the last pass, even
+    # if no new event touched it.
+    for episode in session.scalars(
+        select(Episode).where(Episode.user_id == user_id, Episode.status == "open")
+    ):
+        if _should_close(episode, now):
+            episode.status = "closed"
+            closed_count += 1
+            if episode.summary_status is None:
+                needs_consolidation.append(episode.id)
 
     session.flush()
     return {
-        "group_key": group_key,
-        "episodes": len(sittings),
-        "events": len(events),
-        "open": open_count,
-        "needs_summary": needs_summary,
+        "assigned": len(pending),
+        "episodes_touched": len(touched),
+        "closed": closed_count,
+        "needs_consolidation": needs_consolidation,
     }

@@ -1,56 +1,59 @@
-"""The structure layer: one episode is one sitting of dictation.
+"""The structure layer: one episode is one stretch of activity.
 
-A sitting is a continuous stretch in one app, one thread, with one set of
-people. Topics that recur across days are not episodes; they are entity
-timelines. Boundaries are computed, never inferred by a model.
+An episode spans whatever the user was doing in that stretch, across every
+app, and closes on idleness or at a maximum span. Boundaries are time, never
+a model's judgement, and never semantic similarity -- similarity would make
+assignment depend on ingest order and destroy the time filters retrieval
+needs.
+
+Closing is final. An episode is assembled once and never re-partitioned,
+which is what keeps its summary from ever describing a different set of
+events than the one it holds.
 """
 
-import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from sqlalchemy import (
-    DateTime,
-    ForeignKey,
-    Index,
-    Integer,
-    SmallInteger,
-    Text,
-    Uuid,
-)
+from sqlalchemy import DateTime, Index, Integer, Text
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, UserOwnedMixin
 
 EPISODE_STATUSES = ("open", "closed")
-SUMMARY_STATUSES = ("verbatim", "generated", "skipped")
+
+# 'withheld' means the episode was sensitive and the user has not opted into
+# remembering such content: the events remain, the summary is deliberately
+# absent so nothing derived becomes searchable.
+SUMMARY_STATUSES = ("verbatim", "generated", "skipped", "withheld")
 
 # Boundary constants. Changing either changes every episode in the corpus.
-MAX_GAP_MINUTES = 30
-MAX_EVENTS_PER_EPISODE = 25
+IDLE_MINUTES = 20
+MAX_SPAN_HOURS = 2
+MAX_EVENTS_PER_EPISODE = 60
+
+IDLE_GAP = timedelta(minutes=IDLE_MINUTES)
+MAX_SPAN = timedelta(hours=MAX_SPAN_HOURS)
+
+# Sitting boundaries inside an episode. Not persisted -- these only shape the
+# prompt, so the model can see which lines belonged together. The gap depends
+# on how much evidence there is for grouping: a shared context holds a
+# conversation together, whereas app alone is weak and needs proximity.
+SITTING_GAP_WITH_CONTEXT = timedelta(minutes=30)
+SITTING_GAP_APP_ONLY = timedelta(minutes=5)
 
 
 class Episode(UserOwnedMixin, Base):
     __tablename__ = "episodes"
-
-    # The sitting's identity: which conversation, in which app. Assignment
-    # rebuilds all episodes sharing this key, so it is stored, not derived.
-    group_key: Mapped[str] = mapped_column(Text, nullable=False)
 
     started_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
     ended_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    app: Mapped[str | None] = mapped_column(Text)
-    thread_id: Mapped[str | None] = mapped_column(Text)
-
-    # Written on close, by the summariser. Null until then.
+    # Written on close, by consolidation. Null until then.
     title: Mapped[str | None] = mapped_column(Text)
     summary: Mapped[str | None] = mapped_column(Text)
     summary_status: Mapped[str | None] = mapped_column(Text)
-
-    participant_entity_ids: Mapped[list[uuid.UUID] | None] = mapped_column(ARRAY(Uuid))
     topic_tags: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
 
     event_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -59,43 +62,18 @@ class Episode(UserOwnedMixin, Base):
 
     __table_args__ = (
         Index("ix_episodes_user_started", "user_id", started_at.desc()),
-        Index("ix_episodes_user_group", "user_id", "group_key", started_at.desc()),
-        Index("ix_episodes_user_status", "user_id", "status"),
-        Index("ix_episodes_participants", "participant_entity_ids", postgresql_using="gin"),
+        # Partial: the closer only ever looks for episodes still open, and
+        # there is at most one of those per user.
+        Index(
+            "ix_episodes_open",
+            "user_id",
+            postgresql_where=status == "open",
+        ),
         Index("ix_episodes_topics", "topic_tags", postgresql_using="gin"),
     )
 
     def __repr__(self) -> str:
         return (
-            f"<Episode {self.group_key} {self.started_at:%Y-%m-%d %H:%M} "
+            f"<Episode {self.started_at:%Y-%m-%d %H:%M} "
             f"n={self.event_count} {self.status}>"
         )
-
-
-class EpisodeEvent(Base):
-    """Which events make up a sitting, in order.
-
-    No surrogate key: the pair is the identity. `event_id` is unique on its
-    own because an event belongs to exactly one episode -- an event reachable
-    from no episode is unsearchable, and one reachable from two breaks
-    provenance. The database enforces that rather than trusting the code.
-    """
-
-    __tablename__ = "episode_events"
-
-    episode_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid, ForeignKey("episodes.id", ondelete="CASCADE"), primary_key=True
-    )
-    event_id: Mapped[uuid.UUID] = mapped_column(
-        Uuid,
-        ForeignKey("events.id", ondelete="CASCADE"),
-        primary_key=True,
-        unique=True,
-    )
-
-    seq: Mapped[int] = mapped_column(SmallInteger, nullable=False)
-
-    __table_args__ = (Index("ix_episode_events_episode_seq", "episode_id", "seq"),)
-
-    def __repr__(self) -> str:
-        return f"<EpisodeEvent {self.episode_id} #{self.seq}>"
