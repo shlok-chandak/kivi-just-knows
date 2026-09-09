@@ -52,8 +52,17 @@ _STRUCTURAL: tuple[tuple[str, re.Pattern[str]], ...] = (
     ),
     (
         "credentials",
-        # Provider key prefixes, which are unmistakable on their own.
-        re.compile(r"\b(?:sk|pk|rk)[-_](?:live|test|prod)?[-_]?[A-Za-z0-9]{16,}\b"),
+        # Provider key prefixes, which are unmistakable on their own. Each
+        # is a published, documented shape -- not a guess about what a secret
+        # looks like, which is why they can stand alone.
+        re.compile(
+            r"\b(?:sk|pk|rk)[-_](?:live|test|prod)?[-_]?[A-Za-z0-9]{16,}\b"
+            r"|\bgh[pousr]_[A-Za-z0-9]{20,}\b"
+            r"|\bgithub_pat_[A-Za-z0-9_]{20,}\b"
+            r"|\bxox[baprs]-[A-Za-z0-9-]{10,}\b"
+            r"|\bAKIA[0-9A-Z]{16}\b"
+            r"|-----BEGIN [A-Z ]*PRIVATE KEY-----"
+        ),
     ),
     (
         "financial_account",
@@ -67,6 +76,11 @@ _STRUCTURAL: tuple[tuple[str, re.Pattern[str]], ...] = (
             r"|account[ -]number|upi[ -]?(?:id|pin)|card[ -]number)\b",
             re.IGNORECASE,
         ),
+    ),
+    (
+        "financial_account",
+        # A partial account number is still an account number.
+        re.compile(r"\baccount\s+ending\s+\d{3,}", re.IGNORECASE),
     ),
     (
         "financial_account",
@@ -94,9 +108,11 @@ _LEXICAL: dict[str, tuple[frozenset[str], frozenset[str]]] = {
             "scan results",
         }),
         frozenset({
-            "my", "mine", "i", "me", "his", "her", "their", "wife", "husband",
-            "mother", "father", "son", "daughter", "doctor", "hospital",
-            "clinic", "appointment", "report", "results", "treatment",
+            "my", "mine", "i", "me", "he", "she", "they", "his", "her",
+            "their", "wife", "husband", "mother", "father", "mum", "mom",
+            "dad", "papa", "parents", "brother", "sister", "son", "daughter",
+            "kid", "child", "doctor", "hospital", "clinic", "appointment",
+            "report", "results", "treatment", "been", "since",
         }),
     ),
     "religion": (
@@ -119,8 +135,9 @@ _LEXICAL: dict[str, tuple[frozenset[str], frozenset[str]]] = {
             "election", "campaigned", "constituency",
         }),
         frozenset({
-            "my", "i", "me", "his", "her", "their", "supports", "supporter",
-            "against", "party", "politics", "political", "leaning", "views",
+            "my", "i", "me", "he", "she", "they", "we", "his", "her", "their",
+            "supports", "supporter", "against", "party", "politics",
+            "political", "leaning", "views", "for",
         }),
     ),
     "race_ethnicity": (
@@ -150,10 +167,15 @@ _WORD = re.compile(r"[a-z']+")
 
 
 def _terms(text: str) -> set[str]:
-    """Single words plus adjacent pairs, so two-word terms can be matched."""
+    """Single words plus adjacent pairs, so two-word terms can be matched.
+
+    A contraction also yields its stem: "I've" has to count as "I", or a
+    disclosure that opens with one slips past every context rule.
+    """
     words = _WORD.findall(text.casefold())
+    stems = {word.split("'")[0] for word in words if "'" in word}
     pairs = {f"{a} {b}" for a, b in zip(words, words[1:])}
-    return set(words) | pairs
+    return set(words) | stems | pairs
 
 
 def detect_sensitive(text: str | None) -> str | None:

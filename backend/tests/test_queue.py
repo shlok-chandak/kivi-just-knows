@@ -203,6 +203,39 @@ def test_failure_reschedules_with_backoff(session):
     assert job.run_after > datetime.now(timezone.utc)
 
 
+def test_a_rate_limit_uses_the_providers_own_delay(session):
+    """A quota measured per minute is not something to guess at."""
+    add(session, "g1")
+    job = queue.claim(session)
+    queue.fail(session, job, "429", retry_after=40)
+    session.commit()
+
+    wait = (job.run_after - datetime.now(timezone.utc)).total_seconds()
+    assert wait > 40
+
+
+def test_being_rate_limited_does_not_spend_an_attempt(session):
+    """Otherwise healthy work parks while the service is fine."""
+    add(session, "g1")
+    job = queue.claim(session)
+    before = job.attempts
+    queue.fail(session, job, "429", retry_after=30)
+    session.commit()
+
+    assert job.attempts == before - 1
+    assert job.status == "pending"
+
+
+def test_an_ordinary_failure_still_spends_an_attempt(session):
+    add(session, "g1")
+    job = queue.claim(session)
+    before = job.attempts
+    queue.fail(session, job, "timeout")
+    session.commit()
+
+    assert job.attempts == before
+
+
 def test_backoff_widens_between_attempts():
     delays = [queue.backoff_delay(n).total_seconds() for n in (1, 2, 3)]
     assert delays == sorted(delays)

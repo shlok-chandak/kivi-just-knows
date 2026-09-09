@@ -18,7 +18,8 @@ client = TestClient(app)
 # record carries a password and is refused at ingest, so fewer rows land
 # than the file holds -- that gap is the point of the sensitive rule.
 FIXTURE_RECORDS = 27
-FIXTURE_STORED = 26
+# Two records carry sensitive content and are refused at ingest.
+FIXTURE_STORED = 25
 
 
 def payload(**overrides):

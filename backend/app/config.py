@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     llm_api_key: str = ""
     llm_small_model: str = DEFAULT_SMALL_MODEL
     llm_large_model: str = DEFAULT_LARGE_MODEL
+    # Free-tier keys allow a small number of requests per minute. Spacing
+    # calls to stay under it costs a wait; discovering it costs a round trip,
+    # a retry, and eventually a parked job. Set 0 to disable.
+    llm_requests_per_minute: int = 12
     llm_timeout_seconds: float = 60.0
 
     # Embeddings run locally: no key, no quota, free to recompute.

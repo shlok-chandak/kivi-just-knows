@@ -1,0 +1,625 @@
+{
+  "frozen": true,
+  "note": "Held out. No rule may be changed in response to a failure here, and this file may not be edited to make a rule pass.",
+  "persona": {
+    "user": "Meera Krishnan",
+    "role": "operations lead",
+    "company": "Haulr",
+    "domain": "regional freight and warehousing, Chennai"
+  },
+  "records": 102,
+  "expected_memories": [
+    "Sundaram Fasteners contract is eighteen rupees a kilo",
+    "Kumar took over the Coimbatore depot from Ravi",
+    "Vendor payments go out on the fifth",
+    "Detention charges start after four hours",
+    "Loader wages rise eight percent from October",
+    "No dispatches after eight at night"
+  ],
+  "expected_preferences": [
+    "Prefers the LR number in the subject line",
+    "Prefers the daily report as a table, not paragraphs"
+  ],
+  "per_record": [
+    {
+      "external_id": "h_0001",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0002",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0003",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "no_content"
+    },
+    {
+      "external_id": "h_0004",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "h_0006",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "superseded_by_retry"
+    },
+    {
+      "external_id": "h_0007",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0008",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "h_0009",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0010",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0011",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0012",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0013",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0014",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0015",
+      "expect": "refused",
+      "sensitive_category": "health",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0016",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "no_content"
+    },
+    {
+      "external_id": "h_0017",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0018",
+      "expect": "refused",
+      "sensitive_category": "health",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0019",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "discarded_by_user"
+    },
+    {
+      "external_id": "h_0020",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0021",
+      "expect": "refused",
+      "sensitive_category": "sexual_orientation",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0022",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0023",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0024",
+      "expect": "refused",
+      "sensitive_category": "credentials",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0025",
+      "expect": "refused",
+      "sensitive_category": "health",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0026",
+      "expect": "refused",
+      "sensitive_category": "health",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0027",
+      "expect": "refused",
+      "sensitive_category": "credentials",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0028",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0029",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0030",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0031",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "discarded_by_user"
+    },
+    {
+      "external_id": "h_0032",
+      "expect": "refused",
+      "sensitive_category": "religion",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0033",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "implausible_timing"
+    },
+    {
+      "external_id": "h_0034",
+      "expect": "refused",
+      "sensitive_category": "race_ethnicity",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0035",
+      "expect": "refused",
+      "sensitive_category": "financial_account",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0036",
+      "expect": "refused",
+      "sensitive_category": "politics",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0037",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0038",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0039",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0040",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0041",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0042",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0043",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0044",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0045",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0046",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0047",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0048",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0049",
+      "expect": "refused",
+      "sensitive_category": "religion",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0050",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0051",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0052",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0053",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0054",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0055",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0056",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0057",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0058",
+      "expect": "refused",
+      "sensitive_category": "credentials",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0059",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0060",
+      "expect": "refused",
+      "sensitive_category": "sexual_orientation",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0061",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0062",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0063",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0064",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0065",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0066",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "discarded_by_user"
+    },
+    {
+      "external_id": "h_0067",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0068",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0069",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "h_0070",
+      "expect": "refused",
+      "sensitive_category": "financial_account",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0071",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0072",
+      "expect": "refused",
+      "sensitive_category": "financial_account",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0073",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0074",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0076",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "superseded_by_retry"
+    },
+    {
+      "external_id": "h_0077",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0078",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0079",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0080",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "no_content"
+    },
+    {
+      "external_id": "h_0081",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "h_0082",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0083",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0084",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0085",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0086",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0087",
+      "expect": "refused",
+      "sensitive_category": "credentials",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0088",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "no_content"
+    },
+    {
+      "external_id": "h_0089",
+      "expect": "refused",
+      "sensitive_category": "race_ethnicity",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0090",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "discarded_by_user"
+    },
+    {
+      "external_id": "h_0091",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0092",
+      "expect": "not_embedded",
+      "sensitive_category": null,
+      "ignore_reason": "implausible_timing"
+    },
+    {
+      "external_id": "h_0093",
+      "expect": "refused",
+      "sensitive_category": "politics",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0094",
+      "expect": "refused",
+      "sensitive_category": "financial_account",
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0095",
+      "expect": "near_miss",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0096",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0097",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0098",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0099",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0100",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0101",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    },
+    {
+      "external_id": "h_0102",
+      "expect": "stored",
+      "sensitive_category": null,
+      "ignore_reason": null
+    }
+  ]
+}

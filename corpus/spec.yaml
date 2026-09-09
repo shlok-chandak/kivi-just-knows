@@ -1,0 +1,348 @@
+# The corpus design, authored before any content was generated.
+#
+# Structure first, content second. Every arc, person and revision below was
+# written by hand; the generator realises them into dictations. That order is
+# what makes ground truth free rather than reverse-engineered, and it is the
+# method LoCoMo uses for the same reason (see PROJECT_CONTEXT §9.0).
+#
+# Read this file to understand what the corpus is trying to test. Read
+# ground_truth.json to see what it asserts.
+
+meta:
+  user: Rhea Nair
+  role: founder and product lead at a 14-person B2B SaaS company
+  company: Nomi
+  product: Nomi Desk, a support-inbox tool sold to Indian SMBs
+  locale: en-IN
+  timezone: Asia/Kolkata
+  span_days: 90
+  start: 2026-06-15
+  target_records: 500
+
+# --- how people actually dictate --------------------------------------------
+# The single biggest way a synthetic corpus goes wrong is sounding like
+# minutes. Real dictation is short, elliptical, and assumes everything the
+# speaker already knows. Nobody says "Aditya thinks ₹499 is too steep for
+# Indian SMBs" twice; they say it once and then say "he still thinks it's
+# too high", and an hour later just "still pushing back on price".
+#
+# This section governs the generator more than any other. It is also what
+# makes the corpus hard: if a claim's subject is only recoverable from three
+# dictations earlier, string matching cannot find it and episode context has
+# to.
+
+dictation_style:
+
+  # Length. Most dictations are one short thought.
+  words:
+    p10: 4
+    median: 11
+    p90: 28
+    max: 60
+
+  # Names. A person is named when they first come up in a thread, or when
+  # the speaker switches who they are talking about. After that: pronouns,
+  # or nothing.
+  naming:
+    named_on_first_mention_in_sitting: 0.92
+    named_again_later_in_same_sitting: 0.08
+    pronoun_or_bare_reference_after: 0.85
+    note: >
+      Across the whole corpus this means roughly one dictation in five names
+      anybody. The rest refer to people the way speech does -- "he", "she",
+      "they", "the vendor", or by leaving the subject out entirely.
+
+  # Reference. What a dictation points at without naming it.
+  reference:
+    pronoun_subject: 0.34         # "he's pushing back again"
+    bare_definite: 0.22           # "the deck", "that thread", "the gateway thing"
+    zero_subject: 0.14            # "moved it to Thursday"
+    explicit_subject: 0.30
+
+  # Form. Speech is not sentences.
+  form:
+    fragment: 0.38                # "pricing call at 4"
+    single_clause: 0.44
+    multi_clause: 0.18
+
+  # Restatement. People almost never repeat themselves verbatim; they say a
+  # shorter version, or only the part that changed.
+  restatement:
+    verbatim_repeat: 0.02
+    paraphrase: 0.55              # same claim, different words
+    partial_delta: 0.43           # only the changed part -- "349 now"
+    note: >
+      This is the property that decides whether claim identity works. Exact
+      text matching will reinforce almost nothing here, which is the
+      finding, not a flaw in the corpus.
+
+  # Not everything said is worth remembering, and most of it is not.
+  memory_yield:
+    carries_a_durable_claim: 0.28
+    logistics_or_chatter: 0.52    # "running late", "sent it", "looking now"
+    junk_or_refused: 0.20
+    note: >
+      A corpus where every record is a decision would make extraction look
+      far better than it is. Most of a working day is not memorable.
+
+  # Shorthand a person uses with colleagues and drops with customers.
+  register:
+    casual_apps: [slack, whatsapp, notes]
+    formal_apps: [gmail]
+    casual_markers: ["abbreviations", "lowercase", "no terminal period", "eta", "wrt", "eod", "tmrw"]
+    formal_markers: ["full sentences", "expanded contractions", "greeting and signoff"]
+
+# --- the cast ---------------------------------------------------------------
+# Aliases are deliberate. Entity resolution (M5) has to learn that Adi, Aditya
+# and Aditya Sharma are one person, and that "Priya" alone is ambiguous until
+# the second Priya appears in week 7.
+
+people:
+  - name: Aditya Sharma
+    aliases: [Aditya, Adi, "Aditya S"]
+    role: co-founder, commercial
+    first_seen_week: 1
+  - name: Pranav Iyer
+    aliases: [Pranav, "Pranav I"]
+    role: engineering lead
+    first_seen_week: 1
+  - name: Priya Menon
+    aliases: [Priya, "Priya M"]
+    role: design
+    first_seen_week: 1
+  - name: Priya Raghavan
+    aliases: ["Priya R"]
+    role: legal counsel, external
+    first_seen_week: 7
+    note: >
+      Introduced late and deliberately. A system that resolves every "Priya"
+      to one person is wrong from week 7 onwards, and should say it is unsure
+      rather than guess. Made harder by the naming rule above: after her first
+      mention she is mostly "she" and "legal", exactly as in real speech.
+  - name: Kavya Reddy
+    aliases: [Kavya]
+    role: customer success
+    first_seen_week: 2
+  - name: Rohit Bhatia
+    aliases: [Rohit]
+    role: contractor, data pipeline
+    first_seen_week: 4
+    note: leaves in week 9; later mentions are retrospective
+
+projects:
+  - name: Pro tier pricing
+    weeks: [1, 12]
+  - name: Payment gateway migration
+    weeks: [2, 8]
+  - name: Inbox rules v2
+    weeks: [3, 11]
+  - name: SOC2 readiness
+    weeks: [6, 12]
+
+customers:
+  - name: ABC Inc
+    segment: mid-market
+  - name: Lumen Retail
+    segment: SMB
+  - name: Trellis Health
+    segment: enterprise
+    note: >
+      Named "Health" on purpose. Discussing a healthcare *customer* is
+      ordinary business and must not trip the sensitive rules; discussing
+      someone's health must. The corpus contains both.
+
+# --- decisions that get revised --------------------------------------------
+# Each chain is a supersession test. The final value is what recall must
+# return; the earlier values must remain answerable as history.
+
+decision_arcs:
+  - id: pricing
+    subject: Pro tier price
+    steps:
+      - {week: 1,  value: "₹499", note: initial list price}
+      - {week: 2,  value: "₹299", note: cut after ABC Inc pushback}
+      - {week: 9,  value: "₹349", note: raised once margin data landed}
+    final: "₹349"
+    voiced_as:
+      # How each step actually gets said. Only the first states the subject
+      # in full; the later ones are how someone really revises a number.
+      - "list price is 499 for pro"
+      - "dropping to 299"
+      - "349 now, margin data came back better than we thought"
+  - id: launch_date
+    subject: Inbox rules v2 launch
+    steps:
+      - {week: 3,  value: "October"}
+      - {week: 6,  value: "November", note: payment gateway review}
+      - {week: 10, value: "November 18", note: firmed to a date}
+    final: "November 18"
+  - id: gateway
+    subject: payment gateway
+    steps:
+      - {week: 2,  value: "Razorpay"}
+      - {week: 5,  value: "Cashfree", note: settlement timing}
+    final: "Cashfree"
+  - id: soc2_auditor
+    subject: SOC2 auditor
+    steps:
+      - {week: 6,  value: "Sequoia Assurance"}
+      - {week: 8,  value: "Nomad Audit", note: cost}
+    final: "Nomad Audit"
+  - id: standup
+    subject: standup time
+    steps:
+      - {week: 1,  value: "9:30am"}
+      - {week: 4,  value: "10am"}
+    final: "10am"
+  - id: inbox_owner
+    subject: owner of inbox rules v2
+    steps:
+      - {week: 3,  value: "Pranav Iyer"}
+      - {week: 7,  value: "Priya Menon", note: Pranav moves to SOC2}
+    final: "Priya Menon"
+
+# --- preferences ------------------------------------------------------------
+# Two kinds, and the difference matters. Stated preferences are said out loud
+# once and believed. Edit-derived preferences are never stated at all: they
+# are only visible in the gap between formatted_text and committed_text, and
+# they are the clearest evidence of how someone actually wants to write.
+
+stated_preferences:
+  - "release notes as short bullet points, never paragraphs"
+  - "no more than three bullets in a customer email"
+  - "always mention the rupee figure, never just 'the price'"
+  - "meetings before noon, not after"
+  - "reply to Trellis in full sentences, they are formal"
+
+# Operators are the closed set from PROJECT_CONTEXT §16.2. Each is realised
+# by edits across many dictations, never by the user describing it.
+#
+# The guard rule (§16.3): a style edit changes no alphabetic word token. Any
+# record whose edit adds, removes or substitutes a word is a content
+# correction and must be logged as one, not learned from.
+
+edit_preferences:
+  - operator: terminal_period.drop
+    contexts: [slack, whatsapp]
+    strength: strong          # applied in most edits in those apps
+  - operator: sentence_initial.lowercase
+    contexts: [whatsapp]
+    strength: strong
+  - operator: greeting.drop
+    contexts: [slack]
+    strength: moderate
+  - operator: contraction.expand
+    contexts: [gmail]
+    strength: strong          # the opposite direction in formal contexts
+  - operator: exclamation.drop
+    contexts: [slack, gmail]
+    strength: moderate
+  - operator: list.bulletize
+    contexts: [notion]
+    strength: moderate
+  - operator: hedge.drop
+    contexts: [gmail]
+    strength: moderate
+  - operator: emoji.insert
+    contexts: [whatsapp]
+    strength: weak
+  - operator: signoff.set
+    contexts: [gmail]
+    strength: weak
+  - operator: filler.keep
+    contexts: [whatsapp]
+    strength: weak
+
+# Edits that must NOT become style evidence. Same shape as the above, but a
+# word token changes, so §16.3 rejects them as content corrections.
+content_corrections:
+  count: 18
+  examples:
+    - {from: "Tuesday", to: "Thursday"}
+    - {from: "₹299", to: "₹349"}
+    - {from: "Pranav", to: "Priya"}
+    - {from: "October", to: "November"}
+
+# --- what must be refused ---------------------------------------------------
+# Every sensitive category, so the ingest rules and the review net are both
+# exercised. These records are in the corpus file and must never reach the
+# events table.
+
+sensitive:
+  - {category: credentials,        count: 6,  note: passwords, API keys, an OTP}
+  - {category: financial_account,  count: 6,  note: card, IFSC, PAN, UPI}
+  - {category: health,             count: 5,  note: personal and family medical}
+  - {category: religion,           count: 2}
+  - {category: politics,           count: 2}
+  - {category: race_ethnicity,     count: 2}
+  - {category: sexual_orientation, count: 2}
+
+# Near misses. These use the same vocabulary and must be stored, because a
+# false refusal loses a dictation permanently and silently.
+sensitive_near_misses:
+  count: 14
+  examples:
+    - "Trellis Health wants SSO before they sign."
+    - "The launch metrics look healthy this quarter."
+    - "We need a diagnosis of why checkout is failing."
+    - "The political situation with the vendor is delaying the contract."
+    - "Race condition in the retry handler, Pranav is on it."
+    - "Revenue is up 18% on last quarter."
+
+# --- what must not be embedded ---------------------------------------------
+junk:
+  - {reason: discarded_by_user,    count: 8}
+  - {reason: low_asr_confidence,   count: 8}
+  - {reason: implausible_timing,   count: 4}
+  - {reason: no_content,           count: 8}
+  - {reason: superseded_by_retry,  count: 6}
+
+# --- grouping ---------------------------------------------------------------
+# Both tiers, so "degrades gracefully" is demonstrated rather than asserted.
+
+grouping:
+  with_context_hash: 0.72       # a window title was available
+  without_context_hash: 0.28    # app only; the 5-minute sitting rule applies
+  threadless_bursts:
+    count: 12
+    note: >
+      Three or more dictations in one app inside twenty minutes, addressed to
+      different people, with no window context. Ground truth asserts these are
+      separate sittings. Under the old 30-minute app-only rule they would have
+      merged into one conversation.
+  cross_app_trains:
+    count: 20
+    note: >
+      A thought that moves between apps inside one episode -- agreed on Slack,
+      written up in Notion twenty minutes later. Ground truth asserts one
+      episode and one reinforced memory, not two unrelated ones.
+
+# The style learner needs a context with enough edits to reach n>=3 on several
+# operators (§16.1). This thread carries far more than the minimum.
+dense_thread:
+  app: slack
+  context: "#pricing (Nomi) - Slack"
+  events: 34
+
+apps:
+  slack: 0.34
+  gmail: 0.16
+  notion: 0.14
+  whatsapp: 0.12
+  cursor: 0.09
+  linear: 0.08
+  notes: 0.07
+
+# --- ASR noise --------------------------------------------------------------
+# Modelled on the failure modes recognisers actually have, not invented ones.
+# raw_asr is always degraded relative to formatted_text; the gap between them
+# is a signal the system reads.
+
+asr_noise:
+  lowercase_all: true
+  drop_punctuation: true
+  number_words: 0.55            # "two ninety nine" for ₹299
+  name_misrecognition: 0.18     # "additya", "pranam", "priyah"
+  disfluency_insertion: 0.30    # um, uh, so, like, you know
+  repetition: 0.08              # "the the", "we we should"
+  homophone: 0.10               # their/there, to/too, weather/whether

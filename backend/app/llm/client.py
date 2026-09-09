@@ -5,6 +5,8 @@ so swapping providers means rewriting this file and nothing else.
 """
 
 import logging
+import re
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any, TypeVar
@@ -30,7 +32,16 @@ class LLMError(RuntimeError):
 
 
 class LLMRateLimited(LLMError):
-    """Provider returned 429. Same handling, but worth distinguishing."""
+    """Provider returned 429.
+
+    Carries the provider's own retry hint when it gives one. Guessing a
+    backoff against a per-minute quota is how a job burns all its attempts
+    inside a single window and parks for no reason.
+    """
+
+    def __init__(self, message: str, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 @dataclass(frozen=True)
@@ -50,12 +61,46 @@ class Completion:
     usage: Usage
 
 
+# The provider states how long to wait in the body of a 429.
+_RETRY_AFTER = re.compile(r"['\"]retryDelay['\"]:\s*['\"](\d+(?:\.\d+)?)s")
+
+
 class LLMClient:
+    """The single boundary between this system and a model provider.
+
+    Also the only place that knows about rate limits. A free-tier key allows a
+    small number of requests per minute, and a worker claiming jobs as fast as
+    it can will exhaust that in seconds -- so calls are spaced here rather
+    than left for every caller to remember.
+    """
+
     def __init__(self, api_key: str | None = None) -> None:
         key = api_key or settings.llm_api_key
         if not key:
             raise LLMError("LLM_API_KEY is not set")
         self._client = genai.Client(api_key=key)
+        self._min_interval = (
+            60.0 / settings.llm_requests_per_minute
+            if settings.llm_requests_per_minute > 0
+            else 0.0
+        )
+        self._last_call = 0.0
+        self._lock = threading.Lock()
+
+    def _wait_for_slot(self) -> None:
+        """Space calls so the quota is never reached in the first place.
+
+        Cheaper than discovering the limit by being refused: a 429 costs the
+        round trip, a retry, and eventually a parked job, where waiting costs
+        only the wait.
+        """
+        if self._min_interval <= 0:
+            return
+        with self._lock:
+            wait = self._min_interval - (time.monotonic() - self._last_call)
+            if wait > 0:
+                time.sleep(wait)
+            self._last_call = time.monotonic()
 
     def structured(
         self,
@@ -86,6 +131,7 @@ class LLMClient:
             ),
         )
 
+        self._wait_for_slot()
         started = time.perf_counter()
         try:
             response = self._client.models.generate_content(
@@ -93,7 +139,10 @@ class LLMClient:
             )
         except genai_errors.ClientError as exc:
             if getattr(exc, "code", None) == 429:
-                raise LLMRateLimited(str(exc)) from exc
+                match = _RETRY_AFTER.search(str(exc))
+                raise LLMRateLimited(
+                    str(exc), float(match.group(1)) if match else None
+                ) from exc
             raise LLMError(f"{model}: {exc}") from exc
         except genai_errors.ServerError as exc:
             raise LLMError(f"{model}: {exc}") from exc

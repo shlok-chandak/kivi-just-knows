@@ -11,6 +11,7 @@ from types import FrameType
 
 from app.db.session import SessionLocal
 from app.models.job import Job
+from app.llm.client import LLMRateLimited
 from app.services import queue
 from app.worker.handlers import HANDLERS
 
@@ -58,9 +59,19 @@ def run_once() -> bool:
             failing = session.get(Job, job.id)
             if failing is not None:
                 failing.attempts += 1
-                queue.fail(session, failing, f"{type(exc).__name__}: {exc}")
+                queue.fail(
+                    session,
+                    failing,
+                    f"{type(exc).__name__}: {exc}",
+                    retry_after=getattr(exc, "retry_after", None),
+                )
                 session.commit()
-            logger.exception("%s %s failed", stage, subject)
+            # A rate limit is the queue outrunning its quota, not a fault.
+            # Logging a stack trace for it buries the real failures.
+            if isinstance(exc, LLMRateLimited):
+                logger.warning("%s %s rate limited, will retry", stage, subject)
+            else:
+                logger.exception("%s %s failed", stage, subject)
 
         return True
     finally:

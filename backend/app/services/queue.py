@@ -124,8 +124,19 @@ def complete(session: Session, job: Job) -> None:
     session.flush()
 
 
-def fail(session: Session, job: Job, error: str) -> None:
-    """Reschedule with backoff, or park the job once attempts run out."""
+def fail(
+    session: Session,
+    job: Job,
+    error: str,
+    retry_after: float | None = None,
+) -> None:
+    """Reschedule with backoff, or park the job once attempts run out.
+
+    `retry_after` is the provider's own instruction and always wins over the
+    computed backoff. A quota measured per minute is not something to guess
+    at: an attempt made too early is refused again and spends an attempt for
+    nothing, which is how a job parks while the service is perfectly healthy.
+    """
     job.last_error = error[:2000]
 
     if job.attempts >= job.max_attempts:
@@ -133,7 +144,14 @@ def fail(session: Session, job: Job, error: str) -> None:
         job.finished_at = datetime.now(timezone.utc)
     else:
         job.status = "pending"
-        job.run_after = datetime.now(timezone.utc) + backoff_delay(job.attempts)
+        delay = backoff_delay(job.attempts)
+        if retry_after is not None:
+            delay = max(delay, timedelta(seconds=retry_after + 1))
+        job.run_after = datetime.now(timezone.utc) + delay
+        # Being told to wait is not a failed attempt, it is a queue that is
+        # ahead of its quota. Charging it would park healthy work.
+        if retry_after is not None:
+            job.attempts = max(0, job.attempts - 1)
 
     session.flush()
 

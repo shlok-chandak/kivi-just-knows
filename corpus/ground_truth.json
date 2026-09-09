@@ -1,0 +1,1627 @@
+{
+  "corpus": {
+    "records": 515,
+    "span_days": 90,
+    "generated_from": "corpus/spec.yaml",
+    "deterministic": true
+  },
+  "abilities": {
+    "information_extraction": "A claim stated once must be recoverable, including when its subject is only named earlier in the same episode.",
+    "multi_session_reasoning": "Claims corroborated across apps and days must become one belief, not several.",
+    "temporal_reasoning": "Questions scoped to a week or a month must filter by time before similarity, not after.",
+    "knowledge_updates": "The final value of every arc below is what recall must return; earlier values stay answerable as history.",
+    "abstention": "Questions with no support in the corpus must be refused, and an ambiguous person must be flagged rather than guessed."
+  },
+  "decision_arcs": [
+    {
+      "id": "pricing",
+      "subject": "Pro tier price",
+      "final": "₹349",
+      "superseded": [
+        "₹499",
+        "₹299"
+      ]
+    },
+    {
+      "id": "launch_date",
+      "subject": "Inbox rules v2 launch",
+      "final": "November 18",
+      "superseded": [
+        "October",
+        "November"
+      ]
+    },
+    {
+      "id": "gateway",
+      "subject": "payment gateway",
+      "final": "Cashfree",
+      "superseded": [
+        "Razorpay"
+      ]
+    },
+    {
+      "id": "soc2_auditor",
+      "subject": "SOC2 auditor",
+      "final": "Nomad Audit",
+      "superseded": [
+        "Sequoia Assurance"
+      ]
+    },
+    {
+      "id": "standup",
+      "subject": "standup time",
+      "final": "10am",
+      "superseded": [
+        "9:30am"
+      ]
+    },
+    {
+      "id": "inbox_owner",
+      "subject": "owner of inbox rules v2",
+      "final": "Priya Menon",
+      "superseded": [
+        "Pranav Iyer"
+      ]
+    }
+  ],
+  "stated_preferences": [
+    "Prefers release notes as short bullet points, never paragraphs",
+    "Prefers customer emails to three bullets or fewer",
+    "Prefers the rupee figure stated explicitly, not 'the price'",
+    "Prefers meetings before noon",
+    "Prefers full sentences when writing to Trellis Health"
+  ],
+  "edit_preferences": [
+    {
+      "operator": "terminal_period.drop",
+      "contexts": [
+        "slack",
+        "whatsapp"
+      ]
+    },
+    {
+      "operator": "sentence_initial.lowercase",
+      "contexts": [
+        "whatsapp"
+      ]
+    },
+    {
+      "operator": "greeting.drop",
+      "contexts": [
+        "slack"
+      ]
+    },
+    {
+      "operator": "contraction.expand",
+      "contexts": [
+        "gmail"
+      ]
+    },
+    {
+      "operator": "exclamation.drop",
+      "contexts": [
+        "slack",
+        "gmail"
+      ]
+    },
+    {
+      "operator": "list.bulletize",
+      "contexts": [
+        "notion"
+      ]
+    },
+    {
+      "operator": "hedge.drop",
+      "contexts": [
+        "gmail"
+      ]
+    },
+    {
+      "operator": "emoji.insert",
+      "contexts": [
+        "whatsapp"
+      ]
+    },
+    {
+      "operator": "signoff.set",
+      "contexts": [
+        "gmail"
+      ]
+    },
+    {
+      "operator": "filler.keep",
+      "contexts": [
+        "whatsapp"
+      ]
+    }
+  ],
+  "ambiguous_entities": [
+    {
+      "surface": "Priya",
+      "resolves_to": [
+        "Priya Menon",
+        "Priya Raghavan"
+      ],
+      "expect": "flag ambiguity from week 7 rather than guessing"
+    }
+  ],
+  "records": [
+    {
+      "external_id": "d_00001",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00002",
+      "expect": "stored",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00003",
+      "expect": "not_embedded",
+      "ignore_reason": "discarded_by_user",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00004",
+      "expect": "not_embedded",
+      "ignore_reason": "implausible_timing",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00005",
+      "expect": "not_embedded",
+      "ignore_reason": "no_content"
+    },
+    {
+      "external_id": "d_00006",
+      "expect": "stored"
+    },
+    {
+      "external_id": "d_00007",
+      "expect": "not_embedded",
+      "ignore_reason": "superseded_by_retry"
+    },
+    {
+      "external_id": "d_00008",
+      "expect": "refused",
+      "sensitive_category": "religion"
+    },
+    {
+      "external_id": "d_00009",
+      "expect": "not_embedded",
+      "ignore_reason": "no_content",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00010",
+      "expect": "not_embedded",
+      "ignore_reason": "discarded_by_user"
+    },
+    {
+      "external_id": "d_00011",
+      "expect": "refused",
+      "sensitive_category": "financial_account"
+    },
+    {
+      "external_id": "d_00012",
+      "expect": "refused",
+      "sensitive_category": "politics"
+    },
+    {
+      "external_id": "d_00013",
+      "expect": "refused",
+      "sensitive_category": "sexual_orientation"
+    },
+    {
+      "external_id": "d_00014",
+      "expect": "refused",
+      "sensitive_category": "politics"
+    },
+    {
+      "external_id": "d_00015",
+      "expect": "stored",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00016",
+      "expect": "stored",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00017",
+      "expect": "not_embedded",
+      "ignore_reason": "discarded_by_user"
+    },
+    {
+      "external_id": "d_00018",
+      "expect": "stored",
+      "asserts": "Pro tier list price is ₹499",
+      "memory_type": "decision"
+    },
+    {
+      "external_id": "d_00019",
+      "expect": "not_embedded",
+      "ignore_reason": "discarded_by_user",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00020",
+      "expect": "not_embedded",
+      "ignore_reason": "discarded_by_user",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00021",
+      "expect": "not_embedded",
+      "ignore_reason": "implausible_timing",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00022",
+      "expect": "not_embedded",
+      "ignore_reason": "implausible_timing",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00023",
+      "expect": "not_embedded",
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "d_00024",
+      "expect": "not_embedded",
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "d_00025",
+      "expect": "refused",
+      "sensitive_category": "credentials"
+    },
+    {
+      "external_id": "d_00026",
+      "expect": "refused",
+      "sensitive_category": "credentials"
+    },
+    {
+      "external_id": "d_00027",
+      "expect": "refused",
+      "sensitive_category": "health"
+    },
+    {
+      "external_id": "d_00028",
+      "expect": "refused",
+      "sensitive_category": "race_ethnicity",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00029",
+      "expect": "refused",
+      "sensitive_category": "financial_account",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00030",
+      "expect": "not_embedded",
+      "ignore_reason": "low_asr_confidence",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00031",
+      "expect": "not_embedded",
+      "ignore_reason": "low_asr_confidence",
+      "style_operator": "emoji.insert"
+    },
+    {
+      "external_id": "d_00032",
+      "expect": "refused",
+      "sensitive_category": "sexual_orientation",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00033",
+      "expect": "refused",
+      "sensitive_category": "credentials"
+    },
+    {
+      "external_id": "d_00034",
+      "expect": "not_embedded",
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "d_00035",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00036",
+      "expect": "not_embedded",
+      "ignore_reason": "low_asr_confidence",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00037",
+      "expect": "stored",
+      "asserts": "Standup is at 9:30am",
+      "memory_type": "decision",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00038",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00039",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00040",
+      "expect": "not_embedded",
+      "ignore_reason": "superseded_by_retry",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00041",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00042",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00043",
+      "expect": "not_embedded",
+      "ignore_reason": "superseded_by_retry",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00044",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00045",
+      "expect": "not_embedded",
+      "ignore_reason": "discarded_by_user",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00046",
+      "expect": "refused",
+      "sensitive_category": "credentials",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00047",
+      "expect": "not_embedded",
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "d_00048",
+      "expect": "not_embedded",
+      "ignore_reason": "no_content"
+    },
+    {
+      "external_id": "d_00049",
+      "expect": "not_embedded",
+      "ignore_reason": "discarded_by_user"
+    },
+    {
+      "external_id": "d_00050",
+      "expect": "not_embedded",
+      "ignore_reason": "no_content",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00051",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00052",
+      "expect": "not_embedded",
+      "ignore_reason": "superseded_by_retry"
+    },
+    {
+      "external_id": "d_00053",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00054",
+      "expect": "refused",
+      "sensitive_category": "religion",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00055",
+      "expect": "refused",
+      "sensitive_category": "health"
+    },
+    {
+      "external_id": "d_00056",
+      "expect": "not_embedded",
+      "ignore_reason": "low_asr_confidence"
+    },
+    {
+      "external_id": "d_00057",
+      "expect": "stored",
+      "asserts": "Aditya thinks ₹499 is steep for SMBs",
+      "memory_type": "fact",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00058",
+      "expect": "not_embedded",
+      "ignore_reason": "discarded_by_user"
+    },
+    {
+      "external_id": "d_00059",
+      "expect": "not_embedded",
+      "ignore_reason": "no_content"
+    },
+    {
+      "external_id": "d_00060",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00061",
+      "expect": "not_embedded",
+      "ignore_reason": "no_content",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00062",
+      "expect": "refused",
+      "sensitive_category": "financial_account"
+    },
+    {
+      "external_id": "d_00063",
+      "expect": "refused",
+      "sensitive_category": "financial_account"
+    },
+    {
+      "external_id": "d_00064",
+      "expect": "refused",
+      "sensitive_category": "race_ethnicity"
+    },
+    {
+      "external_id": "d_00065",
+      "expect": "stored",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00066",
+      "expect": "stored"
+    },
+    {
+      "external_id": "d_00067",
+      "expect": "not_embedded",
+      "ignore_reason": "superseded_by_retry"
+    },
+    {
+      "external_id": "d_00068",
+      "expect": "refused",
+      "sensitive_category": "health"
+    },
+    {
+      "external_id": "d_00069",
+      "expect": "not_embedded",
+      "ignore_reason": "no_content",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00070",
+      "expect": "refused",
+      "sensitive_category": "credentials",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00071",
+      "expect": "refused",
+      "sensitive_category": "health"
+    },
+    {
+      "external_id": "d_00072",
+      "expect": "stored",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00073",
+      "expect": "not_embedded",
+      "ignore_reason": "implausible_timing"
+    },
+    {
+      "external_id": "d_00074",
+      "expect": "refused",
+      "sensitive_category": "financial_account"
+    },
+    {
+      "external_id": "d_00075",
+      "expect": "refused",
+      "sensitive_category": "health"
+    },
+    {
+      "external_id": "d_00076",
+      "expect": "stored",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00077",
+      "expect": "stored",
+      "near_miss": true
+    },
+    {
+      "external_id": "d_00078",
+      "expect": "not_embedded",
+      "ignore_reason": "no_content"
+    },
+    {
+      "external_id": "d_00079",
+      "expect": "refused",
+      "sensitive_category": "credentials"
+    },
+    {
+      "external_id": "d_00080",
+      "expect": "refused",
+      "sensitive_category": "financial_account"
+    },
+    {
+      "external_id": "d_00082",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00083",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00084",
+      "expect": "stored"
+    },
+    {
+      "external_id": "d_00085",
+      "expect": "not_embedded",
+      "ignore_reason": "superseded_by_retry"
+    },
+    {
+      "external_id": "d_00093",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00095",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00096",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00099",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00104",
+      "expect": "stored",
+      "style_operator": "emoji.insert"
+    },
+    {
+      "external_id": "d_00105",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00106",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00107",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00110",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00112",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00113",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00114",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00117",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00118",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00119",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00120",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00121",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00122",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00126",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00129",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00131",
+      "expect": "stored",
+      "style_operator": "contraction.expand"
+    },
+    {
+      "external_id": "d_00133",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00136",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00141",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00148",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00150",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00152",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00154",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00155",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00157",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00158",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00159",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00162",
+      "expect": "stored",
+      "asserts": "Payment gateway is Razorpay",
+      "memory_type": "decision",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00166",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00170",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00176",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00181",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00183",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00189",
+      "expect": "stored",
+      "asserts": "ABC Inc anchored around ₹250",
+      "memory_type": "fact"
+    },
+    {
+      "external_id": "d_00190",
+      "expect": "stored",
+      "asserts": "Pro tier price is ₹299",
+      "supersedes": "Pro tier list price is ₹499",
+      "memory_type": "decision",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00191",
+      "expect": "stored",
+      "asserts": "Prefers release notes as short bullet points, never paragraphs",
+      "memory_type": "preference",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00195",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00196",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00197",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00199",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00200",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00201",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00208",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00209",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00213",
+      "expect": "stored",
+      "asserts": "Pro tier price is ₹299",
+      "memory_type": "decision",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00214",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00216",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00218",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00219",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00224",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00225",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00231",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00232",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00233",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00238",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00239",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00241",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00242",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00250",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00251",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00255",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00258",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00263",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00264",
+      "expect": "stored",
+      "asserts": "Inbox rules v2 launches in October",
+      "memory_type": "decision"
+    },
+    {
+      "external_id": "d_00267",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00268",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00269",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00270",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00271",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00272",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00273",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00275",
+      "expect": "stored",
+      "style_operator": "emoji.insert"
+    },
+    {
+      "external_id": "d_00276",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00277",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00282",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00287",
+      "expect": "stored",
+      "asserts": "Pranav Iyer owns Inbox rules v2",
+      "memory_type": "fact"
+    },
+    {
+      "external_id": "d_00288",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00289",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00290",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00291",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00292",
+      "expect": "stored",
+      "style_operator": "contraction.expand"
+    },
+    {
+      "external_id": "d_00295",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00296",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00297",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00298",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00299",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00303",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00304",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00316",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00318",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00319",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00320",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00324",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00330",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00331",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00332",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00333",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00334",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00335",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00336",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00337",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00338",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00339",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00340",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00341",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00344",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00345",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00346",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00347",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00349",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00350",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00361",
+      "expect": "stored",
+      "style_operator": "emoji.insert"
+    },
+    {
+      "external_id": "d_00363",
+      "expect": "stored",
+      "style_operator": "contraction.expand"
+    },
+    {
+      "external_id": "d_00365",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00370",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00372",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00385",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00387",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00392",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00393",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00395",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00397",
+      "expect": "stored",
+      "style_operator": "contraction.expand"
+    },
+    {
+      "external_id": "d_00400",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00401",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00402",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00405",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00407",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00411",
+      "expect": "stored",
+      "asserts": "Standup is at 10am",
+      "supersedes": "Standup is at 9:30am",
+      "memory_type": "decision",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00414",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00415",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00416",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00417",
+      "expect": "stored",
+      "style_operator": "contraction.expand"
+    },
+    {
+      "external_id": "d_00418",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00420",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00421",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00426",
+      "expect": "stored",
+      "asserts": "Prefers customer emails to three bullets or fewer",
+      "memory_type": "preference"
+    },
+    {
+      "external_id": "d_00427",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00428",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00431",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00442",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00443",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00444",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00445",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00446",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00447",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00448",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00449",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00454",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00455",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00458",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00459",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00460",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00461",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00464",
+      "expect": "stored",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00466",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00467",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00468",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00472",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00473",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00474",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00475",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00476",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00478",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00479",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00482",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00483",
+      "expect": "stored",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00488",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00489",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00490",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00491",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00492",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00494",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00495",
+      "expect": "stored",
+      "style_operator": "emoji.insert"
+    },
+    {
+      "external_id": "d_00496",
+      "expect": "stored",
+      "style_operator": "sentence_initial.lowercase"
+    },
+    {
+      "external_id": "d_00497",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00499",
+      "expect": "stored",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00501",
+      "expect": "stored",
+      "asserts": "Payment gateway is Cashfree",
+      "supersedes": "Payment gateway is Razorpay",
+      "memory_type": "decision",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00502",
+      "expect": "stored",
+      "asserts": "Pranav is pulling margin numbers",
+      "memory_type": "commitment"
+    },
+    {
+      "external_id": "d_00503",
+      "expect": "stored",
+      "asserts": "Prefers the rupee figure stated explicitly, not 'the price'",
+      "memory_type": "preference",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00504",
+      "expect": "stored",
+      "asserts": "Payment gateway is Cashfree",
+      "memory_type": "decision"
+    },
+    {
+      "external_id": "d_00505",
+      "expect": "stored",
+      "asserts": "SOC2 auditor is Sequoia Assurance",
+      "memory_type": "decision",
+      "style_operator": "signoff.set"
+    },
+    {
+      "external_id": "d_00506",
+      "expect": "stored",
+      "asserts": "Inbox rules v2 launches in November",
+      "supersedes": "Inbox rules v2 launches in October",
+      "memory_type": "decision",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00507",
+      "expect": "stored",
+      "asserts": "Inbox rules v2 launches in November",
+      "memory_type": "decision"
+    },
+    {
+      "external_id": "d_00508",
+      "expect": "stored",
+      "asserts": "Priya Menon owns Inbox rules v2",
+      "supersedes": "Pranav Iyer owns Inbox rules v2",
+      "memory_type": "fact",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00509",
+      "expect": "stored",
+      "asserts": "Prefers meetings before noon",
+      "memory_type": "preference",
+      "style_operator": "list.bulletize"
+    },
+    {
+      "external_id": "d_00510",
+      "expect": "stored",
+      "asserts": "Priya Raghavan is external legal counsel",
+      "memory_type": "fact",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00511",
+      "expect": "stored",
+      "asserts": "SOC2 auditor is Nomad Audit",
+      "supersedes": "SOC2 auditor is Sequoia Assurance",
+      "memory_type": "decision",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00512",
+      "expect": "stored",
+      "asserts": "Prefers full sentences when writing to Trellis Health",
+      "memory_type": "preference"
+    },
+    {
+      "external_id": "d_00513",
+      "expect": "stored",
+      "asserts": "Pro tier price is ₹349",
+      "supersedes": "Pro tier price is ₹299",
+      "memory_type": "decision",
+      "style_operator": "terminal_period.drop"
+    },
+    {
+      "external_id": "d_00514",
+      "expect": "stored",
+      "asserts": "Pro tier price is ₹349",
+      "memory_type": "decision"
+    },
+    {
+      "external_id": "d_00515",
+      "expect": "stored",
+      "asserts": "Inbox rules v2 launches on November 18",
+      "supersedes": "Inbox rules v2 launches in November",
+      "memory_type": "decision"
+    }
+  ]
+}

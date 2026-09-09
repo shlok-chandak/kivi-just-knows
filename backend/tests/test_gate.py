@@ -132,3 +132,31 @@ def test_a_single_word_longer_than_the_limit_is_still_cut():
 
 def test_an_empty_dictation_has_a_title():
     assert fallback_title("   ") == "Untitled"
+
+
+# --- provider throttling ----------------------------------------------------
+
+
+def test_the_client_spaces_calls_to_stay_under_a_quota(monkeypatch):
+    """A worker claiming jobs as fast as it can will exhaust a free tier in
+    seconds, so the spacing belongs at the single provider boundary."""
+    import time
+
+    from app.llm import client as client_module
+
+    monkeypatch.setattr(client_module.settings, "llm_requests_per_minute", 600)
+    monkeypatch.setattr(client_module.settings, "llm_api_key", "test-key")
+    monkeypatch.setattr(client_module.genai, "Client", lambda **kwargs: object())
+
+    llm = client_module.LLMClient()
+    started = time.monotonic()
+    llm._wait_for_slot()
+    llm._wait_for_slot()
+    assert time.monotonic() - started >= 0.09
+
+
+def test_a_retry_delay_is_read_from_the_providers_reply():
+    from app.llm.client import _RETRY_AFTER
+
+    body = "{'retryDelay': '37.9s', 'status': 'RESOURCE_EXHAUSTED'}"
+    assert float(_RETRY_AFTER.search(body).group(1)) == 37.9
