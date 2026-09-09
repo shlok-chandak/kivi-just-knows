@@ -21,8 +21,9 @@ from app.schemas.extraction import MemoryCandidateOut
 from app.services import consolidate as consolidate_module
 from app.services.consolidate import RULE_NOTHING_TO_EXTRACT, consolidate_episode
 from app.services.consolidate import SENSITIVE_ON_REVIEW
+from tests.conftest import TEST_USER
 
-USER = settings.default_user_id
+USER = TEST_USER
 START = datetime(2026, 9, 4, 10, 0, tzinfo=timezone.utc)
 
 

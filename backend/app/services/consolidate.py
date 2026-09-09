@@ -13,7 +13,7 @@ import logging
 import uuid
 from typing import Any
 
-from sqlalchemy import func, update
+from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -23,7 +23,8 @@ from app.models.episode import Episode
 from app.models.event import Event
 from app.models.rejected import RejectedCandidate
 from app.schemas.consolidation import ConsolidationOut
-from app.services import claims
+from app.models.memory import Memory, MemoryEvidence
+from app.services import claims, embed
 from app.services.episodes import events_in_episode, partition_into_sittings
 from app.services.gate import decide, fallback_title
 from app.services.tracing import TraceRecorder
@@ -108,7 +109,7 @@ def consolidate_episode(
 
     purged = _purge_sensitive(session, episode, result.sensitive_indexes, citable)
 
-    created = reinforced = refused = 0
+    created = reinforced = refused = superseded = 0
     for candidate in result.memories:
         # Claims cite dictations by position, so `citable` must keep its shape
         # even after a purge -- removing an entry would silently renumber
@@ -126,6 +127,13 @@ def consolidate_episode(
             created += 1
         elif outcome == "reinforced":
             reinforced += 1
+        elif outcome == "superseded":
+            # A belief replaced rather than added. Counted apart from both
+            # because it is the one outcome that changes what the system
+            # already held, and a run that quietly does a lot of it is
+            # either tracking a real change of mind or over-merging.
+            superseded += 1
+            created += 1
         else:
             refused += 1
 
@@ -143,6 +151,7 @@ def consolidate_episode(
             )
         )
 
+    _embed_derived(session, episode)
     _mark_consolidated(session, episode_id)
     _record(
         recorder,
@@ -164,10 +173,45 @@ def consolidate_episode(
         "summary_status": episode.summary_status,
         "created": created,
         "reinforced": reinforced,
+        "superseded": superseded,
         "refused": refused,
         "proposed": len(result.memories),
         "called_model": True,
     }
+
+
+def _embed_derived(session: Session, episode: Episode) -> None:
+    """Index what this episode produced, so it can be found.
+
+    Both halves matter and they answer different questions. An episode
+    summary answers "what was that conversation about"; a memory answers
+    "what do I believe". Indexing only one of them would leave the other
+    reachable by exact wording alone.
+
+    Best effort: the model is local, so a failure here is a bug rather than
+    an outage, and losing an index entry must not lose the memory it points
+    at. The embed stage picks up anything missed on its next pass.
+    """
+    items: list[tuple[str, uuid.UUID, str]] = []
+    if episode.summary:
+        items.append(("episode", episode.id, episode.summary))
+
+    for memory in session.scalars(
+        select(Memory).where(
+            Memory.user_id == episode.user_id,
+            Memory.id.in_(
+                select(MemoryEvidence.memory_id).where(
+                    MemoryEvidence.episode_id == episode.id
+                )
+            ),
+        )
+    ):
+        items.append(("memory", memory.id, memory.content))
+
+    try:
+        embed.store(session, episode.user_id, items)
+    except Exception:  # noqa: BLE001 - indexing must not lose a memory
+        logger.exception("embedding failed for episode %s", episode.id)
 
 
 def _purge_sensitive(

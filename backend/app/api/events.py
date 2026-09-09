@@ -17,7 +17,7 @@ from app.services.ingest import (
     find_previous,
     refuse_if_sensitive,
 )
-from app.worker.handlers import STAGE_EPISODE_ASSIGN
+from app.worker.handlers import STAGE_EMBED, STAGE_EPISODE_ASSIGN
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -62,12 +62,13 @@ def create_event(
     # Enqueued even when ignored: every event must belong to an episode, or
     # it is unreachable and the provenance chain has a hole. Cost is gated
     # later -- an episode with nothing extractable never reaches a model.
-    queue.enqueue(
-        db,
-        user_id=event.user_id,
-        stage=STAGE_EPISODE_ASSIGN,
-        subject_key=ASSIGN_SUBJECT,
-    )
+    for stage in (STAGE_EMBED, STAGE_EPISODE_ASSIGN):
+        queue.enqueue(
+            db,
+            user_id=event.user_id,
+            stage=stage,
+            subject_key=ASSIGN_SUBJECT,
+        )
     db.commit()
 
     return event

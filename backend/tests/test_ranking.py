@@ -58,10 +58,14 @@ def test_age_never_reaches_zero():
     assert ancient > 0
 
 
-def test_a_preference_ages_far_more_slowly_than_a_decision():
-    """People do not change how they like their email written every month."""
+def test_a_decision_ages_far_more_slowly_than_a_commitment():
     year = ago(days=365)
-    assert currency("preference", year, NOW) > currency("decision", year, NOW) * 2
+    assert currency("decision", year, NOW) > currency("commitment", year, NOW) * 2
+
+
+def test_a_preference_and_a_decision_are_both_durable():
+    year = ago(days=365)
+    assert currency("preference", year, NOW) == currency("decision", year, NOW)
 
 
 def test_an_unknown_type_is_treated_like_a_fact():
@@ -139,9 +143,19 @@ def test_a_recent_memory_is_not_flagged_stale():
     assert not is_stale(FakeMemory(), NOW)
 
 
-def test_a_long_unmentioned_decision_is_flagged_stale():
-    """Flagged, not withheld: the answer says how old it is."""
-    assert is_stale(FakeMemory(type="decision", last_reinforced_at=ago(days=200)), NOW)
+def test_a_long_unmentioned_commitment_is_flagged_stale():
+    """Flagged, not withheld: the answer says how old it is.
+
+    A commitment nobody has mentioned in months is the case worth flagging.
+    A decision that old is most likely still in force, so flagging it would
+    hedge the correct answer for no reason.
+    """
+    assert is_stale(
+        FakeMemory(type="commitment", last_reinforced_at=ago(days=200)), NOW
+    )
+    assert not is_stale(
+        FakeMemory(type="decision", last_reinforced_at=ago(days=200)), NOW
+    )
 
 
 def test_a_commitment_past_its_deadline_is_expired():

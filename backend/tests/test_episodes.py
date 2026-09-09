@@ -21,8 +21,9 @@ from app.services.episodes import (
     events_in_episode,
     partition_into_sittings,
 )
+from tests.conftest import TEST_USER
 
-USER = settings.default_user_id
+USER = TEST_USER
 START = datetime(2026, 9, 4, 10, 0, tzinfo=timezone.utc)
 
 

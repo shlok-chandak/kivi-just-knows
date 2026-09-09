@@ -33,9 +33,11 @@ from app.config import settings
 from app.db.session import SessionLocal
 from app.models.episode import Episode
 from app.models.event import Event
+from app.models.embedding import Embedding
 from app.models.job import Job
 from app.models.memory import Memory, MemoryEvidence
 from app.models.rejected import RejectedCandidate
+from app.models.trace import Trace, TraceStep
 from app.schemas.event import EventCreate
 from app.services import queue
 from app.services.apps import normalise_app
@@ -45,7 +47,7 @@ from app.services.ingest import (
     build_event_values,
     refuse_if_sensitive,
 )
-from app.worker.handlers import STAGE_EPISODE_ASSIGN
+from app.worker.handlers import STAGE_EMBED, STAGE_EPISODE_ASSIGN
 
 # Fields the importer understands. Anything else is dropped.
 KNOWN_FIELDS = set(EventCreate.model_fields)
@@ -147,6 +149,14 @@ def main(argv: list[str] | None = None) -> int:
         help="delete this user's existing events first",
     )
     parser.add_argument(
+        "--user-id",
+        help=(
+            "import as this user instead of the default. Everything is "
+            "scoped to it, --truncate included, so a second corpus can be "
+            "loaded without destroying the first"
+        ),
+    )
+    parser.add_argument(
         "--strict",
         action="store_true",
         help="abort on the first invalid record instead of skipping it",
@@ -158,6 +168,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if not args.path.is_file():
         raise SystemExit(f"no such file: {args.path}")
+
+    # One name for the owner of everything this run touches. --truncate was
+    # scoped to the default user regardless of who was importing, so loading
+    # a second corpus -- or running the end-to-end test, which imports the
+    # fixture with --truncate -- silently deleted the first one.
+    user_id = uuid.UUID(args.user_id) if args.user_id else settings.default_user_id
 
     mapping = load_mapping(args.mapping)
     batch_id = uuid.uuid4()
@@ -179,37 +195,59 @@ def main(argv: list[str] | None = None) -> int:
             # are about to disappear. Clearing all three keeps the database
             # consistent instead of leaving orphaned episodes behind.
             deleted = session.execute(
-                delete(Event).where(Event.user_id == settings.default_user_id)
+                delete(Event).where(Event.user_id == user_id)
             ).rowcount
             session.execute(
-                delete(Episode).where(Episode.user_id == settings.default_user_id)
+                delete(Episode).where(Episode.user_id == user_id)
             )
             session.execute(
-                delete(Job).where(Job.user_id == settings.default_user_id)
+                delete(Job).where(Job.user_id == user_id)
+            )
+            # Vectors belong to the events being replaced.
+            session.execute(
+                delete(Embedding).where(
+                    Embedding.user_id == user_id
+                )
             )
             # Everything derived from those events goes too. A memory whose
             # evidence has been deleted is unfounded, and the spec treats a
             # memory without evidence as a bug rather than a weak belief.
             session.execute(
                 delete(MemoryEvidence).where(
-                    MemoryEvidence.user_id == settings.default_user_id
+                    MemoryEvidence.user_id == user_id
                 )
             )
             session.execute(
-                delete(Memory).where(Memory.user_id == settings.default_user_id)
+                delete(Memory).where(Memory.user_id == user_id)
+            )
+            # Traces record what each run of the pipeline cost. Keeping them
+            # across a re-import means the cost report sums every run ever
+            # made, which is the one number a reviewer is most likely to
+            # quote.
+            session.execute(
+                delete(TraceStep).where(
+                    TraceStep.trace_id.in_(
+                        select(Trace.id).where(
+                            Trace.user_id == user_id
+                        )
+                    )
+                )
+            )
+            session.execute(
+                delete(Trace).where(Trace.user_id == user_id)
             )
             # The ignore log too: it records decisions about the events being
             # replaced, so keeping it would accumulate a refusal per re-import
             # and misstate how much was actually declined.
             session.execute(
                 delete(RejectedCandidate).where(
-                    RejectedCandidate.user_id == settings.default_user_id
+                    RejectedCandidate.user_id == user_id
                 )
             )
             session.commit()
             print(
                 f"truncated {deleted} existing events, "
-                "plus episodes, memories, jobs and the ignore log"
+                "plus episodes, memories, embeddings, traces, jobs and the log"
             )
 
         for record in load_records(args.path, args.format):
@@ -235,7 +273,7 @@ def main(argv: list[str] | None = None) -> int:
             # must not reach storage, and must not become the "previous"
             # dictation that a later retry check compares against.
             category = refuse_if_sensitive(
-                session, payload, settings.default_user_id
+                session, payload, user_id
             )
             if category is not None:
                 counts["refused"] += 1
@@ -244,7 +282,7 @@ def main(argv: list[str] | None = None) -> int:
             place = (normalise_app(payload.app) or None, payload.context_hash)
             values = build_event_values(
                 payload,
-                user_id=settings.default_user_id,
+                user_id=user_id,
                 source_batch_id=batch_id,
                 ingested_at=ingested_at,
                 previous=last_in_place.get(place),
@@ -268,8 +306,14 @@ def main(argv: list[str] | None = None) -> int:
         if not args.dry_run:
             queued = queue.enqueue_many(
                 session,
-                user_id=settings.default_user_id,
+                user_id=user_id,
                 stage=STAGE_EPISODE_ASSIGN,
+                subject_keys=[ASSIGN_SUBJECT],
+            )
+            queued += queue.enqueue_many(
+                session,
+                user_id=user_id,
+                stage=STAGE_EMBED,
                 subject_keys=[ASSIGN_SUBJECT],
             )
             session.commit()
@@ -277,7 +321,7 @@ def main(argv: list[str] | None = None) -> int:
         total = session.scalar(
             select(func.count())
             .select_from(Event)
-            .where(Event.user_id == settings.default_user_id)
+            .where(Event.user_id == user_id)
         )
     finally:
         session.close()

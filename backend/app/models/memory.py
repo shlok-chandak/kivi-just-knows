@@ -59,10 +59,11 @@ WEIGHT_APPLIED_UNREVERTED = 0.2
 # How fast a claim of each type stops being worth volunteering. Applied at
 # read time against last_reinforced_at -- never written back, so the evidence
 # count stays an honest record of what the user actually said.
+
 HALF_LIFE_DAYS = {
     "preference": 365,
+    "decision": 365,
     "fact": 90,
-    "decision": 30,
     "commitment": 30,
 }
 

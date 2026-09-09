@@ -10,6 +10,9 @@ from app.config import settings
 from app.db.session import SessionLocal
 from app.main import app
 from app.models.event import Event
+from tests.conftest import TEST_USER
+
+USER = TEST_USER
 
 client = TestClient(app)
 
@@ -193,14 +196,14 @@ def test_import_is_idempotent():
             return session.scalar(
                 select(func.count())
                 .select_from(Event)
-                .where(Event.user_id == settings.default_user_id)
+                .where(Event.user_id == USER)
             )
         finally:
             session.close()
 
-    main(["corpus/fixture.jsonl", "--truncate"])
+    main(["corpus/fixture.jsonl", "--truncate", "--user-id", str(USER)])
     first = count()
-    main(["corpus/fixture.jsonl"])
+    main(["corpus/fixture.jsonl", "--user-id", str(USER)])
 
     assert first == FIXTURE_STORED
     assert count() == first
@@ -214,12 +217,12 @@ def test_import_stores_every_record_with_its_content():
     """
     from scripts.import_corpus import main
 
-    main(["corpus/fixture.jsonl", "--truncate"])
+    main(["corpus/fixture.jsonl", "--truncate", "--user-id", str(USER)])
 
     session = SessionLocal()
     try:
         rows = session.scalars(
-            select(Event).where(Event.user_id == settings.default_user_id)
+            select(Event).where(Event.user_id == USER)
         ).all()
         assert len(rows) == FIXTURE_STORED
         assert all(row.raw_asr for row in rows)
@@ -232,14 +235,14 @@ def test_the_importer_applies_the_junk_gate():
     """The fixture carries one of each rejection, so all five stay covered."""
     from scripts.import_corpus import main
 
-    main(["corpus/fixture.jsonl", "--truncate"])
+    main(["corpus/fixture.jsonl", "--truncate", "--user-id", str(USER)])
 
     session = SessionLocal()
     try:
         reasons = set(
             session.scalars(
                 select(Event.ignore_reason).where(
-                    Event.user_id == settings.default_user_id,
+                    Event.user_id == USER,
                     Event.ignore_reason.is_not(None),
                 )
             )

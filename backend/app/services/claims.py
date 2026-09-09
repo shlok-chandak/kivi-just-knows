@@ -34,13 +34,22 @@ from app.models.memory import (
     MemoryEvidence,
 )
 from app.schemas.extraction import MemoryCandidateOut
+from app.services import embed
 
 logger = logging.getLogger("kivi.claims")
 
 # Numbers, money, dates and times. Two claims differing in any of these
 # contradict each other, however alike the sentences read -- which is what
 # keeps a price change from being absorbed into the price it replaced.
-_VALUES = re.compile(r"[\d]+(?:[.,]\d+)*%?|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b")
+# Case-insensitive, and that is not cosmetic: a capitalised month is how a
+# month is normally written, so matching only lowercase made "moved to
+# November" versus "moved to October" read as the same claim -- precisely the
+# failure this guard exists to catch.
+_VALUES = re.compile(
+    r"[\d]+(?:[.,]\d+)*%?"
+    r"|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b",
+    re.IGNORECASE,
+)
 
 
 def _normalise(text: str) -> str:
@@ -50,6 +59,50 @@ def _normalise(text: str) -> str:
 def values_in(text: str) -> frozenset[str]:
     """The numbers and dates a claim commits to."""
     return frozenset(match.group(0).lower() for match in _VALUES.finditer(text))
+
+
+# Similarity cannot decide whether two claims are the same claim, and the
+# measurement is unambiguous about why. On this model:
+#
+#   paraphrase, same claim      "price is 349" / "pro tier costs 349 a month"
+#                               min 0.378   mean 0.691
+#   conflict, different value   "price is 349" / "price is 299"
+#                               min 0.691   mean 0.845   max 0.957
+#
+# Conflicts score *higher* than paraphrases, because an embedding is built to
+# ignore a two-character difference and here those two characters are the
+# entire content. So there is no threshold: any cut-off low enough to catch a
+# paraphrase merges every price change into the price it replaced.
+#
+# Similarity therefore answers a narrower question -- are these about the same
+# thing -- and the values decide same or contradictory. That makes supersession
+# something the system detects rather than something it stumbles into.
+#
+# But similarity cannot fully answer the narrower question either, and the
+# measurement says so:
+#
+#   same claim, different words   "standup is at 10am" / "the daily meeting
+#                                 is at 10"                          0.511
+#   different subjects entirely   "Priya owns the vendor contract" /
+#                                 "Pranav is on the checkout bug"    0.406
+#
+# A tenth of a point apart, and the second is two people doing two different
+# things. Unrelated work claims cluster around 0.4 because they share the
+# register, the company and the vocabulary -- so there is no threshold that
+# admits the paraphrase without risking the false merge.
+#
+# The cut-off is therefore set high, deliberately, and it under-merges. A
+# claim that should have reinforced becomes a second memory instead: that
+# costs corroboration, which is visible and recoverable. Merging two claims
+# that were never the same invents a fact nobody stated, which is neither.
+#
+# Raising recall here needs the subject resolved to an entity rather than
+# guessed from wording -- which is M5, and is why §6.4 has always described
+# claim identity as subject *and* predicate rather than similarity alone.
+SAME_TOPIC = 0.62
+
+# Below this two claims are simply unrelated (see retrieval.MIN_SIMILARITY).
+UNRELATED = 0.243
 
 
 def claim_key(subject: str | None, content: str) -> str:
@@ -62,6 +115,58 @@ def claim_key(subject: str | None, content: str) -> str:
     """
     material = f"{_normalise(subject or '')}|{_normalise(content)}"
     return hashlib.sha256(material.encode()).hexdigest()[:32]
+
+
+def compare(existing: str, incoming: str) -> str:
+    """How a new claim relates to one already held.
+
+    Returns "same", "contradicts", or "unrelated". Computes the similarity
+    itself, which is the convenient form for a caller holding two strings
+    and nothing else.
+    """
+    return classify(existing, incoming, _similarity(existing, incoming))
+
+
+def classify(existing: str, incoming: str, similarity: float) -> str:
+    """compare(), for a caller that already knows the similarity.
+
+    Split out because the database can return distance alongside the rows it
+    matched, so a caller comparing one claim against ten neighbours would
+    otherwise re-embed twenty strings to learn what the query already told
+    it.
+
+    The order matters. Values are checked before similarity, because a
+    differing number is decisive however alike the sentences read -- and on
+    numeric claims the sentences read *more* alike when the number changes.
+    """
+    if similarity < UNRELATED:
+        return "unrelated"
+
+    old_values, new_values = values_in(existing), values_in(incoming)
+
+    # Both commit to a value and the values differ: this is a revision, not a
+    # restatement, and it is a revision no matter how close the wording is.
+    if old_values and new_values and old_values != new_values:
+        return "contradicts" if similarity >= SAME_TOPIC else "unrelated"
+
+    if similarity >= SAME_TOPIC:
+        return "same"
+
+    # About the same thing but not clearly the same claim. Creating a separate
+    # memory loses corroboration; merging invents a fact nobody stated. The
+    # first is recoverable and the second is not.
+    return "unrelated"
+
+
+def _similarity(left: str, right: str) -> float:
+    """Cosine between two claims. Imported late so tests can stub the model."""
+    from app.services import embed
+
+    vectors = embed.encode([left, right])
+    a, b = vectors[0], vectors[1]
+    dot = sum(x * y for x, y in zip(a, b))
+    norm = (sum(x * x for x in a) ** 0.5) * (sum(y * y for y in b) ** 0.5)
+    return dot / norm if norm else 0.0
 
 
 def half_life_days(memory_type: str) -> int:
@@ -135,7 +240,9 @@ def persist(
 
     weight = WEIGHT_EXPLICIT if explicit else WEIGHT_INFERRED
     key = claim_key(candidate.subject, candidate.content)
+    stated_at = _latest(sources)
 
+    # Same words as something already held. Cheap, exact, and no vectors.
     existing = session.scalars(
         select(Memory).where(
             Memory.user_id == episode.user_id,
@@ -146,8 +253,20 @@ def persist(
 
     outcome = "reinforced"
     if existing is None:
-        existing = _create(session, episode, candidate, key, explicit)
-        outcome = "created"
+        match, relation = _closest_live(session, episode.user_id, candidate.content)
+
+        if relation == "same":
+            # Different words, one belief. Reinforcing rather than inserting
+            # is what stops a claim restated across five apps from becoming
+            # five weakly-held beliefs instead of one well-supported one.
+            existing = match
+        elif relation == "contradicts":
+            existing, outcome = _replace(
+                session, episode, candidate, key, explicit, match, stated_at
+            )
+        else:
+            existing = _create(session, episode, candidate, key, explicit)
+            outcome = "created"
 
     added = _record_evidence(session, episode, existing, sources, weight, excerpt)
 
@@ -164,6 +283,98 @@ def persist(
 
     session.flush()
     return outcome
+
+
+# How many held beliefs a new claim is compared against. The list is ordered
+# by closeness, so a larger number only adds neighbours less alike than ones
+# already rejected -- it buys nothing and costs a comparison each.
+NEIGHBOURS = 10
+
+
+def _closest_live(
+    session: Session, user_id: uuid.UUID, content: str
+) -> tuple[Memory | None, str]:
+    """The held belief this claim relates to, and how.
+
+    Only live beliefs are considered. Comparing against superseded ones
+    would let a price that was already replaced be reinforced back into
+    contention by a later restatement of the value it lost to.
+
+    Nearest first, returning the first neighbour that is not unrelated. On
+    numeric claims that ordering works in our favour rather than against
+    it: conflicts measure *closer* than paraphrases, because an embedding
+    is built to ignore the two characters that are the entire difference,
+    so the belief a new value replaces tends to be the nearest one of all.
+
+    A limit worth naming: beliefs are embedded after an episode finishes
+    with them, so two contradictory claims inside one episode cannot see
+    each other here. Arcs that play out over days -- which is what a
+    changing price or owner actually looks like -- are unaffected.
+    """
+    live = select(Memory.id).where(
+        Memory.user_id == user_id,
+        Memory.status != "superseded",
+    )
+    neighbours = embed.nearest(
+        session,
+        user_id,
+        "memory",
+        embed.encode_one(content),
+        ids=list(session.scalars(live)),
+        limit=NEIGHBOURS,
+    )
+
+    for memory_id, similarity in neighbours:
+        memory = session.get(Memory, memory_id)
+        if memory is None:
+            continue
+        relation = classify(memory.content, content, similarity)
+        if relation != "unrelated":
+            return memory, relation
+
+    return None, "unrelated"
+
+
+def _replace(
+    session: Session,
+    episode: Episode,
+    candidate: MemoryCandidateOut,
+    key: str,
+    explicit: bool,
+    superseded: Memory,
+    stated_at: datetime,
+) -> tuple[Memory, str]:
+    """Record a claim that contradicts one already held.
+
+    Which of the two wins is decided by when they were said, not by which
+    arrived first. Episodes are consolidated in queue order, and a retry or
+    a backfill can present last month's decision after this month's -- so
+    trusting arrival order would let stale news overwrite current news
+    exactly when the queue is under stress.
+
+    The loser is kept rather than deleted. "What is the price" and "what
+    was the price in June" are different questions, and a system that
+    discards superseded values can only answer the first.
+    """
+    older = superseded.last_reinforced_at
+    incoming_is_newer = older is None or stated_at >= older
+
+    memory = _create(session, episode, candidate, key, explicit)
+
+    if incoming_is_newer:
+        superseded.status = "superseded"
+        superseded.valid_until = stated_at
+        logger.info(
+            "superseded %r by %r", superseded.content[:60], candidate.content[:60]
+        )
+        return memory, "superseded"
+
+    # Arrived late and belongs to the past. Stored as history so it stays
+    # answerable, but never volunteered as current.
+    memory.status = "superseded"
+    memory.valid_until = older
+    session.flush()
+    return memory, "created"
 
 
 def _latest(sources: list[Event]) -> datetime:

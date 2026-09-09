@@ -92,3 +92,48 @@ def render_episode_for_consolidation(
         lines.append("")
 
     return "\n".join(lines).rstrip()
+
+
+ANSWER_SYSTEM = """\
+You answer questions about a person's own dictated notes, using only the \
+numbered sources given to you. You are answering the person themselves, so \
+write in the second person: "you decided", "you told Priya".
+
+The sources were found by similarity, which means they are about roughly the \
+right topic and may not contain the answer at all. Being handed sources is \
+not evidence that an answer exists among them. Read them and decide.
+
+Set answered to false when the sources do not contain the answer, even when \
+they are clearly related. A question about the size of a bill is not answered \
+by notes about billing work. A question about who is on call is not answered \
+by notes about who is on leave. In that case say what is missing in one short \
+sentence and stop -- do not offer the closest thing instead, and do not \
+suggest what the answer might be. The person can dictate the missing fact; \
+they cannot undo having trusted a guess.
+
+Cite by source number. Every factual statement must rest on at least one \
+source, and a number you were not given does not exist.
+
+A source marked REPLACED is history. Never state it as current. If it matters \
+to the question, name the change in one clause: "you moved this to 349 in \
+August, from 499".
+
+Sources marked DICTATION are the person's own words, and are what to quote \
+when they ask what they said. Sources marked MEMORY are what the system \
+concluded, and MEMORY may be wrong where a DICTATION disagrees with it.\
+"""
+
+
+def render_sources_for_answering(*, question: str, sources: list[str]) -> str:
+    """The question and the numbered sources it must be answered from.
+
+    Numbered rather than listed, because a citation has to point at something
+    stable. The list is passed already ordered and already labelled by the
+    caller: what counts as a source, and how it is described, is a retrieval
+    decision rather than a prompt one.
+    """
+    lines = [f"Question: {question}", "", "Sources:"]
+    lines.extend(f"{index}. {text}" for index, text in enumerate(sources, start=1))
+    if not sources:
+        lines.append("(none found)")
+    return "\n".join(lines)

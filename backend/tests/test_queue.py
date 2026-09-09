@@ -11,8 +11,9 @@ from app.models.job import Job
 from app.services import queue
 from app.worker.handlers import HANDLERS
 from app.worker.main import run_once
+from tests.conftest import TEST_USER
 
-USER = settings.default_user_id
+USER = TEST_USER
 STAGE = "episode_assign"
 
 
@@ -57,11 +58,19 @@ def _stub_consolidator():
 
 @pytest.fixture
 def session():
+    """Every job, not only this user's.
+
+    claim() serves the whole queue, which is right for a worker and means a
+    job left behind by an earlier test file is claimed by this one. Scoping
+    the cleanup to one user left those behind. Clearing the table outright
+    is safe here and nowhere else: conftest redirects the connection to a
+    dedicated test database before anything is imported.
+    """
     db = SessionLocal()
-    db.execute(delete(Job).where(Job.user_id == USER))
+    db.execute(delete(Job))
     db.commit()
     yield db
-    db.execute(delete(Job).where(Job.user_id == USER))
+    db.execute(delete(Job))
     db.commit()
     db.close()
 
@@ -84,23 +93,23 @@ def test_enqueue_reports_success(session):
 def test_duplicate_pending_job_is_coalesced(session):
     add(session, "g1")
     assert add(session, "g1") is False
-    assert session.scalar(select(Job.subject_key)) == "g1"
+    assert session.scalar(select(Job.subject_key).where(Job.user_id == USER)) == "g1"
 
 
 def test_a_job_may_queue_while_another_runs(session):
     """A new event must not be lost because a rebuild is already in flight."""
     add(session, "g1")
-    running = session.scalars(select(Job)).one()
+    running = session.scalars(select(Job).where(Job.user_id == USER)).one()
     running.status = "running"
     session.commit()
 
     assert add(session, "g1") is True
-    assert len(session.scalars(select(Job)).all()) == 2
+    assert len(session.scalars(select(Job).where(Job.user_id == USER)).all()) == 2
 
 
 def test_completed_jobs_do_not_block_new_ones(session):
     add(session, "g1")
-    done = session.scalars(select(Job)).one()
+    done = session.scalars(select(Job).where(Job.user_id == USER)).one()
     done.status = "done"
     session.commit()
 
@@ -131,7 +140,15 @@ def test_claim_marks_the_job_running_and_counts_the_attempt(session):
 
 
 def test_claim_returns_none_when_the_queue_is_empty(session):
-    assert queue.claim(session) is None
+    """Asked about a stage nothing uses, rather than about the whole queue.
+
+    claim() serves every user, which is correct for a worker and awkward for
+    a test: "the queue is empty" would otherwise mean "nobody anywhere has
+    work", and the only way to arrange that is to delete other people's
+    jobs. Filtering by stage tests the same behaviour and arranges it
+    without touching a row that is not ours.
+    """
+    assert queue.claim(session, stages=["stage_used_by_no_one"]) is None
 
 
 def test_two_workers_never_claim_the_same_job(session):
@@ -163,7 +180,7 @@ def test_a_single_job_is_claimed_by_only_one_worker(session):
 
 def test_a_job_scheduled_for_later_is_not_claimed(session):
     add(session, "g1")
-    job = session.scalars(select(Job)).one()
+    job = session.scalars(select(Job).where(Job.user_id == USER)).one()
     job.run_after = datetime.now(timezone.utc) + timedelta(minutes=5)
     session.commit()
 
@@ -279,7 +296,7 @@ def test_run_once_processes_a_job(session):
 
     session.expire_all()
     assert (
-        session.scalar(select(Job.status).where(Job.stage == STAGE)) == "done"
+        session.scalar(select(Job.status).where(Job.stage == STAGE, Job.user_id == USER)) == "done"
     )
 
 
@@ -294,7 +311,7 @@ def test_assignment_queues_consolidation_for_closed_episodes(session, monkeypatc
 
     monkeypatch.setattr(consolidate_module, "get_client", _stub_consolidator)
 
-    main(["corpus/fixture.jsonl", "--truncate"])
+    main(["corpus/fixture.jsonl", "--truncate", "--user-id", str(USER)])
     session.expire_all()
 
     while run_once():
@@ -303,12 +320,16 @@ def test_assignment_queues_consolidation_for_closed_episodes(session, monkeypatc
     session.expire_all()
     stages = dict(
         session.execute(
-            select(Job.stage, func.count()).group_by(Job.stage)
+            select(Job.stage, func.count())
+            .where(Job.user_id == USER)
+            .group_by(Job.stage)
         ).all()
     )
     assert stages.get("episode_consolidate", 0) > 0
     assert not session.scalars(
-        select(Job).where(Job.status.in_(["pending", "failed"]))
+        select(Job).where(
+            Job.status.in_(["pending", "failed"]), Job.user_id == USER
+        )
     ).all()
 
 
@@ -320,7 +341,7 @@ def test_every_event_ends_up_in_an_episode_after_a_full_run(session, monkeypatch
 
     monkeypatch.setattr(consolidate_module, "get_client", _stub_consolidator)
 
-    main(["corpus/fixture.jsonl", "--truncate"])
+    main(["corpus/fixture.jsonl", "--truncate", "--user-id", str(USER)])
     while run_once():
         pass
 

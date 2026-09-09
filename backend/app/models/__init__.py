@@ -1,6 +1,11 @@
 """Model registry. Every model must be imported here for Alembic to see it."""
 
 from app.models.base import Base, UserOwnedMixin
+from app.models.embedding import (
+    EMBEDDING_DIM,
+    OBJECT_TYPES,
+    Embedding,
+)
 from app.models.episode import (
     EPISODE_STATUSES,
     IDLE_MINUTES,
@@ -33,6 +38,9 @@ __all__ = [
     "UserOwnedMixin",
     "Event",
     "INGEST_STATUSES",
+    "Embedding",
+    "EMBEDDING_DIM",
+    "OBJECT_TYPES",
     "IGNORE_REASONS",
     "Episode",
     "EPISODE_STATUSES",

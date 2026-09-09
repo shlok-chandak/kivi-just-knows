@@ -17,9 +17,10 @@ from app.models.episode import Episode
 from app.models.event import Event
 from app.models.memory import Memory, MemoryEvidence
 from app.schemas.extraction import MemoryCandidateOut
-from app.services import claims
+from app.services import claims, embed
+from tests.conftest import TEST_USER
 
-USER = settings.default_user_id
+USER = TEST_USER
 START = datetime(2026, 9, 4, 10, 0, tzinfo=timezone.utc)
 
 
@@ -111,8 +112,8 @@ def test_the_same_number_written_differently_still_matches():
 
 
 def test_half_life_depends_on_the_kind_of_claim():
-    assert claims.half_life_days("preference") > claims.half_life_days("fact")
-    assert claims.half_life_days("fact") > claims.half_life_days("decision")
+    assert claims.half_life_days("decision") > claims.half_life_days("fact")
+    assert claims.half_life_days("fact") > claims.half_life_days("commitment")
 
 
 # --- guards -----------------------------------------------------------------
@@ -291,3 +292,136 @@ def test_evidence_points_at_the_event_and_the_episode(world):
     assert evidence.event_id == source.id
     assert evidence.episode_id == episode.id
     assert evidence.stance == "supports"
+
+
+# --- supersession -------------------------------------------------------------
+
+
+def _index(db, memory):
+    """Give a stored belief its vector.
+
+    Consolidation does this once an episode finishes, so by the time a later
+    episode contradicts a belief its vector exists. A test has to do it
+    explicitly, and skipping it is why supersession can appear to work in
+    isolation and never fire in the pipeline.
+    """
+    embed.store(db, USER, [("memory", memory.id, memory.content)])
+    db.commit()
+
+
+def test_a_changed_price_supersedes_the_price_it_replaced(world):
+    """The point of the whole mechanism.
+
+    Two live beliefs about one price mean the system cannot answer "what do
+    we charge" -- both are true as far as it knows, and whichever ranks
+    higher wins by accident.
+    """
+    db, episode = world
+    first = event(db, episode, "The list price for the Pro tier is ₹499.", minutes=0)
+    later = event(db, episode, "We dropped the Pro tier price to ₹299.", minutes=90)
+
+    assert claims.persist(
+        db,
+        episode,
+        candidate("The list price for the Pro tier is ₹499.",
+                  "The list price for the Pro tier is ₹499.", [1]),
+        [first],
+    ) == "created"
+    original = db.query(Memory).one()
+    _index(db, original)
+
+    outcome = claims.persist(
+        db,
+        episode,
+        candidate("The Pro tier price is ₹299 a month.",
+                  "We dropped the Pro tier price to ₹299.", [1]),
+        [later],
+    )
+
+    assert outcome == "superseded"
+    db.refresh(original)
+    assert original.status == "superseded"
+    assert original.valid_until is not None
+
+    live = db.query(Memory).filter(Memory.status == "active").one()
+    assert "299" in live.content
+
+
+def test_the_replaced_belief_is_kept_rather_than_deleted(world):
+    """"What was the price in June" is a different question from "what is it"."""
+    db, episode = world
+    first = event(db, episode, "The list price for the Pro tier is ₹499.", minutes=0)
+    later = event(db, episode, "We dropped the Pro tier price to ₹299.", minutes=90)
+
+    claims.persist(
+        db, episode,
+        candidate("The list price for the Pro tier is ₹499.",
+                  "The list price for the Pro tier is ₹499.", [1]),
+        [first],
+    )
+    _index(db, db.query(Memory).one())
+    claims.persist(
+        db, episode,
+        candidate("The Pro tier price is ₹299 a month.",
+                  "We dropped the Pro tier price to ₹299.", [1]),
+        [later],
+    )
+
+    assert db.query(Memory).count() == 2
+
+
+def test_a_claim_arriving_late_does_not_overwrite_newer_news(world):
+    """Queue order is not chronological order.
+
+    A retry or a backfill can present last month's decision after this
+    month's. Trusting arrival order would let stale news win exactly when
+    the queue is under stress.
+    """
+    db, episode = world
+    recent = event(db, episode, "We dropped the Pro tier price to ₹299.", minutes=90)
+    old = event(db, episode, "The list price for the Pro tier is ₹499.", minutes=0)
+
+    claims.persist(
+        db, episode,
+        candidate("The Pro tier price is ₹299 a month.",
+                  "We dropped the Pro tier price to ₹299.", [1]),
+        [recent],
+    )
+    current = db.query(Memory).one()
+    _index(db, current)
+
+    claims.persist(
+        db, episode,
+        candidate("The list price for the Pro tier is ₹499.",
+                  "The list price for the Pro tier is ₹499.", [1]),
+        [old],
+    )
+
+    db.refresh(current)
+    assert current.status == "active"
+    stale = db.query(Memory).filter(Memory.id != current.id).one()
+    assert stale.status == "superseded"
+
+
+def test_a_restatement_in_other_words_reinforces_rather_than_duplicates(world):
+    db, episode = world
+    first = event(db, episode, "The Pro tier price is ₹299 a month.", minutes=0)
+    again = event(db, episode, "Pro tier costs ₹299 a month.", minutes=90)
+
+    claims.persist(
+        db, episode,
+        candidate("The Pro tier price is ₹299 a month.",
+                  "The Pro tier price is ₹299 a month.", [1]),
+        [first],
+    )
+    _index(db, db.query(Memory).one())
+
+    outcome = claims.persist(
+        db, episode,
+        candidate("Pro tier costs ₹299 a month.",
+                  "Pro tier costs ₹299 a month.", [1]),
+        [again],
+    )
+
+    assert outcome == "reinforced"
+    assert db.query(Memory).count() == 1
