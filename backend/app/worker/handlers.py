@@ -15,7 +15,7 @@ from app.config import settings
 from app.models.embedding import Embedding
 from app.models.event import Event
 from app.models.job import Job
-from app.services import embed, queue
+from app.services import embed, profile, queue
 from app.services.consolidate import consolidate_episode
 from app.services.episodes import assign_events
 from app.services.tracing import start_ingest_trace
@@ -25,6 +25,7 @@ Handler = Callable[[Session, Job], dict[str, Any]]
 STAGE_EMBED = "embed"
 STAGE_EPISODE_ASSIGN = "episode_assign"
 STAGE_EPISODE_CONSOLIDATE = "episode_consolidate"
+STAGE_PROFILE_REFRESH = profile.REFRESH_STAGE
 
 # Enough to keep one pass short while still amortising the model load.
 EMBED_BATCH = 128
@@ -144,8 +145,35 @@ def handle_episode_consolidate(session: Session, job: Job) -> dict[str, Any]:
     return result
 
 
+def handle_profile_refresh(session: Session, job: Job) -> dict[str, Any]:
+    """Rebuild the always-on profile after the beliefs behind it changed.
+
+    Its own stage rather than part of consolidation: the queue coalesces
+    pending jobs by subject, so a run over 135 episodes refreshes once
+    instead of 135 times.
+    """
+    with start_ingest_trace(
+        session, user_id=job.user_id, subject_key=job.subject_key
+    ) as recorder:
+        built = profile.refresh(session, job.user_id)
+        recorder.step(
+            STAGE_PROFILE_REFRESH,
+            decision=f"{len(built.style)} style, {len(built.work)} work",
+            rationale=f"{built.tokens} of {profile.BUDGET_TOKENS} tokens",
+            output_summary={
+                "style": len(built.style),
+                "work": len(built.work),
+                "tokens": built.tokens,
+            },
+        )
+        recorder.close("answered")
+
+    return {"style": len(built.style), "work": len(built.work), "tokens": built.tokens}
+
+
 HANDLERS: dict[str, Handler] = {
     STAGE_EMBED: handle_embed,
     STAGE_EPISODE_ASSIGN: handle_episode_assign,
     STAGE_EPISODE_CONSOLIDATE: handle_episode_consolidate,
+    STAGE_PROFILE_REFRESH: handle_profile_refresh,
 }

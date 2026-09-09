@@ -208,12 +208,18 @@ def persist(
     episode: Episode,
     candidate: MemoryCandidateOut,
     citable: list[Event],
+    *,
+    replaces: Memory | None = None,
 ) -> str:
     """Store one claim with its evidence.
 
     Returns what happened: "created", "reinforced", "superseded", or
     "refused". The caller reports these separately, because a run that
     reinforced ten beliefs did not learn ten new things.
+
+    `replaces` is a belief the extractor was shown and said this supersedes.
+    Optional, because the extractor only sees beliefs close enough to be
+    worth showing -- when it names none, similarity still gets its turn.
     """
     sources = resolve_sources(candidate.source_indexes, citable)
     if not sources:
@@ -253,7 +259,15 @@ def persist(
 
     outcome = "reinforced"
     if existing is None:
-        match, relation = _closest_live(session, episode.user_id, candidate.content)
+        if replaces is not None and replaces.status != "superseded":
+            existing, outcome = _replace(
+                session, episode, candidate, key, explicit, replaces, stated_at
+            )
+            match, relation = None, "handled"
+        else:
+            match, relation = _closest_live(
+                session, episode.user_id, candidate.content
+            )
 
         if relation == "same":
             # Different words, one belief. Reinforcing rather than inserting
@@ -264,7 +278,7 @@ def persist(
             existing, outcome = _replace(
                 session, episode, candidate, key, explicit, match, stated_at
             )
-        else:
+        elif relation != "handled":
             existing = _create(session, episode, candidate, key, explicit)
             outcome = "created"
 
@@ -291,25 +305,19 @@ def persist(
 NEIGHBOURS = 10
 
 
-def _closest_live(
-    session: Session, user_id: uuid.UUID, content: str
-) -> tuple[Memory | None, str]:
-    """The held belief this claim relates to, and how.
+def nearby_live(
+    session: Session, user_id: uuid.UUID, text: str, *, limit: int = NEIGHBOURS
+) -> list[tuple[Memory, float]]:
+    """Live beliefs closest in meaning to this text, nearest first.
 
-    Only live beliefs are considered. Comparing against superseded ones
-    would let a price that was already replaced be reinforced back into
-    contention by a later restatement of the value it lost to.
+    Only live ones. A superseded belief offered back as context invites the
+    thing it was superseded for -- and reinforcing one would let a replaced
+    price climb back into contention.
 
-    Nearest first, returning the first neighbour that is not unrelated. On
-    numeric claims that ordering works in our favour rather than against
-    it: conflicts measure *closer* than paraphrases, because an embedding
-    is built to ignore the two characters that are the entire difference,
-    so the belief a new value replaces tends to be the nearest one of all.
-
-    A limit worth naming: beliefs are embedded after an episode finishes
-    with them, so two contradictory claims inside one episode cannot see
-    each other here. Arcs that play out over days -- which is what a
-    changing price or owner actually looks like -- are unaffected.
+    Two callers want this. Claim identity asks whether an incoming claim is
+    one of these already; extraction asks to be shown them before reading a
+    new stretch of dictation, so a fragment like "349 now" can be resolved
+    against what the price was.
     """
     live = select(Memory.id).where(
         Memory.user_id == user_id,
@@ -319,15 +327,38 @@ def _closest_live(
         session,
         user_id,
         "memory",
-        embed.encode_one(content),
+        embed.encode_one(text),
         ids=list(session.scalars(live)),
-        limit=NEIGHBOURS,
+        limit=limit,
     )
 
+    found: list[tuple[Memory, float]] = []
     for memory_id, similarity in neighbours:
         memory = session.get(Memory, memory_id)
-        if memory is None:
-            continue
+        if memory is not None:
+            found.append((memory, similarity))
+    return found
+
+
+def _closest_live(
+    session: Session, user_id: uuid.UUID, content: str
+) -> tuple[Memory | None, str]:
+    """The held belief this claim relates to, and how.
+
+    Nearest first, returning the first neighbour that is not unrelated. On
+    numeric claims that ordering works in our favour rather than against
+    it: conflicts measure *closer* than paraphrases, because an embedding
+    is built to ignore the two characters that are the entire difference,
+    so the belief a new value replaces tends to be the nearest one of all.
+
+    Where it fails is a replacement worded differently -- "going with
+    Razorpay" against "switching to Cashfree" measures 0.367, far under the
+    bar, because knowing those are two answers to one question is world
+    knowledge rather than word similarity. That case is handled upstream,
+    by showing the extractor what is already believed and letting it say
+    what a new claim replaces.
+    """
+    for memory, similarity in nearby_live(session, user_id, content):
         relation = classify(memory.content, content, similarity)
         if relation != "unrelated":
             return memory, relation

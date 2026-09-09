@@ -72,3 +72,15 @@ class MemoryCandidateOut(BaseModel):
             "verbatim. Do not paraphrase and do not add words."
         )
     )
+    replaces: int | None = Field(
+        default=None,
+        description=(
+            "If this claim makes one of the numbered KNOWN beliefs out of "
+            "date, its K number. Use it when the new claim answers the same "
+            "question with a different answer: a changed price, a different "
+            "supplier, a new owner, a moved date. Both being about the same "
+            "topic is not enough -- 'the price is 349' replaces 'the price is "
+            "299', but 'the pricing page is slow' replaces nothing. Null when "
+            "the claim adds something new or simply restates what is known."
+        ),
+    )

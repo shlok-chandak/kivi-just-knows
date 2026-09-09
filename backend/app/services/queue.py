@@ -31,6 +31,7 @@ def enqueue(
     subject_key: str,
     subject_type: str = "group",
     max_attempts: int | None = None,
+    run_after: datetime | None = None,
 ) -> bool:
     """Queue one job. Returns False when an identical job is already waiting."""
     inserted = enqueue_many(
@@ -40,6 +41,7 @@ def enqueue(
         subject_keys=[subject_key],
         subject_type=subject_type,
         max_attempts=max_attempts,
+        run_after=run_after,
     )
     return inserted == 1
 
@@ -52,6 +54,7 @@ def enqueue_many(
     subject_keys: list[str],
     subject_type: str = "group",
     max_attempts: int | None = None,
+    run_after: datetime | None = None,
 ) -> int:
     """Queue many jobs in one statement, skipping any already waiting.
 
@@ -72,6 +75,10 @@ def enqueue_many(
             "status": "pending",
             "attempts": 0,
             **({"max_attempts": max_attempts} if max_attempts else {}),
+            # Not due yet is different from not queued: a job scheduled for
+            # later still blocks a duplicate, which is what keeps a rate-
+            # limited stage from being re-queued a thousand times.
+            **({"run_after": run_after} if run_after else {}),
         }
         for key in unique_keys
     ]

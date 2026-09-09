@@ -24,12 +24,18 @@ from app.models.event import Event
 from app.models.rejected import RejectedCandidate
 from app.schemas.consolidation import ConsolidationOut
 from app.models.memory import Memory, MemoryEvidence
-from app.services import claims, embed
+from app.services import claims, embed, profile, queue
 from app.services.episodes import events_in_episode, partition_into_sittings
 from app.services.gate import decide, fallback_title
 from app.services.tracing import TraceRecorder
 
 logger = logging.getLogger("kivi.consolidate")
+
+# How many held beliefs the extractor is shown. Enough to carry the thread of
+# a decision that has moved a few times, small enough that the list stays
+# scannable -- a long one is mostly beliefs about other things, and every one
+# of those is an invitation to connect what is not connected.
+KNOWN_BELIEFS = 8
 
 STAGE = "episode_consolidate"
 RULE_NOTHING_TO_EXTRACT = "no_extractable_content"
@@ -84,10 +90,18 @@ def consolidate_episode(
         }
 
     sittings = partition_into_sittings(citable)
+
+    # What is already believed about this, so fragments like "349 now" can be
+    # read against it.
+    known = claims.nearby_live(
+        session, episode.user_id, "\n".join(texts), limit=KNOWN_BELIEFS
+    )
+
     completion = get_client().structured(
         prompt=render_episode_for_consolidation(
             started_at=episode.started_at.isoformat(),
             sittings=sittings,
+            known=[memory.content for memory, _ in known],
         ),
         schema=ConsolidationOut,
         system=CONSOLIDATE_SYSTEM,
@@ -122,7 +136,13 @@ def consolidate_episode(
             refused += 1
             continue
 
-        outcome = claims.persist(session, episode, candidate, citable)
+        outcome = claims.persist(
+            session,
+            episode,
+            candidate,
+            citable,
+            replaces=_replaced_belief(candidate.replaces, known),
+        )
         if outcome == "created":
             created += 1
         elif outcome == "reinforced":
@@ -153,6 +173,18 @@ def consolidate_episode(
 
     _embed_derived(session, episode)
     _mark_consolidated(session, episode_id)
+
+    # Only when the beliefs behind it moved, and at most once a day. The job
+    # is queued for when it is next due rather than run now, so coalescing
+    # collapses everything said in between into that one rebuild.
+    if created or reinforced or superseded:
+        queue.enqueue(
+            session,
+            user_id=episode.user_id,
+            stage=profile.REFRESH_STAGE,
+            subject_key=profile.REFRESH_SUBJECT,
+            run_after=profile.next_refresh_due(session, episode.user_id),
+        )
     _record(
         recorder,
         verdict,
@@ -178,6 +210,21 @@ def consolidate_episode(
         "proposed": len(result.memories),
         "called_model": True,
     }
+
+
+def _replaced_belief(
+    number: int | None, known: list[tuple[Memory, float]]
+) -> Memory | None:
+    """The belief a K number names, if it names one that was shown.
+
+    A number outside the list is dropped, not guessed at: retiring the wrong
+    belief is worse than retiring none.
+    """
+    if number is None or not 1 <= number <= len(known):
+        if number is not None:
+            logger.warning("claim cites unknown belief K%s, ignoring", number)
+        return None
+    return known[number - 1][0]
 
 
 def _embed_derived(session: Session, episode: Episode) -> None:

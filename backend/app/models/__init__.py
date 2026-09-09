@@ -23,6 +23,7 @@ from app.models.memory import (
     Memory,
     MemoryEvidence,
 )
+from app.models.profile import SECTIONS, STATES, ProfileEntry
 from app.models.rejected import REJECTION_RULES, RejectedCandidate
 from app.models.trace import (
     INGEST_STAGES,
@@ -62,6 +63,9 @@ __all__ = [
     "MEMORY_TYPES",
     "MEMORY_STATUSES",
     "STANCES",
+    "ProfileEntry",
+    "SECTIONS",
+    "STATES",
     "RejectedCandidate",
     "REJECTION_RULES",
 ]

@@ -29,6 +29,7 @@ from sqlalchemy.orm import Session
 from app.llm.client import SMALL, get_client
 from app.llm.prompts import ANSWER_SYSTEM, render_sources_for_answering
 from app.schemas.recall import AnswerOut
+from app.services import profile as profile_service
 from app.services import retrieval
 
 logger = logging.getLogger("kivi.recall")
@@ -171,10 +172,13 @@ def answer(
             filters_not_applied=found.filters_not_applied,
         )
 
+    resident = profile_service.load(session, user_id, now=now)
+
     completion = get_client().structured(
         prompt=render_sources_for_answering(
             question=question,
             sources=[source.rendered() for source in sources],
+            profile=resident.rendered(),
         ),
         schema=AnswerOut,
         system=ANSWER_SYSTEM,

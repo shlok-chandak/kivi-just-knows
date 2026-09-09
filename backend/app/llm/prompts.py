@@ -57,6 +57,28 @@ reasonable reading is 'inferred'.
 
 Returning an empty list of claims is the correct answer for a stretch that \
 contains nothing durable. Never invent a claim to avoid returning nothing.
+
+You may be shown a KNOWN section listing beliefs already held, numbered K1, \
+K2 and so on. It is context, not material. Never extract a claim from it, \
+and never cite it -- claims cite dictations only.
+
+Use it for two things.
+
+To resolve what a dictation leaves out. People dictate in fragments and drop \
+the subject once it is established, so "349 now" or "moved to Tuesday" only \
+means something against what is already known. Write the resolved claim in \
+full: given K1 "the Pro tier price is 299 a month", the dictation "349 now" \
+is the claim "the Pro tier price is 349 a month". Resolve only what the \
+known belief actually settles -- if nothing there tells you what a number \
+refers to, leave the claim as the dictation supports it, or omit it.
+
+To notice when something has changed. If a claim answers the same question \
+as a known belief with a different answer, set replaces to that K number. \
+This is how a decision is recorded as overturned rather than sitting \
+alongside the one it replaced, both looking current. It applies when the \
+wording shares nothing: "switching to Cashfree" replaces "going with \
+Razorpay" because both name the payment provider. Do not set it because two \
+things are on the same topic, and never because a known belief looks old.
 """
 
 
@@ -64,6 +86,7 @@ def render_episode_for_consolidation(
     *,
     started_at: str,
     sittings: list[list[Event]],
+    known: list[str] | None = None,
 ) -> str:
     """The episode as its sittings, with dictations numbered across the whole.
 
@@ -73,7 +96,19 @@ def render_episode_for_consolidation(
     somewhere else -- structure that cost nothing to compute and would
     otherwise be thrown away before the expensive step.
     """
-    lines = [
+    lines: list[str] = []
+
+    # Before the dictations, not after: what is already believed is what the
+    # fragments have to be read against, and a reader who meets "349 now"
+    # first has already decided what it means.
+    if known:
+        lines.append("KNOWN -- already believed. Context only; never cite.")
+        lines.extend(
+            f"K{position}. {text}" for position, text in enumerate(known, start=1)
+        )
+        lines.append("")
+
+    lines += [
         "A stretch of dictation by the user, grouped into sittings.",
         f"Started: {started_at}",
         "",
@@ -120,11 +155,18 @@ August, from 499".
 
 Sources marked DICTATION are the person's own words, and are what to quote \
 when they ask what they said. Sources marked MEMORY are what the system \
-concluded, and MEMORY may be wrong where a DICTATION disagrees with it.\
+concluded, and MEMORY may be wrong where a DICTATION disagrees with it.
+
+You may also be given standing context about the person -- how they like \
+things written, what they are working on. Follow their stated preferences \
+when writing the answer. It is context, never evidence: it cannot be cited, \
+and it can never make a question answerable on its own.\
 """
 
 
-def render_sources_for_answering(*, question: str, sources: list[str]) -> str:
+def render_sources_for_answering(
+    *, question: str, sources: list[str], profile: str = ""
+) -> str:
     """The question and the numbered sources it must be answered from.
 
     Numbered rather than listed, because a citation has to point at something
@@ -132,7 +174,12 @@ def render_sources_for_answering(*, question: str, sources: list[str]) -> str:
     caller: what counts as a source, and how it is described, is a retrieval
     decision rather than a prompt one.
     """
-    lines = [f"Question: {question}", "", "Sources:"]
+    lines: list[str] = []
+    if profile:
+        # Standing context, not evidence: it shapes how the answer is written
+        # rather than what it may claim, so it is never citable.
+        lines += ["About the person you are answering:", profile, ""]
+    lines += [f"Question: {question}", "", "Sources:"]
     lines.extend(f"{index}. {text}" for index, text in enumerate(sources, start=1))
     if not sources:
         lines.append("(none found)")
