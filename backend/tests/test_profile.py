@@ -189,3 +189,95 @@ def test_a_scheduled_rebuild_blocks_another_being_queued(db):
         subject_key=profile.REFRESH_SUBJECT, run_after=later,
     ) is False
     db.commit()
+
+
+# --- filtering when there are more preferences than fit ----------------------
+
+
+def _preference(session, content: str, *, days_ago: int, uses: int = 0) -> Memory:
+    memory = preference(session, content, days_ago=days_ago)
+    memory.use_count = uses
+    session.flush()
+    return memory
+
+
+def test_everything_fits_when_under_the_cap(db):
+    for index in range(MAX := profile.MAX_STYLE_LINES):
+        _preference(db, f"Preference {index}.", days_ago=index)
+
+    assert len(profile.refresh(db, USER, now=NOW).style) == MAX
+
+
+def test_over_the_cap_the_oldest_are_dropped_first(db):
+    """Recency leads, because it is the signal that actually varies."""
+    for index in range(profile.MAX_STYLE_LINES + 6):
+        _preference(db, f"Preference {index}.", days_ago=index)
+
+    kept = {entry.memory.content for entry in profile.refresh(db, USER, now=NOW).style}
+    assert len(kept) == profile.MAX_STYLE_LINES
+    # The newest is in and the oldest is out.
+    assert "Preference 0." in kept
+    assert "Preference 15." not in kept
+
+
+def test_a_proven_useful_older_preference_beats_a_trivial_newer_one(db):
+    """Why style is ranked rather than cut off by date.
+
+    The oldest real preference in the corpus was also the only one ever cited
+    in an answer. Dropping the oldest first would have retired exactly the
+    one that had earned its place.
+    """
+    for index in range(profile.MAX_STYLE_LINES):
+        _preference(db, f"Never used {index}.", days_ago=index + 1)
+
+    veteran = _preference(db, "Release notes as short bullets.", days_ago=60, uses=8)
+    veteran.alpha = 6.0
+    db.flush()
+
+    kept = {entry.memory.content for entry in profile.refresh(db, USER, now=NOW).style}
+    assert "Release notes as short bullets." in kept
+
+
+def test_a_preference_is_still_resident_a_year_on(db):
+    """Preferences are close to permanent: a year is not old for one."""
+    _preference(db, "Meetings before noon.", days_ago=365)
+
+    kept = [e.memory.content for e in profile.refresh(db, USER, now=NOW).style]
+    assert kept == ["Meetings before noon."]
+
+
+def test_decay_eventually_retires_a_preference_nobody_restates(db):
+    """Without a cliff. Age loses to fresher preferences rather than to a rule."""
+    ancient = _preference(db, "Ancient but once useful.", days_ago=1200, uses=50)
+    ancient.alpha = 20.0
+    for index in range(profile.MAX_STYLE_LINES):
+        _preference(db, f"Recent {index}.", days_ago=index + 1)
+    db.flush()
+
+    kept = {entry.memory.content for entry in profile.refresh(db, USER, now=NOW).style}
+    assert "Ancient but once useful." not in kept
+
+
+def test_work_is_strictly_newest_first_however_useful_the_old_one_was(db):
+    """The difference from style: currently means currently."""
+    old = Memory(
+        id=uuid.uuid4(), user_id=USER, type="decision",
+        content="An old decision everyone kept citing.",
+        claim_key=uuid.uuid4().hex[:32], status="active",
+        alpha=20.0, beta=1.0, observation_count=9, use_count=50,
+        last_reinforced_at=NOW - timedelta(days=120),
+    )
+    db.add(old)
+    for index in range(profile.MAX_WORK_LINES):
+        db.add(
+            Memory(
+                id=uuid.uuid4(), user_id=USER, type="decision",
+                content=f"Decision {index}.", claim_key=uuid.uuid4().hex[:32],
+                status="active", alpha=2.0, beta=1.0, observation_count=1,
+                last_reinforced_at=NOW - timedelta(days=index + 1),
+            )
+        )
+    db.flush()
+
+    kept = {entry.memory.content for entry in profile.refresh(db, USER, now=NOW).work}
+    assert "An old decision everyone kept citing." not in kept

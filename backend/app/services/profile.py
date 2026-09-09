@@ -36,9 +36,25 @@ REFRESH_INTERVAL = timedelta(days=1)
 # Hard cap, not a guideline.
 BUDGET_TOKENS = 1500
 
-# Style comes first and takes what it needs; work context gets what is left,
-# up to this. Without a separate cap a busy week would evict the preferences.
-MAX_WORK_LINES = 5
+# Ten of each, twenty in all. Separate caps rather than one shared pool:
+# with a single cap a busy week of decisions would crowd out the standing
+# preferences, which are the half that cannot be recovered by searching.
+MAX_STYLE_LINES = 10
+MAX_WORK_LINES = 10
+
+# Style and work are cut differently on purpose.
+#
+# Work is strictly newest first: "currently working on" means exactly that,
+# and a decision from two months ago does not belong there however sound it
+# was.
+#
+# Style is ranked, not gated. A preference is close to permanent -- 365-day
+# half-life -- so one stated a year ago is probably still true, and a hard
+# recency cutoff would retire it for no reason. The score handles both cases
+# on its own: when confidences tie, currency breaks the tie and the recent
+# one wins; when an older preference has actually been earning its place,
+# usage lets it beat a newer one. Decay still removes the genuinely ancient,
+# without a cliff.
 
 # Rough estimate. Not a tokeniser -- it only has to be close and never under.
 CHARS_PER_TOKEN = 3.5
@@ -88,6 +104,15 @@ def estimate_tokens(text: str) -> int:
     return max(1, round(len(text) / CHARS_PER_TOKEN)) + 2
 
 
+def _filter_style(entries: list[Entry]) -> list[Entry]:
+    """The preferences that belong in every prompt, best first.
+
+    Already sorted by score, which is confidence times currency times how
+    often the preference has actually been used. Nothing else to do but cut.
+    """
+    return entries[:MAX_STYLE_LINES]
+
+
 def _select(
     session: Session,
     user_id: uuid.UUID,
@@ -126,7 +151,7 @@ def _select(
         made.sort(key=lambda entry: entry.score, reverse=True)
         return made
 
-    style = entries_for([m for m in live if m.type in STYLE_TYPES])
+    style = _filter_style(entries_for([m for m in live if m.type in STYLE_TYPES]))
     # Work is ordered by when it was last said, not by the durability score
     # used everywhere else. A decision holds its confidence until overturned,
     # which is right for answering and wrong here -- it put a two-month-old
