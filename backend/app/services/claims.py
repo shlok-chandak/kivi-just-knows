@@ -388,6 +388,12 @@ def _replace(
     The loser is kept rather than deleted. "What is the price" and "what
     was the price in June" are different questions, and a system that
     discards superseded values can only answer the first.
+
+    Whichever loses also records what beat it. Knowing a belief is retired
+    is half an answer: "your price is no longer 299" is worth much less than
+    "299 became 349 in August", and only the link makes the second sayable.
+    Chains follow from it -- 499 already points at 299, so retiring 299
+    leaves 499 -> 299 -> 349 readable end to end.
     """
     older = superseded.last_reinforced_at
     incoming_is_newer = older is None or stated_at >= older
@@ -397,15 +403,19 @@ def _replace(
     if incoming_is_newer:
         superseded.status = "superseded"
         superseded.valid_until = stated_at
+        superseded.superseded_by = memory.id
         logger.info(
             "superseded %r by %r", superseded.content[:60], candidate.content[:60]
         )
         return memory, "superseded"
 
     # Arrived late and belongs to the past. Stored as history so it stays
-    # answerable, but never volunteered as current.
+    # answerable, but never volunteered as current -- and pointing at the
+    # belief that already held, which is what replaced it from the reader's
+    # side even though it arrived first.
     memory.status = "superseded"
     memory.valid_until = older
+    memory.superseded_by = superseded.id
     session.flush()
     return memory, "created"
 

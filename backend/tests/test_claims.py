@@ -456,6 +456,119 @@ def test_a_claim_arriving_late_does_not_overwrite_newer_news(world):
     assert stale.status == "superseded"
 
 
+def test_the_retired_belief_names_what_replaced_it(world):
+    """Knowing a belief is dead is half an answer.
+
+    "Your price is no longer 499" is worth much less than "499 became 299",
+    and only the link makes the second sayable.
+    """
+    db, episode = world
+    first = event(db, episode, "The list price for the Pro tier is ₹499.", minutes=0)
+    later = event(db, episode, "We dropped the Pro tier price to ₹299.", minutes=90)
+
+    claims.persist(
+        db, episode,
+        candidate("The list price for the Pro tier is ₹499.",
+                  "The list price for the Pro tier is ₹499.", [1]),
+        [first],
+    )
+    original = db.query(Memory).one()
+    _index(db, original)
+
+    claims.persist(
+        db, episode,
+        candidate("The Pro tier price is ₹299 a month.",
+                  "We dropped the Pro tier price to ₹299.", [1]),
+        [later],
+    )
+
+    db.refresh(original)
+    replacement = db.query(Memory).filter(Memory.status == "active").one()
+    assert original.superseded_by == replacement.id
+
+
+def test_a_claim_that_arrives_late_points_at_the_belief_that_already_held(world):
+    """The losing side is the newcomer, so the newcomer carries the link."""
+    db, episode = world
+    recent = event(db, episode, "We dropped the Pro tier price to ₹299.", minutes=90)
+    old = event(db, episode, "The list price for the Pro tier is ₹499.", minutes=0)
+
+    claims.persist(
+        db, episode,
+        candidate("The Pro tier price is ₹299 a month.",
+                  "We dropped the Pro tier price to ₹299.", [1]),
+        [recent],
+    )
+    current = db.query(Memory).one()
+    _index(db, current)
+
+    claims.persist(
+        db, episode,
+        candidate("The list price for the Pro tier is ₹499.",
+                  "The list price for the Pro tier is ₹499.", [1]),
+        [old],
+    )
+
+    stale = db.query(Memory).filter(Memory.id != current.id).one()
+    assert stale.superseded_by == current.id
+
+
+def test_three_prices_leave_a_chain_that_can_be_walked(world):
+    """499 -> 299 -> 349, readable end to end rather than three dead ends."""
+    db, episode = world
+    prices = [
+        ("The list price for the Pro tier is ₹499.", 0),
+        ("The Pro tier price is ₹299 a month.", 90),
+        ("The Pro tier price is ₹349 a month.", 180),
+    ]
+    for content, minutes in prices:
+        source = event(db, episode, content, minutes=minutes)
+        claims.persist(db, episode, candidate(content, content, [1]), [source])
+        for memory in db.query(Memory).all():
+            _index(db, memory)
+
+    live = db.query(Memory).filter(Memory.status == "active").one()
+    assert "349" in live.content
+
+    # Walk backwards from the oldest belief to the one in force.
+    oldest = db.query(Memory).filter(Memory.content.like("%499%")).one()
+    walked = [oldest]
+    while walked[-1].superseded_by is not None:
+        walked.append(db.get(Memory, walked[-1].superseded_by))
+
+    assert [m.content for m in walked] == [content for content, _ in prices]
+
+
+def test_forgetting_a_replacement_does_not_leave_a_dangling_link(world):
+    """The link is a real foreign key, so deletion nulls it rather than lying."""
+    from app.services import memory_control
+
+    db, episode = world
+    first = event(db, episode, "The list price for the Pro tier is ₹499.", minutes=0)
+    later = event(db, episode, "We dropped the Pro tier price to ₹299.", minutes=90)
+
+    claims.persist(
+        db, episode,
+        candidate("The list price for the Pro tier is ₹499.",
+                  "The list price for the Pro tier is ₹499.", [1]),
+        [first],
+    )
+    original = db.query(Memory).one()
+    _index(db, original)
+    claims.persist(
+        db, episode,
+        candidate("The Pro tier price is ₹299 a month.",
+                  "We dropped the Pro tier price to ₹299.", [1]),
+        [later],
+    )
+    replacement = db.query(Memory).filter(Memory.status == "active").one()
+
+    memory_control._purge(db, USER, [replacement.id])
+    db.expire_all()
+
+    assert db.get(Memory, original.id).superseded_by is None
+
+
 def test_a_restatement_in_other_words_reinforces_rather_than_duplicates(world):
     db, episode = world
     first = event(db, episode, "The Pro tier price is ₹299 a month.", minutes=0)

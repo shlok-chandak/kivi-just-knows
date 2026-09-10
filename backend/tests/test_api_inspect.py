@@ -201,6 +201,10 @@ def test_currency_falls_with_age_and_confidence_does_not(db):
 
 
 def test_belief_names_the_claim_that_replaced_it(db):
+    """Reading the link only. The link is set by the pipeline, which this
+    fixture bypasses -- test_claims covers that it is ever written at all,
+    and for a long time it was not, which this test could not have shown.
+    """
     session, track = db
     newer = _memory(track, content="The agreed rate is 19.00.")
     older = _memory(
