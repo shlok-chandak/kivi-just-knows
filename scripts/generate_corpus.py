@@ -26,13 +26,18 @@ from typing import Any
 import yaml
 
 from scripts.corpus_content import (
+    APP_POOLS,
     FRAME_FOLLOWUP,
     FRAME_LOGISTICS,
     FRAME_LONG,
     FRAME_TAIL,
     FRAME_UPDATE,
     JUNK,
+    NEAR_MISS_APPS,
     NEAR_MISSES,
+    RETRY_APPS,
+    SENSITIVE_APPS,
+    TAIL_APPS,
     PRIYA_DISAMBIGUATION,
     RETRIES,
     SCRIPTED,
@@ -355,16 +360,22 @@ def build(spec: dict[str, Any], target: int, seed: int) -> tuple[list[dict], dic
             for _ in range(rng.randint(1, 4)):
                 if specials and (rng.random() < 0.14 or len(specials) > budget):
                     special = specials.pop()
-                    sitting.append(_from_special(special, namer, rng))
+                    made = _from_special(special, namer, rng)
+                    sitting.append(made)
                     # A retry is the same words a few seconds later, so both
-                    # halves have to be in the same sitting for the gate to
-                    # have anything to compare against.
+                    # halves have to be in the same sitting, and in the same
+                    # app, for the gate to have anything to compare against.
                     if special[0] == "retry":
                         sitting.insert(
-                            -1, {"text": special[1], "special": "retry_first"}
+                            -1,
+                            {
+                                "text": special[1],
+                                "special": "retry_first",
+                                "app": made.get("app"),
+                            },
                         )
                 else:
-                    sitting.append(_from_filler(namer, rng))
+                    sitting.append(_from_filler(namer, rng, app))
 
             last_when = slot
             for offset, item in enumerate(sitting):
@@ -448,25 +459,36 @@ def _from_beat(beat: dict, namer: Namer, rng: random.Random) -> dict[str, Any]:
 def _from_special(
     special: tuple[str, str, str | None], namer: Namer, rng: random.Random
 ) -> dict[str, Any]:
+    """Sensitive, junk, near-miss or retry material.
+
+    Sensitive lines carry their own app, so a health disclosure lands
+    somewhere a person would actually say one.
+    """
     what, line, label = special
-    return {
+    item: dict[str, Any] = {
         "text": _fill(line, None, namer, rng),
         "special": what,
         "label": label,
     }
+    if what == "sensitive" and label in SENSITIVE_APPS:
+        item["app"] = rng.choice(SENSITIVE_APPS[label])
+    elif what == "near_miss":
+        item["app"] = rng.choice(NEAR_MISS_APPS)
+    elif what == "retry":
+        item["app"] = rng.choice(RETRY_APPS)
+    return item
 
 
-def _from_filler(namer: Namer, rng: random.Random) -> dict[str, Any]:
-    pool = rng.choices(
-        [FRAME_LOGISTICS, FRAME_UPDATE, FRAME_FOLLOWUP, FRAME_LONG],
-        weights=[0.32, 0.36, 0.17, 0.15],
-        k=1,
-    )[0]
+def _from_filler(namer: Namer, rng: random.Random, app: str) -> dict[str, Any]:
+    """One ordinary dictation, drawn from what this app is used for."""
+    pools = APP_POOLS.get(app) or [FRAME_LOGISTICS, FRAME_UPDATE]
+    pool = rng.choice(pools)
     text = _fill(rng.choice(pool), None, namer, rng)
 
     # A fifth of dictations run on into a second clause, which is what puts
-    # the top of the length distribution where speech actually sits.
-    if rng.random() < 0.42:
+    # the top of the length distribution where speech actually sits. Only in
+    # the apps where people talk in sentences.
+    if app in TAIL_APPS and rng.random() < 0.42:
         tail = _fill(rng.choice(FRAME_TAIL), None, namer, rng)
         text = text.rstrip(".") + ", " + tail[0].lower() + tail[1:]
         if not text.endswith((".", "?", "!")):

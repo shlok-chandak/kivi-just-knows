@@ -292,6 +292,12 @@ SLOTS = {
                "conversion", "the trial-to-paid rate", "NPS"],
     "pct": ["3.1%", "4%", "8%", "12%", "18%", "22%", "31%"],
     "team": ["support", "design", "eng", "sales", "legal", "finance"],
+    # Parts of the codebase, so editor and tracker lines vary the way the
+    # other pools do rather than repeating a handful of sentences.
+    "component": ["the retry handler", "the webhook check", "the import job",
+                  "the billing sync", "the auth middleware", "the export worker",
+                  "the rate limiter", "the session store", "the search index",
+                  "the queue consumer", "the settings page", "the invoice job"],
 }
 
 # {who} resolves to a name on first mention in a sitting, a pronoun after.
@@ -411,6 +417,167 @@ FRAME_TAIL = [
     "I'll pick it up after {project}",
     "not blocking anything yet",
 ]
+
+# --- what belongs in which app ----------------------------------------------
+#
+# Nobody dictates "quick sync at 4?" into a code editor. The app decides what
+# kind of thing gets said in it, and the pools below are drawn from only by
+# the apps they suit. Style is a separate axis, applied afterwards by the
+# edit operators in spec.yaml.
+
+# Cursor is an AI editor: what gets dictated is an instruction to it.
+FRAME_CURSOR = [
+    "Refactor {component} to use exponential backoff.",
+    "Add a test for {component}.",
+    "Why is {component} failing on the {project} branch?",
+    "Extract {component} into a helper and keep the signature.",
+    "Rename this in {component}, it shadows the outer variable.",
+    "Write a migration for {component}.",
+    "Explain what {component} actually does.",
+    "Fix the type error in {component}.",
+    "Add logging around {component}.",
+    "Split {component}, it is doing too much.",
+    "Make {component} handle a null response.",
+    "Pull the config in {component} out into environment variables.",
+    "Write the docstring for {component}.",
+    "Convert {component} to async.",
+    "Add an index for {component} on user_id and created_at.",
+    "{component} is flaky, find the race.",
+    "Wire the new endpoint into {component}.",
+    "Cache the lookup in {component}, it runs on every request.",
+    "Give me a smaller version of the query in {component}.",
+    "Handle the timeout case in {component}.",
+    "Why does {component} allocate on every call?",
+    "Add validation in {component} before we write to the table.",
+]
+
+# Linear is an issue tracker: sizing, blocking, triage.
+FRAME_LINEAR = [
+    "Blocking on the {component} change.",
+    "Estimate is two days on {component}.",
+    "Moving {project} to next sprint.",
+    "Assigning {component} to {who}.",
+    "Duplicate of the {component} bug.",
+    "Needs a repro on {component} before we can size it.",
+    "Bumping priority, {customer} hit {component} again.",
+    "Closing, {component} shipped in the last release.",
+    "Split {project} into two tickets.",
+    "No repro on {component} after the fix.",
+    "Adding acceptance criteria for {project}.",
+    "Marking {project} blocked on {team}.",
+    "Reopening, {customer} still sees the {component} issue.",
+    "Moving this to the {project} epic.",
+    "Sizing {component} as a small.",
+    "Needs design input on {project} before we start.",
+]
+
+# Notion is the written record: decisions, risks, next steps. Plain sentences,
+# because list.bulletize turns them into bullets at edit time.
+FRAME_NOTION = [
+    "Decision: {artifact} ships {day}.",
+    "Open question: who owns {project} after launch.",
+    "Next step: {who} confirms with {customer}.",
+    "Risk: {metric} sits at {pct} if we slip.",
+    "Agreed: {artifact} goes out {day}.",
+    "Owner for {project} is {who}.",
+    "{project} is blocked on {team} until {day}.",
+    "Scope for {project} excludes the migration.",
+    "Success measure is {metric} above {pct}.",
+    "Dependency: {customer} sign off on {artifact}.",
+    "Rollback plan is documented in {artifact}.",
+    "Timeline for {project} assumes no {team} review.",
+]
+
+# Gmail is outward-facing. Contractions and hedges are deliberate: the gmail
+# operators expand and drop them, so they need to be there to begin with.
+FRAME_GMAIL = [
+    "I think we can get {artifact} across to you by {day}.",
+    "Thanks for the call, I'll send {artifact} shortly.",
+    "Confirming {artifact} will be with {customer} on {day}.",
+    "Apologies for the delay, we're finalising {artifact}.",
+    "I don't think {day} is realistic for {project}.",
+    "Following up on {project}, we haven't heard back.",
+    "Happy to walk {customer} through {artifact} on a call.",
+    "We'd like to close {project} out before {day}.",
+    "Can't commit to {day} yet, I'll confirm once {team} reply.",
+    "Just to confirm, {customer} want {artifact} before {day}.",
+    "I'm afraid {project} has slipped, we'll update {day}.",
+    "Attaching {artifact} for review ahead of {day}.",
+    "Maybe we push the {project} call to {day}?",
+    "We're comfortable with scope, it's the timing I'd question.",
+]
+
+# WhatsApp is people, not process.
+FRAME_WHATSAPP = [
+    "running late, start without me",
+    "can you call when free",
+    "did {who} get back to you",
+    "sorry just seeing this, {day} works?",
+    "on my way, {time} ok?",
+    "{day} works for me",
+    "stuck in traffic, tell {who}",
+    "yeah go ahead with {artifact}",
+    "let's talk about {project} tomorrow",
+    "did we ever hear from {customer}",
+    "quick one, is {artifact} done",
+    "no rush on {artifact}",
+    "call you after standup about {project}",
+    "at lunch, back in twenty",
+    "{who} says {day} is fine",
+    "can we do {time} instead",
+    "sending {artifact} now",
+    "did {customer} reply yet",
+    "{project} is a mess honestly",
+    "tell {who} I'll be late",
+    "see you at {time}",
+    "{who} wants {artifact} before {day}",
+]
+
+# Notes is talking to yourself: numbers, reminders, half-thoughts.
+FRAME_NOTES = [
+    "{metric} at {pct}, check again {day}.",
+    "Remember to chase {who} on {artifact}.",
+    "{project}: waiting on {team}.",
+    "Ask {customer} about the renewal.",
+    "Numbers for the {project} call.",
+    "Follow up on {artifact} before {day}.",
+    "Idea: pull {metric} into the weekly.",
+    "Don't forget the {project} handover.",
+]
+
+# Which pools each app draws its filler from.
+APP_POOLS = {
+    "slack": [FRAME_LOGISTICS, FRAME_UPDATE, FRAME_FOLLOWUP, FRAME_LONG],
+    "gmail": [FRAME_GMAIL, FRAME_LONG],
+    "notion": [FRAME_NOTION],
+    "whatsapp": [FRAME_WHATSAPP],
+    "cursor": [FRAME_CURSOR],
+    "linear": [FRAME_LINEAR],
+    "notes": [FRAME_NOTES, FRAME_UPDATE],
+}
+
+# Tails join onto a clause. Only the conversational apps use them.
+TAIL_APPS = ("slack", "gmail", "notes")
+
+# Where each kind of sensitive material plausibly gets said. A biopsy result
+# dictated into a code editor tests nothing except the generator.
+SENSITIVE_APPS = {
+    "credentials": ["slack", "notion", "linear", "cursor"],
+    "financial_account": ["gmail", "notes", "whatsapp"],
+    "health": ["whatsapp", "notes", "gmail"],
+    "religion": ["whatsapp", "gmail"],
+    "politics": ["whatsapp", "slack"],
+    "race_ethnicity": ["whatsapp", "gmail"],
+    "sexual_orientation": ["whatsapp", "slack"],
+}
+
+# Near misses have to sit where their true-positive twins sit, or the guard
+# is being tested on an easier distribution than it faces.
+NEAR_MISS_APPS = ("slack", "gmail", "whatsapp", "notes", "notion")
+
+# Retries are messages to people, so they belong where people are addressed.
+# Nobody re-dictates "the cutover is Saturday night" into a code editor.
+RETRY_APPS = ("slack", "gmail", "whatsapp", "notes")
 
 # Kept for the ingest-gate fixtures, which reference them by name.
 LOGISTICS = FRAME_LOGISTICS
