@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
 from app.models.job import Job
 from app.models.memory import Memory
@@ -281,3 +281,44 @@ def test_work_is_strictly_newest_first_however_useful_the_old_one_was(db):
 
     kept = {entry.memory.content for entry in profile.refresh(db, USER, now=NOW).work}
     assert "An old decision everyone kept citing." not in kept
+
+
+def test_a_refresh_queues_the_next_one_a_day_out(db):
+    """The profile keeps up on its own, or it only works when poked.
+
+    Currency decays with the clock, so what belongs in the profile changes
+    even on a day nobody dictated anything -- which means the rebuild cannot
+    depend on consolidation noticing a belief moved.
+    """
+    from app.models.job import Job as JobModel
+    from app.worker.handlers import handle_profile_refresh
+
+    session = db
+    preference(session, "Release notes as short bullets.")
+    job = JobModel(
+        user_id=USER,
+        stage=profile.REFRESH_STAGE,
+        subject_type="group",
+        subject_key=profile.REFRESH_SUBJECT,
+        status="running",
+        attempts=1,
+    )
+    session.add(job)
+    session.flush()
+
+    handle_profile_refresh(session, job)
+    session.commit()
+
+    queued = list(
+        session.scalars(
+            select(JobModel).where(
+                JobModel.user_id == USER,
+                JobModel.stage == profile.REFRESH_STAGE,
+                JobModel.status == "pending",
+            )
+        )
+    )
+
+    assert len(queued) == 1, "the next rebuild should already be waiting"
+    waited = queued[0].run_after - datetime.now(timezone.utc)
+    assert timedelta(hours=23) < waited <= profile.REFRESH_INTERVAL

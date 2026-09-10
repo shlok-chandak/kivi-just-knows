@@ -6,6 +6,7 @@ accounted for whether or not it called a model.
 
 import uuid
 from collections.abc import Callable
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -151,6 +152,11 @@ def handle_profile_refresh(session: Session, job: Job) -> dict[str, Any]:
     Its own stage rather than part of consolidation: the queue coalesces
     pending jobs by subject, so a run over 135 episodes refreshes once
     instead of 135 times.
+
+    Re-arms itself for tomorrow before returning, so the profile keeps up
+    with a day's dictations whether or not consolidation happens to notice a
+    belief moved. Currency decays with the clock, so what belongs in the
+    profile changes even on a day nobody said anything new.
     """
     with start_ingest_trace(
         session, user_id=job.user_id, subject_key=job.subject_key
@@ -167,6 +173,16 @@ def handle_profile_refresh(session: Session, job: Job) -> dict[str, Any]:
             },
         )
         recorder.close("answered")
+
+    # Tomorrow's rebuild, queued now. This job is 'running' rather than
+    # 'pending', so the coalescing index does not treat it as a duplicate.
+    queue.enqueue(
+        session,
+        user_id=job.user_id,
+        stage=STAGE_PROFILE_REFRESH,
+        subject_key=profile.REFRESH_SUBJECT,
+        run_after=datetime.now(timezone.utc) + profile.REFRESH_INTERVAL,
+    )
 
     return {"style": len(built.style), "work": len(built.work), "tokens": built.tokens}
 
