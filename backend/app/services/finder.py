@@ -123,6 +123,11 @@ def find(
     )
     by_id = {candidate.id: candidate.similarity for candidate in scored}
 
+    if not (when is not None or apps) and scored:
+        rows = _by_id(session, [candidate.id for candidate in scored])
+    elif not (when is not None or apps) and not scored:
+        widened.append("nothing matched the topic; showing the most recent")
+
     found = [
         Found(event, by_id.get(event.id), "filters+topic" if event.id in by_id else "filters")
         for event in rows
@@ -132,6 +137,19 @@ def find(
     # person only mentioned in passing.
     found.sort(key=lambda item: (item.similarity or 0.0), reverse=True)
     return FindResult(found, filters, widened)
+
+
+def _by_id(session: Session, ids: Sequence[uuid.UUID]) -> list[Event]:
+    """The events the topic search picked, newest first before ranking."""
+    if not ids:
+        return []
+    return list(
+        session.scalars(
+            select(Event)
+            .where(Event.id.in_(list(ids)))
+            .order_by(Event.occurred_at.desc())
+        )
+    )
 
 
 def _filtered(

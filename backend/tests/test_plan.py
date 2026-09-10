@@ -61,3 +61,62 @@ def test_no_plan_exceeds_the_cap():
     for intent in ("recall", "find_dictation", "restyle", "draft", "memory_control"):
         made = plan(spec(intent=intent, style_hint="casual", forget=True))
         assert len(made.steps) <= MAX_STEPS
+
+
+# --- finder: what selects the candidates ------------------------------------
+
+
+def test_a_topic_search_is_not_capped_to_the_newest_dictations():
+    """The candidate set must come from the topic when nothing else narrows.
+
+    finder selected the newest N by time and then let the topic reorder only
+    those, so a dictation older than N could never be found however well it
+    matched. The topic search ran, found it, and its score was discarded.
+    """
+    import uuid as _uuid
+    from datetime import datetime, timedelta, timezone
+
+    from sqlalchemy import delete
+
+    from app.db.session import SessionLocal
+    from app.models.event import Event
+    from app.services import finder
+    from tests.conftest import TEST_USER
+
+    now = datetime(2026, 9, 1, 12, 0, tzinfo=timezone.utc)
+    session = SessionLocal()
+    made: list[_uuid.UUID] = []
+
+    def add(text: str, days_ago: int) -> Event:
+        row = Event(
+            id=_uuid.uuid4(),
+            user_id=TEST_USER,
+            occurred_at=now - timedelta(days=days_ago),
+            ingested_at=now - timedelta(days=days_ago),
+            app="slack",
+            raw_asr=text.lower(),
+            formatted_text=text,
+            committed_text=text,
+            ingest_status="pending",
+        )
+        session.add(row)
+        session.flush()
+        made.append(row.id)
+        return row
+
+    try:
+        # The one that matters, buried behind more recent, unrelated chatter.
+        target = add("The zephyr reconciliation settlement is on Tuesday.", 60)
+        for day in range(1, 15):
+            add(f"Running {day} minutes late.", day)
+        session.commit()
+
+        result = finder.find(
+            session, TEST_USER, now=now, topic="zephyr reconciliation settlement"
+        )
+
+        assert target.id in {item.event.id for item in result.found}
+    finally:
+        session.execute(delete(Event).where(Event.id.in_(made)))
+        session.commit()
+        session.close()
