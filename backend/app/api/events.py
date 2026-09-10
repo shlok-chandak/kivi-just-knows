@@ -3,6 +3,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -72,6 +73,60 @@ def create_event(
     db.commit()
 
     return event
+
+
+class BatchIn(BaseModel):
+    """A whole corpus in one request."""
+
+    events: list[EventCreate] = Field(min_length=1, max_length=2000)
+
+
+@router.post("/batch", status_code=status.HTTP_202_ACCEPTED)
+def create_events(payload: BatchIn, db: Session = Depends(get_db)) -> dict:
+    """Ingest many dictations at once.
+
+    Every record goes through the same path as a single POST -- refusal
+    first, then the previous-dictation lookup a retry is judged against --
+    because a corpus loaded in bulk that skipped either check would be
+    stored on terms no single dictation is ever stored on.
+
+    Returns counts only. What happened to each one is worth watching rather
+    than reading, and /stream/ingest is where that happens.
+    """
+    user_id = settings.default_user_id
+    stored = refused = 0
+
+    for record in payload.events:
+        category = refuse_if_sensitive(db, record, user_id)
+        if category is not None:
+            refused += 1
+            continue
+
+        previous = find_previous(
+            db,
+            user_id=user_id,
+            app=normalise_app(record.app) or None,
+            context_hash=record.context_hash,
+            before=record.occurred_at,
+        )
+        db.add(Event(**build_event_values(record, user_id=user_id, previous=previous)))
+        stored += 1
+        # Flushed per record so the next one's previous-dictation lookup can
+        # see it, which is what makes a retry inside the batch detectable.
+        db.flush()
+
+    # One assignment job for the batch, not one per record: the queue
+    # coalesces by subject anyway, and the worker walks every loose event.
+    for stage in (STAGE_EMBED, STAGE_EPISODE_ASSIGN):
+        queue.enqueue(db, user_id=user_id, stage=stage, subject_key=ASSIGN_SUBJECT)
+    db.commit()
+
+    return {
+        "received": len(payload.events),
+        "stored": stored,
+        "refused": refused,
+        "watch": "/stream/ingest",
+    }
 
 
 @router.get("/{event_id}", response_model=EventOut)
