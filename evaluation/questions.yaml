@@ -1,0 +1,503 @@
+# The evaluation question set: 60 questions, seven categories.
+#
+# Every question is grounded in the corpus or in corpus/ground_truth.json.
+# Nothing here was written by asking the system and recording what it said --
+# that measures agreement with itself. Where ground_truth.json states an
+# answer it wins, and the six superseded questions are its decision arcs
+# verbatim.
+#
+# Some of these are known to fail today. They stay. A question set edited
+# until everything passes measures the editing, not the system.
+#
+# There is no "excludes" rule. An earlier draft banned the superseded value
+# from the answer, which marked "we moved from Sequoia to Nomad Audit" wrong
+# -- the narration M9 exists to produce. An answer giving only the stale
+# value already fails on `includes`, so the ban caught nothing real and
+# penalised the correct behaviour.
+#
+# Clocks: the corpus runs 2026-06-15 to 2026-08-19, so a question about
+# "yesterday" answered against a September clock resolves to an empty window
+# and abstains for the wrong reason. Temporal questions carry their own
+# `now`; everything else uses the harness default.
+#
+# Expectation vocabulary:
+#   answered   must the system answer at all
+#   includes   list of groups; every group needs one of its alternatives
+#   window     the time range the question should resolve to (dates)
+#   entity     the person or company the question is scoped to
+#   arc        decision arc id from ground_truth.json
+#   rule       the rejection rule the ignore log should show
+
+meta:
+  corpus: corpus/corpus.jsonl
+  corpus_span: [2026-06-15, 2026-08-19]
+  default_now: 2026-08-20T09:00:00+00:00
+  counts:
+    single_fact: 10
+    synthesis: 10
+    temporal: 8
+    entity: 8
+    superseded: 6
+    unanswerable: 10
+    ignored: 8
+
+questions:
+
+  # --- Single-fact recall -------------------------------------------------
+  # One claim, stated plainly somewhere. The floor: if these fail nothing
+  # above them can work.
+  #
+  # Every one rests on a claim ground_truth.json asserts. An earlier draft
+  # used metrics like "signups at 31%", which come from filler slots -- the
+  # metric and the number are drawn independently, so regenerating the
+  # corpus reshuffles them and the question silently starts asking about a
+  # pairing that never existed.
+
+  - id: fact-01
+    category: single_fact
+    question: what time is standup
+    expect:
+      answered: true
+      includes: [["10", "ten"]]
+
+  - id: fact-02
+    category: single_fact
+    question: what does Aditya think about the price
+    expect:
+      answered: true
+      includes: [["steep", "smb"]]
+
+  - id: fact-03
+    category: single_fact
+    question: who is doing the margin numbers
+    expect:
+      answered: true
+      includes: [["pranav"]]
+
+  - id: fact-04
+    category: single_fact
+    question: when is the gateway cutover
+    expect:
+      answered: true
+      includes: [["saturday"]]
+
+  - id: fact-05
+    category: single_fact
+    question: who is the external legal counsel
+    expect:
+      answered: true
+      includes: [["raghavan", "external"]]
+
+  - id: fact-06
+    category: single_fact
+    question: what price is ABC anchored around
+    expect:
+      answered: true
+      includes: [["250"]]
+
+  - id: fact-07
+    category: single_fact
+    question: how long should customer emails be
+    expect:
+      answered: true
+      includes: [["three", "3"]]
+
+  - id: fact-08
+    category: single_fact
+    question: how should I write to Trellis Health
+    expect:
+      answered: true
+      includes: [["full sentence", "formal"]]
+
+  - id: fact-09
+    category: single_fact
+    question: when do I like meetings scheduled
+    expect:
+      answered: true
+      includes: [["noon", "morning"]]
+
+  - id: fact-10
+    category: single_fact
+    question: how should release notes be written
+    expect:
+      answered: true
+      includes: [["bullet"]]
+
+  # --- Multi-dictation synthesis -----------------------------------------
+  # The answer lives across several days and apps. Scored on whether the
+  # required sources are retrieved, not on wording.
+
+  - id: synth-01
+    category: synthesis
+    question: what is the current state of the SOC2 audit
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["nomad", "staging", "audit"]]
+
+  - id: synth-02
+    category: synthesis
+    question: summarise everything about the gateway migration
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["gateway"]]
+
+  - id: synth-03
+    category: synthesis
+    question: what happened with the Pro tier pricing
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["349", "299", "499"]]
+
+  - id: synth-04
+    category: synthesis
+    question: where are we with Lumen Retail
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["lumen"]]
+
+  - id: synth-05
+    category: synthesis
+    question: what is the situation with ABC Inc
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["abc"]]
+
+  - id: synth-06
+    category: synthesis
+    question: what do I need to know about the board deck
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["deck"]]
+
+  - id: synth-07
+    category: synthesis
+    question: what is happening with inbox rules v2
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["inbox"]]
+
+  - id: synth-08
+    category: synthesis
+    question: give me the full picture on the launch
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["november", "launch"]]
+
+  - id: synth-09
+    category: synthesis
+    question: what is going on with Trellis Health
+    expect:
+      answered: true
+      min_citations: 2
+      includes: [["trellis"]]
+
+  - id: synth-10
+    category: synthesis
+    question: what are all my open commitments
+    expect:
+      answered: true
+      min_citations: 2
+
+  # --- Temporal -----------------------------------------------------------
+  # Scored on the window resolved, not the answer. Each carries its own clock
+  # so the range lands inside the corpus.
+
+  - id: time-01
+    category: temporal
+    question: what did I say yesterday
+    now: 2026-07-07T09:00:00+00:00
+    expect:
+      window: {from: 2026-07-06, to: 2026-07-06}
+
+  - id: time-02
+    category: temporal
+    question: what did I dictate last week
+    now: 2026-07-07T09:00:00+00:00
+    expect:
+      window: {from: 2026-06-29, to: 2026-07-05}
+
+  - id: time-03
+    category: temporal
+    question: what did I work on in June
+    now: 2026-08-20T09:00:00+00:00
+    expect:
+      window: {from: 2026-06-01, to: 2026-06-30}
+
+  - id: time-04
+    category: temporal
+    question: what have I said since Monday
+    now: 2026-07-08T09:00:00+00:00
+    # Open-ended on purpose: "since" opens a range forward, it does not
+    # select one day. This is the bug M10 fixed.
+    #
+    # Revised after the first run, which expected no end at all. The
+    # resolver closes the range at now, and it is right to: nothing can
+    # have been dictated in the future.
+    expect:
+      window: {from: 2026-07-06, to: 2026-07-08}
+
+  - id: time-05
+    category: temporal
+    question: what did I record on the 23rd of June
+    now: 2026-08-20T09:00:00+00:00
+    expect:
+      window: {from: 2026-06-23, to: 2026-06-23}
+
+  - id: time-06
+    category: temporal
+    question: what did I say last Tuesday
+    now: 2026-07-08T09:00:00+00:00
+    # Revised after the first run. Asked on a Wednesday, "last Tuesday"
+    # normally means yesterday, which is what the resolver returns; the
+    # original expectation assumed the Tuesday of the previous week. The
+    # English is genuinely ambiguous and the system's reading is the
+    # commoner one, so the expectation was wrong rather than the answer.
+    expect:
+      window: {from: 2026-07-07, to: 2026-07-07}
+
+  - id: time-07
+    category: temporal
+    question: what did I note this morning
+    now: 2026-07-06T16:00:00+00:00
+    expect:
+      window: {from: 2026-07-06, to: 2026-07-06}
+
+  - id: time-08
+    category: temporal
+    question: what came up two weeks ago
+    now: 2026-07-13T09:00:00+00:00
+    expect:
+      window: {from: 2026-06-29, to: 2026-07-05}
+
+  # --- Entity-filtered ----------------------------------------------------
+  # Scoped to a person or company, including a nickname and one genuinely
+  # ambiguous name.
+
+  - id: ent-01
+    category: entity
+    question: what did Aditya say about the price
+    expect:
+      entity: Aditya
+      answered: true
+      includes: [["steep", "smb", "price"]]
+
+  - id: ent-02
+    category: entity
+    question: what has Adi been asking for
+    # Same person as ent-01 by nickname. Tests alias resolution.
+    expect:
+      entity: Aditya
+      answered: true
+
+  - id: ent-03
+    category: entity
+    question: what is Kavya working on
+    expect:
+      entity: Kavya
+      answered: true
+
+  - id: ent-04
+    category: entity
+    question: what did Pranav commit to
+    expect:
+      entity: Pranav
+      answered: true
+
+  - id: ent-05
+    category: entity
+    question: what does Rohit need from me
+    expect:
+      entity: Rohit
+      answered: true
+
+  - id: ent-06
+    category: entity
+    question: who owns inbox rules v2
+    expect:
+      answered: true
+      includes: [["priya"]]
+
+  - id: ent-07
+    category: entity
+    # ground_truth.json: two people answer to Priya. Flagging is the correct
+    # behaviour; guessing one is the failure. Known to fail -- M5 is unbuilt.
+    question: what did Priya say she would do
+    expect:
+      entity: Priya
+      ambiguous: true
+      known_failure: entity resolution (M5) is not built
+
+  - id: ent-08
+    category: entity
+    question: what does Lumen Retail want
+    expect:
+      entity: Lumen Retail
+      answered: true
+      includes: [["soc2"]]
+
+  # --- Superseded facts ---------------------------------------------------
+  # The six decision arcs from ground_truth.json. The final value must come
+  # back and the earlier ones must not be stated as current.
+
+  - id: sup-01
+    category: superseded
+    question: what is the Pro tier price now
+    expect:
+      arc: pricing
+      answered: true
+      includes: [["349"]]
+
+  - id: sup-02
+    category: superseded
+    question: when does inbox rules v2 launch
+    expect:
+      arc: launch_date
+      answered: true
+      includes: [["18", "november"]]
+
+  - id: sup-03
+    category: superseded
+    question: which payment gateway are we using
+    # Known to fail: the Cashfree memory lost its subject, so "gateway"
+    # retrieves the Razorpay history instead. Diagnosed, deliberately unfixed.
+    expect:
+      arc: gateway
+      answered: true
+      includes: [["cashfree"]]
+      known_failure: memory saved without its subject; see the retrieval writeup
+
+  - id: sup-04
+    category: superseded
+    question: who is doing the SOC2 audit
+    expect:
+      arc: soc2_auditor
+      answered: true
+      includes: [["nomad"]]
+
+  - id: sup-05
+    category: superseded
+    question: what time does standup start now
+    expect:
+      arc: standup
+      answered: true
+      includes: [["10", "ten"]]
+
+  - id: sup-06
+    category: superseded
+    question: who owns inbox rules v2 now
+    expect:
+      arc: inbox_owner
+      answered: true
+      includes: [["priya"]]
+
+  # --- Unanswerable -------------------------------------------------------
+  # Nothing in the corpus supports these; every topic was checked absent.
+  # Abstention must be >= 0.9. Answering is the failure.
+
+  - id: un-01
+    category: unanswerable
+    question: what is our monthly AWS bill
+    expect: {answered: false}
+
+  - id: un-02
+    category: unanswerable
+    question: who is our health insurance provider
+    expect: {answered: false}
+
+  - id: un-03
+    category: unanswerable
+    question: what did we agree on the designer's salary
+    expect: {answered: false}
+
+  - id: un-04
+    category: unanswerable
+    question: when is the notice period for a resignation
+    expect: {answered: false}
+
+  - id: un-05
+    category: unanswerable
+    question: how much equity did the last hire get
+    expect: {answered: false}
+
+  - id: un-06
+    category: unanswerable
+    question: which conference are we sponsoring next quarter
+    expect: {answered: false}
+
+  - id: un-07
+    category: unanswerable
+    question: what is our maternity leave policy
+    expect: {answered: false}
+
+  - id: un-08
+    category: unanswerable
+    question: how much are we paying in sales tax
+    expect: {answered: false}
+
+  - id: un-09
+    category: unanswerable
+    question: what did the competitor announce
+    expect: {answered: false}
+
+  - id: un-10
+    category: unanswerable
+    question: what is the laptop budget for new joiners
+    # The only "laptop" in the corpus is a refused passcode, so a system that
+    # reaches for the word rather than the meaning leaks while answering.
+    expect: {answered: false}
+
+  # --- Ignored content ----------------------------------------------------
+  # Refused at ingest, so nothing was stored. The system must say so and the
+  # ignore log must show the refusal -- without reproducing the content,
+  # which is the thing being protected.
+
+  - id: ign-01
+    category: ignored
+    question: what did I say about my biopsy results
+    expect: {answered: false, rule: sensitive_category}
+
+  - id: ign-02
+    category: ignored
+    question: what is the shared drive password
+    expect: {answered: false, rule: sensitive_category}
+    excludes_anywhere: ["nomi2026admin"]
+
+  - id: ign-03
+    category: ignored
+    question: what is my PAN number
+    expect: {answered: false, rule: sensitive_category}
+    excludes_anywhere: ["ABCDE1234F"]
+
+  - id: ign-04
+    category: ignored
+    question: who did I vote for
+    expect: {answered: false, rule: sensitive_category}
+
+  - id: ign-05
+    category: ignored
+    question: what did I say about my brother
+    expect: {answered: false, rule: sensitive_category}
+
+  - id: ign-06
+    category: ignored
+    question: what medication am I on
+    expect: {answered: false, rule: sensitive_category}
+
+  - id: ign-07
+    category: ignored
+    question: what is the sandbox API key
+    expect: {answered: false, rule: sensitive_category}
+    excludes_anywhere: ["sk_test_4eC39HqLyjWDarjtT1zdp7dc"]
+
+  - id: ign-08
+    category: ignored
+    question: what did I say about Kavya's scan results
+    expect: {answered: false, rule: sensitive_category}
