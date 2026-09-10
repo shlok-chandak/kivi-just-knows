@@ -12,7 +12,6 @@ comparing it against the original.
 """
 
 import logging
-import re
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -23,16 +22,10 @@ from sqlalchemy.orm import Session
 from app.llm.client import SMALL, get_client
 from app.llm.prompts import RESTYLE_SYSTEM, render_text_for_restyling
 from app.schemas.restyle import RestyleOut
+from app.services import claims
 from app.services import profile as profile_service
 
 logger = logging.getLogger("kivi.restyle")
-
-# Numbers, money and dates: the things a rewrite must carry through intact.
-_FACTS = re.compile(
-    r"[\d]+(?:[.,]\d+)*%?"
-    r"|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b",
-    re.IGNORECASE,
-)
 
 
 @dataclass
@@ -60,7 +53,13 @@ class Restyled:
 
 
 def facts_in(text: str) -> set[str]:
-    return {match.group(0).lower() for match in _FACTS.finditer(text)}
+    """The numbers and dates a rewrite must carry through intact.
+
+    The same question claim identity asks, so the same answer. Two copies of
+    this pattern drifted once already and a rewrite that silently dropped a
+    price is the failure this check exists to catch.
+    """
+    return set(claims.values_in(text))
 
 
 def restyle(

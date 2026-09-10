@@ -47,7 +47,9 @@ logger = logging.getLogger("kivi.claims")
 # failure this guard exists to catch.
 _VALUES = re.compile(
     r"[\d]+(?:[.,]\d+)*%?"
-    r"|\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\b",
+    r"|\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may"
+    r"|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?"
+    r"|nov(?:ember)?|dec(?:ember)?)\b",
     re.IGNORECASE,
 )
 

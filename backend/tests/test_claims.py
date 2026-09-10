@@ -111,6 +111,59 @@ def test_the_same_number_written_differently_still_matches():
     assert claims.values_in("₹299 for Pro") == claims.values_in("Pro is 299")
 
 
+@pytest.mark.parametrize(
+    "text",
+    [
+        "We decided to keep the price",  # dec
+        "the pitch deck is ready",       # dec
+        "that was a good decision",      # dec
+        "a 40 percent margin on that",   # mar
+        "marching orders from Priya",    # mar
+        "maybe we ship on Friday",       # may
+        "the junior dev owns it",        # jun
+        "augment the onboarding flow",   # aug
+        "the april_config file",         # apr, but not a word on its own
+    ],
+)
+def test_a_word_that_merely_starts_like_a_month_is_not_a_date(text):
+    """A prefix match read "decided" as December and "deck" as December.
+
+    The cost was not cosmetic: a sentence carrying a fake month held a value
+    the sentence it restated did not, so the two looked like a change of mind.
+    """
+    months = {value for value in claims.values_in(text) if not value.isdigit()}
+    assert months == set()
+
+
+@pytest.mark.parametrize(
+    "text,expected",
+    [
+        ("delayed until November", "november"),
+        ("moved to Oct", "oct"),
+        ("due 15 Mar", "mar"),
+        ("shipping in September", "september"),
+        ("sept at the earliest", "sept"),
+    ],
+)
+def test_a_real_month_is_still_a_date(text, expected):
+    assert expected in claims.values_in(text)
+
+
+def test_a_restatement_that_says_decided_holds_the_same_values():
+    """The failure this fix exists for: same price, one sentence saying so."""
+    assert claims.values_in("We decided pricing stays at 349") == claims.values_in(
+        "Pricing is 349 a month"
+    )
+
+
+def test_a_rewrite_is_checked_against_the_same_facts_a_claim_is():
+    """One definition. Two copies of this pattern drifted once already."""
+    from app.services import restyle
+
+    text = "We decided on 349 by November"
+    assert restyle.facts_in(text) == set(claims.values_in(text))
+
+
 def test_half_life_depends_on_the_kind_of_claim():
     assert claims.half_life_days("decision") > claims.half_life_days("fact")
     assert claims.half_life_days("fact") > claims.half_life_days("commitment")
