@@ -4,15 +4,18 @@ A trace is the answer to "why did it say that". Every stage records what it
 decided and why, along with what the model calls cost, so a wrong answer is
 diagnosable rather than merely disappointing.
 
-Replay re-asks a stored question against what is known now. The point is the
-comparison: a system whose memory is alive should answer the same question
-differently once it has learned something, and this is where that becomes
-visible instead of claimed.
+Replay re-asks a stored question, optionally with something taken away. Plain
+replay shows whether the answer has changed as the system learned more.
+Replay with beliefs excluded answers the sharper question -- did this memory
+actually affect the result, or would the answer have been the same without
+it. Claiming memory mattered is easy; removing it and showing the answer
+change is the proof.
 """
 
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Header, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -21,6 +24,7 @@ from app.config import settings
 from app.db.session import get_db
 from app.models.trace import Trace, TraceStep
 from app.services import asking
+from app.services.ablation import Ablation
 
 router = APIRouter(prefix="/traces", tags=["traces"])
 
@@ -96,17 +100,29 @@ def detail(trace_id: uuid.UUID, db: Session = Depends(get_db)) -> dict:
     return {**_trace(trace), "steps": [_step(step) for step in steps]}
 
 
+class ReplayRequest(BaseModel):
+    """What to withhold from the re-run. Empty means a plain replay."""
+
+    exclude_memory_ids: list[uuid.UUID] = Field(default_factory=list)
+    skip_filters: bool = False
+    disable_stages: list[str] = Field(default_factory=list)
+
+
 @router.post("/{trace_id}/replay")
 def replay(
     trace_id: uuid.UUID,
+    payload: ReplayRequest | None = None,
     db: Session = Depends(get_db),
     x_kivi_now: str | None = Header(default=None),
 ) -> dict:
-    """Ask the same question again, against what is known now.
+    """Ask the same question again, optionally with something taken away.
 
     Only queries can be replayed. Re-running an ingest would extract the same
     dictation a second time and write beliefs, which is a different and much
     less reversible thing than asking a question twice.
+
+    Nothing is deleted. Exclusions apply to this run alone, so the question
+    asked normally afterwards behaves exactly as it did before.
     """
     original = _load(db, trace_id)
     if original.kind != "query":
@@ -120,11 +136,14 @@ def replay(
             "This trace did not record the request text.",
         )
 
+    cuts = Ablation.parse(payload.model_dump(mode="json") if payload else None)
+
     result = asking.run(
         db,
         original.user_id,
         original.input,
         now=reference_now(x_kivi_now),
+        cuts=cuts,
     )
     db.commit()
 
@@ -133,6 +152,7 @@ def replay(
 
     return {
         "request": original.input,
+        "withheld": cuts.as_dict() if cuts.active else None,
         "then": {
             "trace_id": str(original.id),
             "at": original.created_at.isoformat() if original.created_at else None,

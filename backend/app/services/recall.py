@@ -31,6 +31,7 @@ from app.llm.prompts import ANSWER_SYSTEM, render_sources_for_answering
 from app.schemas.recall import AnswerOut
 from app.services import profile as profile_service
 from app.services import retrieval
+from app.services.ablation import NONE, Ablation
 
 logger = logging.getLogger("kivi.recall")
 
@@ -150,6 +151,7 @@ def answer(
     until: datetime | None = None,
     apps: Sequence[str] | None = None,
     person: str | None = None,
+    cuts: Ablation = NONE,
 ) -> Answer:
     """Answer a question from what this user actually dictated."""
     now = now or datetime.now(timezone.utc)
@@ -157,6 +159,7 @@ def answer(
     found = retrieval.search(
         session, user_id, question,
         now=now, since=since, until=until, apps=apps, person=person,
+        cuts=cuts,
     )
     sources = to_sources(found.candidates[:CONTEXT_SIZE])
 

@@ -21,6 +21,7 @@ from app.services import composer, finder, memory_control, parse, plan
 from app.services import recall as recall_service
 from app.services import restyle as restyle_service
 from app.services import timeref, tracing
+from app.services.ablation import NONE, Ablation
 
 logger = logging.getLogger("kivi.asking")
 
@@ -56,14 +57,22 @@ def run(
     *,
     text: str | None = None,
     now: datetime | None = None,
+    cuts: Ablation = NONE,
+    parsed: parse.Parsed | None = None,
 ) -> Outcome:
-    """Answer, find, restyle, draft, or edit memory -- whichever was asked."""
+    """Answer, find, restyle, draft, or edit memory -- whichever was asked.
+
+    `parsed` reuses an earlier reading of the same request. The ablations
+    need it: they compare retrieval and generation, so holding the parse
+    fixed across the arms isolates what is being measured, and it happens to
+    save a model call per arm.
+    """
     now = now or datetime.now(timezone.utc)
 
     with tracing.start_query_trace(
         session, user_id=user_id, request=request
     ) as recorder:
-        parsed = parse.parse(request)
+        parsed = parsed or parse.parse(request)
         spec = parsed.spec
         recorder.step(
             "parse",
@@ -86,6 +95,9 @@ def run(
             input_summary={
                 "time_expression": spec.time_expression,
                 "resolved": _time_dict(when),
+                # Recorded so a run with something withheld is never mistaken
+                # for a normal one when the trace is read back.
+                "withheld": cuts.as_dict() if cuts.active else None,
             },
         )
 
@@ -94,8 +106,14 @@ def run(
         last = "answered"
 
         for step in made.steps:
+            if not cuts.allows(step.tool):
+                recorder.step(step.tool, decision="skipped: disabled for this run")
+                steps.append({"tool": step.tool, "result": {"skipped": True}})
+                continue
+
             ran = _run(
-                session, user_id, step.tool, spec, request, when, now, carried
+                session, user_id, step.tool, spec, request, when, now, carried,
+                cuts,
             )
             recorder.step(
                 step.tool,
@@ -145,7 +163,7 @@ class _Ran:
     outcome: str = "answered"
 
 
-def _run(session, user_id, tool, spec, request, when, now, carried) -> _Ran:
+def _run(session, user_id, tool, spec, request, when, now, carried, cuts=NONE) -> _Ran:
     """One step of the plan."""
     if tool == "recall":
         answer = recall_service.answer(
@@ -155,6 +173,7 @@ def _run(session, user_id, tool, spec, request, when, now, carried) -> _Ran:
             until=when.end if when else None,
             apps=spec.apps or None,
             person=spec.people[0] if spec.people else None,
+            cuts=cuts,
         )
         return _Ran(
             result=answer.as_dict(),

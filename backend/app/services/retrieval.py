@@ -31,6 +31,7 @@ from app.models.episode import Episode
 from app.models.event import Event
 from app.models.memory import Memory
 from app.services import embed, ranking
+from app.services.ablation import NONE, Ablation
 
 logger = logging.getLogger("kivi.retrieval")
 
@@ -193,6 +194,7 @@ def search_memories(
     memory_types: Sequence[str] | None = None,
     include_candidates: bool = False,
     limit: int = 10,
+    cuts: Ablation = NONE,
 ) -> list[Candidate]:
     """Durable beliefs that might answer this.
 
@@ -207,6 +209,10 @@ def search_memories(
         allowed = allowed.where(Memory.status == "active")
     if memory_types:
         allowed = allowed.where(Memory.type.in_(list(memory_types)))
+    # Withheld for this run only. Nothing is deleted, so the same question
+    # asked normally still finds them.
+    if cuts.exclude_memory_ids:
+        allowed = allowed.where(Memory.id.notin_(list(cuts.exclude_memory_ids)))
     allowed = _apply_filters(
         allowed, Memory.last_reinforced_at, since=since, until=until
     )
@@ -390,6 +396,7 @@ def search(
     memory_types: Sequence[str] | None = None,
     person: str | None = None,
     limit: int = 12,
+    cuts: Ablation = NONE,
 ) -> Retrieved:
     """Everything that might answer, most useful first.
 
@@ -401,6 +408,13 @@ def search(
     widened: list[str] = []
     not_applied: list[str] = []
 
+    # The vector-only comparison: let similarity decide with no narrowing
+    # first, which is the arrangement this design argues against.
+    if cuts.skip_filters:
+        since = until = None
+        apps = memory_types = None
+        not_applied.append("all filters (ablation)")
+
     # Recipient is not captured, so a question naming a person cannot be
     # filtered by one. The name still helps as search text, but the answer
     # has to say the filter was not applied rather than implying it was.
@@ -411,7 +425,7 @@ def search(
         return (
             search_memories(
                 session, user_id, query, now=now, since=start, until=end,
-                memory_types=memory_types, limit=limit,
+                memory_types=memory_types, limit=limit, cuts=cuts,
             )
             + search_events(
                 session, user_id, query, now=now, since=start, until=end,
