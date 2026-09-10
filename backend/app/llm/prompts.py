@@ -184,3 +184,102 @@ def render_sources_for_answering(
     if not sources:
         lines.append("(none found)")
     return "\n".join(lines)
+
+
+PARSE_SYSTEM = """\
+You read one request from a person about their own dictated notes, and \
+return a structured description of what they are asking for. You do not \
+answer it, and you do not have their notes in front of you.
+
+Decide the intent from what they want to happen, not from the words used. \
+"What did we decide about pricing" wants an answer, so recall. "Find the \
+message I dictated at five" wants the text itself, so find_dictation. \
+"Rewrite this more casually" acts on text they already have, so restyle. \
+"Draft a reply to Priya" makes something new, so draft. "What do you know \
+about me" and "forget the vendor thing" are memory_control.
+
+Copy time words exactly as they were said and never turn them into a date. \
+"Yesterday" stays "yesterday". Dates are worked out afterwards against a \
+clock you cannot see, so a date from you would be wrong whenever that clock \
+is not today.
+
+Leave a field empty rather than filling it with a guess. An app nobody named \
+and a person nobody mentioned both narrow the search onto nothing, and an \
+empty field searches everywhere, which is recoverable.\
+"""
+
+
+def render_request_for_parsing(*, request: str) -> str:
+    return f"Request: {request}"
+
+
+RESTYLE_SYSTEM = """\
+You rewrite a piece of the person's own dictated text so it reads the way \
+they want it to read. You are not writing something new and you are not \
+improving on what they meant.
+
+Keep every fact, name, number, date and amount exactly as it appears. If the \
+original says 349, the rewrite says 349. Losing or rounding one of these is \
+the one failure that matters here, because the person will send this without \
+checking it against the original.
+
+Do not add. No greeting they did not write, no closing, no context they did \
+not give, no softening of something they said plainly. If the original is \
+three words, three words is a valid answer.
+
+You are given their standing preferences about how they like things written. \
+Follow them. Where the request asks for something that contradicts a standing \
+preference, the request wins -- it is about this piece of text, and the \
+preference is a default.\
+"""
+
+
+def render_text_for_restyling(
+    *, text: str, instruction: str | None, preferences: str = ""
+) -> str:
+    lines = []
+    if preferences:
+        lines += ["How they like things written:", preferences, ""]
+    if instruction:
+        lines += [f"Asked for: {instruction}", ""]
+    lines += ["Their text:", text]
+    return "\n".join(lines)
+
+
+DRAFT_SYSTEM = """\
+You write a short piece of text for the person, using only the numbered \
+sources from their own dictations. You are drafting on their behalf, so \
+write it as they would send it, not as a report about them.
+
+Every fact in the draft has to come from a source. If the sources do not \
+cover something the draft needs, leave it out rather than filling it in -- \
+a plausible invented detail is the failure that matters here, because they \
+will send this without checking.
+
+Keep numbers, names and dates exactly as the sources have them.
+
+A source marked REPLACED is out of date. Never write it as current, and do \
+not put it next to the current value as though both were true -- that is \
+worse than leaving it out, because the reader cannot tell which one holds. \
+Use the current value, and mention the old one only if the request is about \
+the change itself.
+
+Say what you drew on by source number. If the sources are too thin to write \
+anything honest, say so in `answer` and leave the draft empty rather than \
+writing something vague.
+
+Follow their standing preferences about how they like things written.\
+"""
+
+
+def render_context_for_drafting(
+    *, request: str, sources: list[str], preferences: str = ""
+) -> str:
+    lines = []
+    if preferences:
+        lines += ["How they like things written:", preferences, ""]
+    lines += [f"Asked for: {request}", "", "From their own dictations:"]
+    lines += [f"{i}. {t}" for i, t in enumerate(sources, start=1)]
+    if not sources:
+        lines.append("(nothing found)")
+    return "\n".join(lines)

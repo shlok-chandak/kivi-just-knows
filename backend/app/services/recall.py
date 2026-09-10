@@ -107,7 +107,7 @@ class Answer:
         }
 
 
-def _to_sources(candidates: Sequence[retrieval.Candidate]) -> list[Source]:
+def to_sources(candidates: Sequence[retrieval.Candidate]) -> list[Source]:
     return [
         Source(
             number=position,
@@ -121,7 +121,7 @@ def _to_sources(candidates: Sequence[retrieval.Candidate]) -> list[Source]:
     ]
 
 
-def _resolve(numbers: Sequence[int], sources: Sequence[Source]) -> list[Source]:
+def resolve_citations(numbers: Sequence[int], sources: Sequence[Source]) -> list[Source]:
     """Turn the model's citation numbers into the sources they name.
 
     Numbers outside the list are dropped rather than trusted. A citation to
@@ -158,7 +158,7 @@ def answer(
         session, user_id, question,
         now=now, since=since, until=until, apps=apps, person=person,
     )
-    sources = _to_sources(found.candidates[:CONTEXT_SIZE])
+    sources = to_sources(found.candidates[:CONTEXT_SIZE])
 
     # Nothing retrieved is already an answer, and not one worth paying for.
     # Asking the model to decline over an empty list spends a call to be told
@@ -186,7 +186,7 @@ def answer(
     )
     result: AnswerOut = completion.value
 
-    citations = _resolve(result.citations, sources) if result.answered else []
+    citations = resolve_citations(result.citations, sources) if result.answered else []
 
     # An answer resting on nothing traceable is the failure this whole path
     # exists to avoid, so it is withdrawn rather than shown uncited.
