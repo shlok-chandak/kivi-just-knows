@@ -24,7 +24,7 @@ from app.models.event import Event
 from app.models.rejected import RejectedCandidate
 from app.schemas.consolidation import ConsolidationOut
 from app.models.memory import Memory, MemoryEvidence
-from app.services import claims, embed, profile, queue
+from app.services import apps, claims, embed, profile, queue
 from app.services.episodes import events_in_episode, partition_into_sittings
 from app.services.gate import decide, fallback_title
 from app.services.tracing import TraceRecorder
@@ -39,6 +39,7 @@ KNOWN_BELIEFS = 8
 
 STAGE = "episode_consolidate"
 RULE_NOTHING_TO_EXTRACT = "no_extractable_content"
+RULE_TOOL_INSTRUCTION = "tool_instruction"
 
 # Distinct from the ingest rule: this one got past the deterministic layer and
 # had to be removed after being read. Collapsing the two would hide how often
@@ -133,6 +134,26 @@ def consolidate_episode(
             # Deleting the dictation is not enough if what was derived from it
             # survives: the claim can carry the very detail that was refused.
             logger.warning("dropping claim drawn from purged content")
+            refused += 1
+            continue
+
+        # Rests on nothing but tool instructions. A claim citing an editor
+        # alongside a real dictation is still grounded in the real one, so
+        # this needs every source to be unextractable, not any of them.
+        if sources and not any(apps.extractable(event.app) for event in sources):
+            session.add(
+                RejectedCandidate(
+                    user_id=episode.user_id,
+                    episode_id=episode_id,
+                    event_id=sources[0].id,
+                    candidate={"content": candidate.content[:500]},
+                    rejection_rule=RULE_TOOL_INSTRUCTION,
+                    rationale=(
+                        f"drawn only from {sources[0].app}, where dictation "
+                        f"instructs a tool rather than recording a fact"
+                    ),
+                )
+            )
             refused += 1
             continue
 

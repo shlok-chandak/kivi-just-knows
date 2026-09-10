@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import delete
+from sqlalchemy import delete, func, select
 
 from app.config import settings
 from app.db.session import SessionLocal
@@ -365,3 +365,55 @@ def test_a_purge_does_not_renumber_the_remaining_claims(world):
 
     evidence = db.query(MemoryEvidence).one()
     assert evidence.event_id == third.id
+
+
+# --- apps that instruct a tool rather than record a fact --------------------
+
+
+def test_a_claim_drawn_only_from_an_editor_is_refused(world):
+    """"Refactor the retry handler" is a command, not something true."""
+    db, episode, install = world
+    event(db, episode, "Refactor the retry handler.", minutes=0, app="cursor")
+    event(db, episode, "Convert the import job to async.", minutes=4, app="cursor")
+    install(out([claim("The import job will be converted to async.",
+                       "Convert the import job to async.", indexes=(2,))]))
+
+    consolidate_episode(db, episode.id)
+
+    assert db.scalar(
+        select(func.count()).select_from(Memory).where(Memory.user_id == USER)
+    ) == 0
+    logged = db.scalars(
+        select(RejectedCandidate).where(
+            RejectedCandidate.user_id == USER,
+            RejectedCandidate.rejection_rule == "tool_instruction",
+        )
+    ).all()
+    assert len(logged) == 1, "the refusal must be visible in the ignore log"
+
+
+def test_the_dictations_themselves_are_kept(world):
+    """Indexed but not mined. Losing them would lose "what was I doing"."""
+    db, episode, install = world
+    row = event(db, episode, "Split the billing sync.", minutes=0, app="cursor")
+    install(out([claim("The billing sync will be split.",
+                       "Split the billing sync.", indexes=(1,))]))
+
+    consolidate_episode(db, episode.id)
+
+    assert db.get(Event, row.id) is not None
+
+
+def test_an_editor_alongside_a_real_dictation_still_counts(world):
+    """One unextractable source does not disqualify a grounded claim."""
+    db, episode, install = world
+    event(db, episode, "Switching the gateway to Cashfree.", minutes=0, app="slack")
+    event(db, episode, "swap the gateway client to cashfree", minutes=4, app="cursor")
+    install(out([claim("The payment gateway is Cashfree.",
+                       "Switching the gateway to Cashfree.", indexes=(1, 2))]))
+
+    consolidate_episode(db, episode.id)
+
+    assert db.scalar(
+        select(func.count()).select_from(Memory).where(Memory.user_id == USER)
+    ) == 1

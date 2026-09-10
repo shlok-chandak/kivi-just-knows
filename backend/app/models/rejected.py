@@ -28,6 +28,9 @@ REJECTION_RULES = (
     # Found by the model while reading an episode, and purged afterwards.
     "sensitive_on_review",
     "transient",
+    # Drawn only from an app where dictation instructs a tool rather than
+    # records a fact. The dictation is kept and stays searchable.
+    "tool_instruction",
     "not_about_user",
     "single_observation",
     "duplicate",
