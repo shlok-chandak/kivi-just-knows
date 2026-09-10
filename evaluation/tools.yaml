@@ -1,0 +1,116 @@
+# The four tools the recall eval does not measure.
+#
+# Scored on safety, not quality. Whether a rewrite reads well is a matter of
+# taste and would need a judge model to guess at; whether it silently dropped
+# a price is a fact, and it is the one that matters when the person sends it.
+# Same for the rest: did find return the dictation that exists, does every
+# line of a draft trace to a source, does deletion refuse when it should.
+#
+# Nothing here is destructive. The forget cases run inside a transaction the
+# runner rolls back, so the corpus survives being tested against.
+
+meta:
+  default_now: 2026-08-20T09:00:00+00:00
+
+# Requests to route. Intent only -- the wording of a topic is a judgement
+# call, which tool to run is not.
+routing:
+  - {request: "what rate did we agree with Lumen", intent: recall}
+  - {request: "find the message I sent about the gateway yesterday", intent: find_dictation}
+  - {request: "draft a note to ABC about the pricing", intent: draft}
+  - {request: "forget everything about the nav redesign", intent: memory_control}
+  - {request: "rewrite this for the team channel", intent: restyle}
+  - {request: "find what I dictated on Monday and make it formal", intent: find_dictation}
+
+# Did it return the dictation that exists, under the constraints given.
+find:
+  - id: find-01
+    request: what did I dictate yesterday
+    now: 2026-08-20T09:00:00+00:00
+    expect: {contains: "18th"}
+
+  - id: find-02
+    request: what did I say about the gateway settlement
+    expect: {contains: "settlement"}
+
+  - id: find-03
+    request: what did I dictate in linear
+    expect: {app: linear}
+
+  - id: find-04
+    request: find the message about margin coming back better
+    expect: {contains: "349"}
+
+# A rewrite that loses a number is not a worse rewrite, it is a wrong one.
+# Inputs are real dictations from the corpus.
+restyle:
+  - id: style-01
+    text: "349 now. Margin came back better than we thought at the higher tier."
+    instruction: make it formal for an email
+    expect: {keeps: ["349"]}
+
+  - id: style-02
+    text: "Locking the 18th."
+    instruction: make it a polite note to the team
+    expect: {keeps: ["18"]}
+
+  - id: style-03
+    text: "Settlement is T+3 with them, which kills the refund flow. Switching to Cashfree."
+    instruction: make it shorter and neutral
+    expect: {keeps: ["3"]}
+
+  - id: style-04
+    text: "ABC came back on price. They're anchored around 250."
+    instruction: rewrite for a formal update
+    expect: {keeps: ["250"]}
+
+# Grounded and cited, or withdrawn. A draft resting on nothing is the failure
+# this path exists to prevent, so coming back empty is the right answer for
+# the last two.
+draft:
+  - id: draft-01
+    request: draft a short note to the team about where the Pro tier price landed
+    topic: Pro tier price
+    expect: {enough: true, min_citations: 1}
+
+  - id: draft-02
+    request: draft an update on the SOC2 audit
+    topic: SOC2 audit
+    expect: {enough: true, min_citations: 1}
+
+  - id: draft-03
+    request: draft a note explaining our AWS bill this quarter
+    topic: AWS bill
+    expect: {enough: false}
+
+  - id: draft-04
+    request: draft a summary of our maternity leave policy
+    topic: maternity leave policy
+    expect: {enough: false}
+
+# Deletion is irreversible, so the refusals matter more than the deletions.
+memory:
+  - id: mem-01
+    action: show
+    topic: the Pro tier price
+    expect: {min_memories: 1}
+
+  - id: mem-02
+    action: show
+    topic: ""
+    expect: {min_memories: 1}
+
+  - id: mem-03
+    action: forget
+    topic: ""
+    expect: {refused: true}
+
+  - id: mem-04
+    action: forget
+    topic: something nobody ever dictated about
+    expect: {refused: true}
+
+  - id: mem-05
+    action: forget
+    topic: the Pro tier price
+    expect: {deletes: true}
