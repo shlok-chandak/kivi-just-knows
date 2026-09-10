@@ -10,6 +10,8 @@ what the person wanted than a stack trace.
 """
 
 import logging
+from dataclasses import dataclass
+from typing import Any
 
 from app.llm.client import SMALL, get_client
 from app.llm.prompts import PARSE_SYSTEM, render_request_for_parsing
@@ -18,7 +20,20 @@ from app.schemas.query import QuerySpec
 logger = logging.getLogger("kivi.parse")
 
 
-def parse(request: str) -> tuple[QuerySpec, bool]:
+@dataclass
+class Parsed:
+    """What the request turned into, and what it cost to find out."""
+
+    spec: QuerySpec
+    by_model: bool
+    usage: Any = None
+
+    # Unpacks as `spec, by_model` so existing call sites keep working.
+    def __iter__(self):
+        return iter((self.spec, self.by_model))
+
+
+def parse(request: str) -> Parsed:
     """The request as a QuerySpec, and whether the model produced it."""
     try:
         completion = get_client().structured(
@@ -29,7 +44,7 @@ def parse(request: str) -> tuple[QuerySpec, bool]:
         )
     except Exception:  # noqa: BLE001 - a parse failure must not lose the question
         logger.exception("parse failed, falling back to recall: %r", request[:80])
-        return QuerySpec(intent="recall", topic=request), False
+        return Parsed(QuerySpec(intent="recall", topic=request), False)
 
     spec: QuerySpec = completion.value
 
@@ -38,4 +53,4 @@ def parse(request: str) -> tuple[QuerySpec, bool]:
     if not spec.topic.strip() and spec.intent != "memory_control":
         spec.topic = request
 
-    return spec, True
+    return Parsed(spec, True, completion.usage)

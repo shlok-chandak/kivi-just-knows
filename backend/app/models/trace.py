@@ -51,6 +51,16 @@ QUERY_STAGES = (
     "verify",
 )
 
+# One level up from QUERY_STAGES: the tools the planner runs, rather than the
+# stages inside one of them.
+TOOL_STAGES = (
+    "recall",
+    "find_dictation",
+    "restyle",
+    "draft",
+    "memory_control",
+)
+
 
 class Trace(UserOwnedMixin, Base):
     __tablename__ = "traces"

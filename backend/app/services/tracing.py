@@ -124,3 +124,19 @@ def start_ingest_trace(
         subject_key=subject_key,
         input_text=input_text,
     )
+
+
+def start_query_trace(
+    session: Session, *, user_id: uuid.UUID, request: str
+) -> TraceRecorder:
+    """Open a trace for one thing a person asked.
+
+    The request text is the input, so a trace can be replayed later against
+    whatever is known by then.
+    """
+    return TraceRecorder(
+        session,
+        user_id=user_id,
+        kind="query",
+        input_text=request,
+    )

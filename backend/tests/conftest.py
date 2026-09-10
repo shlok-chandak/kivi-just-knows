@@ -53,7 +53,11 @@ os.environ["DATABASE_URL"] = _test_database_url()
 import pytest  # noqa: E402
 
 from app.config import settings  # noqa: E402
+from app.services import composer as composer_module  # noqa: E402
 from app.services import consolidate as consolidate_module  # noqa: E402
+from app.services import parse as parse_module  # noqa: E402
+from app.services import recall as recall_module  # noqa: E402
+from app.services import restyle as restyle_module  # noqa: E402
 
 if not settings.database_url.endswith(_TEST_DATABASE):
     raise RuntimeError(
@@ -69,7 +73,13 @@ TEST_USER = uuid.UUID("00000000-0000-0000-0000-0000000000ff")
 
 # Every module that reaches for a client. A new one must be added here, or
 # its tests will quietly start calling the real provider.
-_LLM_CONSUMERS = (consolidate_module,)
+_LLM_CONSUMERS = (
+    composer_module,
+    consolidate_module,
+    parse_module,
+    recall_module,
+    restyle_module,
+)
 
 
 class RealProviderCalledInTests(RuntimeError):
