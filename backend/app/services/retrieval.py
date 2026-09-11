@@ -72,7 +72,14 @@ class Candidate:
     matched_by: set[str] = field(default_factory=set)
     memory_type: str | None = None
     confidence: float | None = None
+
+    # Old, but still what we believe. A preference from March is not wrong.
     stale: bool = False
+
+    # Replaced by a later claim. Different from stale in the way that
+    # matters: this one is no longer true, and saying it as though it were
+    # is the failure the whole supersession mechanism exists to prevent.
+    superseded: bool = False
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -83,7 +90,24 @@ class Candidate:
             "score": round(self.score, 3),
             "matched_by": sorted(self.matched_by),
             "stale": self.stale,
+            "superseded": self.superseded,
         }
+
+
+def _order(candidate: Candidate) -> tuple[float, bool]:
+    """By score, with a live belief winning a tie against a replaced one.
+
+    Relevance has to lead. Ranking every replaced belief below every live
+    one was tried and is worse than it sounds: a replaced price matching at
+    0.78 lands underneath an unrelated live note matching at 0.25, falls
+    outside the context window, and history becomes unreachable again --
+    the same bug, one layer further in.
+
+    Being replaced is not handled by burying it. It is handled by saying
+    so: the source is labelled REPLACED, and the answer prompt is built to
+    use the current value and name the change.
+    """
+    return (-candidate.score, candidate.superseded)
 
 
 @dataclass
@@ -94,6 +118,13 @@ class Retrieved:
     widened: list[str] = field(default_factory=list)
     filters_applied: dict[str, Any] = field(default_factory=dict)
     filters_not_applied: list[str] = field(default_factory=list)
+
+    # How many matched before the shortlist was cut, and of what. Kept
+    # because "answered from 3 sources" does not say whether three was all
+    # there was or three survived out of thirty -- and those are different
+    # answers to "why did it say that".
+    considered: int = 0
+    by_kind: dict[str, int] = field(default_factory=dict)
 
     @property
     def empty(self) -> bool:
@@ -193,20 +224,31 @@ def search_memories(
     until: datetime | None = None,
     memory_types: Sequence[str] | None = None,
     include_candidates: bool = False,
+    include_superseded: bool = False,
     limit: int = 10,
     cuts: Ablation = NONE,
 ) -> list[Candidate]:
     """Durable beliefs that might answer this.
 
-    Superseded memories are excluded: they are history, reachable when asked
-    for directly, but offering one as current is simply wrong. Candidates are
-    excluded too unless asked for, because an inference heard once should not
-    be stated as fact.
+    Candidates are excluded unless asked for, because an inference heard
+    once should not be stated as fact.
+
+    Superseded beliefs are included when asked for, and then always sort
+    below live ones. Excluding them outright was simpler and wrong: "what
+    was the price before we raised it" is a real question, and a store that
+    keeps history and cannot retrieve it is keeping it for nobody. The
+    danger was never that history is reachable, it is that history is
+    mistaken for the present -- which is handled by labelling and ordering,
+    not by hiding.
     """
+    statuses = ["active"]
+    if include_candidates:
+        statuses.append("candidate")
+    if include_superseded:
+        statuses.append("superseded")
+
     allowed = select(Memory.id).where(Memory.user_id == user_id)
-    allowed = allowed.where(Memory.status != "superseded")
-    if not include_candidates:
-        allowed = allowed.where(Memory.status == "active")
+    allowed = allowed.where(Memory.status.in_(statuses))
     if memory_types:
         allowed = allowed.where(Memory.type.in_(list(memory_types)))
     # Withheld for this run only. Nothing is deleted, so the same question
@@ -241,10 +283,19 @@ def search_memories(
         similarity = max(hits.get(memory.id, 0.0), lexical.get(memory.id, 0.0))
         matched = {arm for arm, found in
                    (("vector", hits), ("lexical", lexical)) if memory.id in found}
+        replaced = memory.status == "superseded"
+
         # An expired commitment is not offered as current. It stays in the
         # store and stays answerable when asked about directly.
-        if ranking.is_expired(memory, now):
+        #
+        # Not applied to a replaced belief. `valid_until` carries two
+        # meanings: a commitment's own deadline, and the moment a belief
+        # stopped being true. Every superseded row has the second, so
+        # checking expiry here would drop the whole of history again,
+        # one line further down than last time.
+        if not replaced and ranking.is_expired(memory, now):
             continue
+
         candidates.append(
             Candidate(
                 kind="memory",
@@ -257,10 +308,11 @@ def search_memories(
                 memory_type=memory.type,
                 confidence=float(memory.posterior_mean or 0.0),
                 stale=ranking.is_stale(memory, now),
+                superseded=replaced,
             )
         )
 
-    candidates.sort(key=lambda c: c.score, reverse=True)
+    candidates.sort(key=_order)
     return candidates[:limit]
 
 
@@ -395,6 +447,7 @@ def search(
     apps: Sequence[str] | None = None,
     memory_types: Sequence[str] | None = None,
     person: str | None = None,
+    include_superseded: bool = True,
     limit: int = 12,
     cuts: Ablation = NONE,
 ) -> Retrieved:
@@ -426,6 +479,7 @@ def search(
             search_memories(
                 session, user_id, query, now=now, since=start, until=end,
                 memory_types=memory_types, limit=limit, cuts=cuts,
+                include_superseded=include_superseded,
             )
             + search_events(
                 session, user_id, query, now=now, since=start, until=end,
@@ -451,10 +505,16 @@ def search(
             until + timedelta(days=WIDEN_DAYS) if until else None,
         )
 
-    found.sort(key=lambda c: c.score, reverse=True)
+    found.sort(key=_order)
+
+    by_kind: dict[str, int] = {}
+    for candidate in found:
+        by_kind[candidate.kind] = by_kind.get(candidate.kind, 0) + 1
 
     return Retrieved(
         candidates=found[:limit],
+        considered=len(found),
+        by_kind=by_kind,
         widened=widened,
         filters_applied={
             "since": since.isoformat() if since else None,

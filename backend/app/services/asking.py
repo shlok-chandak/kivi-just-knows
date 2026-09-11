@@ -294,7 +294,14 @@ def _summarise(result: dict) -> dict:
     Full results hold whole dictations and drafts. Storing them again on the
     trace would duplicate the corpus row by row for no added explanation.
     """
-    keep = ("answered", "enough", "refused", "widened", "filters", "deleted")
+    # `filters_not_applied` is the honesty record: it says a constraint the
+    # person stated was not actually enforced. Dropping it left the live
+    # answer admitting that and the stored trace implying a clean search --
+    # and the trace is what gets read back and quoted.
+    keep = (
+        "answered", "enough", "refused", "widened", "filters", "deleted",
+        "filters_not_applied", "funnel",
+    )
     small = {key: result[key] for key in keep if key in result}
     for key in ("citations", "found", "memories"):
         if key in result:

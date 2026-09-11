@@ -83,6 +83,11 @@ class Answer:
     called_model: bool = False
     usage: Any = None
 
+    # How the field narrowed: matched, shown to the model, actually cited.
+    # "Answered from 3 sources" does not distinguish three out of three from
+    # three out of thirty, and only one of those is a confident answer.
+    funnel: dict[str, Any] = field(default_factory=dict)
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "question": self.question,
@@ -105,10 +110,19 @@ class Answer:
             "considered": len(self.considered),
             "widened": self.widened,
             "filters_not_applied": self.filters_not_applied,
+            "funnel": self.funnel,
         }
 
 
 def to_sources(candidates: Sequence[retrieval.Candidate]) -> list[Source]:
+    """Number the retrieved items for citation, and label what they are.
+
+    REPLACED means replaced. It used to be fed from staleness, which is a
+    different thing entirely -- a belief nobody has restated in six months
+    is old, not wrong -- so current beliefs were being announced to the
+    model as history while actual history never reached it at all. The age
+    of a source is already visible in the date beside it.
+    """
     return [
         Source(
             number=position,
@@ -116,7 +130,7 @@ def to_sources(candidates: Sequence[retrieval.Candidate]) -> list[Source]:
             id=candidate.id,
             text=candidate.text,
             occurred_at=candidate.occurred_at,
-            superseded=candidate.stale,
+            superseded=candidate.superseded,
         )
         for position, candidate in enumerate(candidates, start=1)
     ]
@@ -163,6 +177,21 @@ def answer(
     )
     sources = to_sources(found.candidates[:CONTEXT_SIZE])
 
+    def funnel(cited: int) -> dict[str, Any]:
+        """The narrowing, reported the same way on every path out of here.
+
+        Including the paths that abstain: "nothing matched" and "thirty
+        matched and none of them answered it" are different failures, and
+        the second is the one worth looking into.
+        """
+        return {
+            "matched": found.considered,
+            "by_kind": found.by_kind,
+            "shown": len(sources),
+            "cited": cited,
+            "replaced_shown": sum(1 for source in sources if source.superseded),
+        }
+
     # Nothing retrieved is already an answer, and not one worth paying for.
     # Asking the model to decline over an empty list spends a call to be told
     # what the empty list said.
@@ -173,6 +202,7 @@ def answer(
             text="Nothing in your dictations covers that.",
             widened=found.widened,
             filters_not_applied=found.filters_not_applied,
+            funnel=funnel(0),
         )
 
     resident = profile_service.load(session, user_id, now=now)
@@ -204,6 +234,7 @@ def answer(
             filters_not_applied=found.filters_not_applied,
             called_model=True,
             usage=completion.usage,
+            funnel=funnel(0),
         )
 
     _count_uses(session, citations)
@@ -219,6 +250,7 @@ def answer(
         filters_not_applied=found.filters_not_applied,
         called_model=True,
         usage=completion.usage,
+        funnel=funnel(len(citations)),
     )
 
 
