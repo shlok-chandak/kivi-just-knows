@@ -22,11 +22,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, AsyncIterator
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Header, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from starlette.concurrency import run_in_threadpool
 
+from app.api.ask import reference_now
 from app.config import settings
 from app.db.session import SessionLocal
 from app.models.episode import Episode
@@ -35,12 +36,20 @@ from app.models.job import Job
 from app.models.memory import Memory
 from app.models.rejected import RejectedCandidate
 from app.models.trace import Trace, TraceStep
+from app.services import asking
 
 router = APIRouter(prefix="/stream", tags=["stream"])
 
 # Rules where the candidate is the thing being refused. Same withholding as
 # the ignore log: showing it here would undo the refusal just as surely.
 WITHHELD = ("sensitive_category", "sensitive_on_review")
+
+_SSE = {
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    # Nginx and friends buffer streams into uselessness otherwise.
+    "X-Accel-Buffering": "no",
+}
 
 POLL_SECONDS = 0.6
 # A browser tab left open should not hold a connection forever.
@@ -307,13 +316,106 @@ async def ingest(
 
             await asyncio.sleep(POLL_SECONDS)
 
-    return StreamingResponse(
-        frames(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            # Nginx and friends buffer streams into uselessness otherwise.
-            "X-Accel-Buffering": "no",
-        },
-    )
+    return StreamingResponse(frames(), media_type="text/event-stream", headers=_SSE)
+
+
+# --- watching one question being answered -----------------------------------
+
+# How long to wait on the queue before saying something anyway. A model call
+# is several seconds of silence, and a stream that goes quiet is
+# indistinguishable from one that has died.
+HEARTBEAT_SECONDS = 2.0
+
+
+def _step_frame(step: TraceStep) -> dict[str, Any]:
+    """One stage, as it happened.
+
+    Richer than the stored trace summary on purpose: this is read once,
+    live, by someone watching the reasoning, where the table is read back
+    later by someone diagnosing it.
+    """
+    return {
+        "seq": step.seq,
+        "stage": step.stage,
+        "decision": step.decision,
+        "rationale": step.rationale,
+        "input": step.input_summary,
+        "output": step.output_summary,
+        "latency_ms": step.latency_ms,
+        "model": step.model,
+        "tokens": (
+            {"input": step.input_tokens, "output": step.output_tokens}
+            if step.model
+            else None
+        ),
+        "cost_usd": round(float(step.cost_usd), 6) if step.cost_usd else None,
+    }
+
+
+@router.get("/ask")
+async def ask(
+    request: str = Query(min_length=1, max_length=2000),
+    text: str | None = Query(default=None),
+    x_kivi_now: str | None = Header(default=None),
+) -> StreamingResponse:
+    """Answer a question, reporting each stage as it finishes.
+
+    The same call as POST /ask and the same code path -- the difference is
+    only that the stages are handed out as they complete rather than at the
+    end. Nothing in the pipeline knows it is being watched: every stage
+    already announces itself to the trace recorder, and this listens in.
+    """
+    user_id = settings.default_user_id
+    now = reference_now(x_kivi_now)
+
+    async def frames() -> AsyncIterator[str]:
+        loop = asyncio.get_running_loop()
+        queue: asyncio.Queue = asyncio.Queue()
+        done = object()
+
+        def listen(step: TraceStep) -> None:
+            # Called on the worker thread, so hand it across rather than
+            # touching the loop's queue directly.
+            loop.call_soon_threadsafe(queue.put_nowait, _step_frame(step))
+
+        def work() -> dict[str, Any]:
+            try:
+                with SessionLocal() as session:
+                    outcome = asking.run(
+                        session, user_id, request, text=text, now=now,
+                        on_step=listen,
+                    )
+                    session.commit()
+                    return outcome.as_dict()
+            finally:
+                # Always, including on failure, or the reader waits forever.
+                loop.call_soon_threadsafe(queue.put_nowait, done)
+
+        running = asyncio.create_task(run_in_threadpool(work))
+        yield _frame("hello", {"request": request, "at": now.isoformat()})
+
+        waited = 0.0
+        while True:
+            try:
+                item = await asyncio.wait_for(queue.get(), HEARTBEAT_SECONDS)
+            except asyncio.TimeoutError:
+                waited += HEARTBEAT_SECONDS
+                # A comment line: keeps the connection warm and tells the
+                # reader the silence is work rather than a dropped stream.
+                yield f": waiting {waited:.0f}s\n\n"
+                continue
+            if item is done:
+                break
+            waited = 0.0
+            yield _frame("step", item)
+
+        try:
+            result = await running
+        except Exception as exc:  # noqa: BLE001 - the reader is owed a reason
+            yield _frame("error", {"error": f"{type(exc).__name__}: {exc}"})
+            return
+
+        yield _frame("answer", result)
+        yield _frame("done", {"trace_id": result.get("trace_id")})
+
+    return StreamingResponse(frames(), media_type="text/event-stream", headers=_SSE)

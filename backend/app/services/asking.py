@@ -59,6 +59,7 @@ def run(
     now: datetime | None = None,
     cuts: Ablation = NONE,
     parsed: parse.Parsed | None = None,
+    on_step: tracing.Listener | None = None,
 ) -> Outcome:
     """Answer, find, restyle, draft, or edit memory -- whichever was asked.
 
@@ -66,11 +67,15 @@ def run(
     need it: they compare retrieval and generation, so holding the parse
     fixed across the arms isolates what is being measured, and it happens to
     save a model call per arm.
+
+    `on_step` watches the run as it happens. Nothing below knows about it:
+    the stages already announce themselves to the recorder, so a live view
+    and the stored trace are fed by one call and cannot disagree.
     """
     now = now or datetime.now(timezone.utc)
 
     with tracing.start_query_trace(
-        session, user_id=user_id, request=request
+        session, user_id=user_id, request=request, on_step=on_step
     ) as recorder:
         parsed = parsed or parse.parse(request)
         spec = parsed.spec
