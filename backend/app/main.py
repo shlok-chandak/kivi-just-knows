@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import (
     ask,
+    evaluation,
     events,
     health,
     ignored,
@@ -28,6 +29,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(ask.router)
+app.include_router(evaluation.router)
 app.include_router(events.router)
 app.include_router(ignored.router)
 app.include_router(memories.router)

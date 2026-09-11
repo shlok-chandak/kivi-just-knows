@@ -27,6 +27,9 @@ services:
       - ./backend:/app
       - ./corpus:/app/corpus
       - ./scripts:/app/scripts
+      # Recorded eval runs, for the results screen to read back. Read-only:
+      # the API reports measurements, it must never be able to edit them.
+      - ./evaluation:/app/evaluation:ro
 
   worker:
     build: ./backend
