@@ -28,6 +28,11 @@ class Rate:
 
 
 RATES: dict[str, Rate] = {
+    # The model this build actually runs. Its absence meant every call fell
+    # back to the most expensive known rate, so every cost reported before
+    # now is an upper bound roughly double the real one -- and the warning
+    # said so on every call, which is the only reason it was noticed.
+    "gemini-3.1-flash-lite": Rate(input_usd=0.25, output_usd=1.50),
     "gemini-3.5-flash-lite": Rate(input_usd=0.30, output_usd=2.50),
     "gemini-3.8-flash": Rate(input_usd=0.75, output_usd=3.75),
 }
