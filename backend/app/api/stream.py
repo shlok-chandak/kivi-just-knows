@@ -356,6 +356,10 @@ def _step_frame(step: TraceStep) -> dict[str, Any]:
 async def ask(
     request: str = Query(min_length=1, max_length=2000),
     text: str | None = Query(default=None),
+    now: str | None = Query(
+        default=None,
+        description="reference date for 'yesterday' and the like, ISO 8601",
+    ),
     x_kivi_now: str | None = Header(default=None),
 ) -> StreamingResponse:
     """Answer a question, reporting each stage as it finishes.
@@ -364,9 +368,15 @@ async def ask(
     only that the stages are handed out as they complete rather than at the
     end. Nothing in the pipeline knows it is being watched: every stage
     already announces itself to the trace recorder, and this listens in.
+
+    The clock can arrive as a query parameter as well as a header, which
+    POST /ask does not need. A browser opens this with EventSource, and
+    EventSource cannot send headers -- so without the parameter a page can
+    only ever ask against today, and re-asking a recorded question means
+    resolving "yesterday" against a different day than the recording did.
     """
     user_id = settings.default_user_id
-    now = reference_now(x_kivi_now)
+    reference = reference_now(now or x_kivi_now)
 
     async def frames() -> AsyncIterator[str]:
         loop = asyncio.get_running_loop()
@@ -382,7 +392,7 @@ async def ask(
             try:
                 with SessionLocal() as session:
                     outcome = asking.run(
-                        session, user_id, request, text=text, now=now,
+                        session, user_id, request, text=text, now=reference,
                         on_step=listen,
                     )
                     session.commit()
@@ -392,7 +402,7 @@ async def ask(
                 loop.call_soon_threadsafe(queue.put_nowait, done)
 
         running = asyncio.create_task(run_in_threadpool(work))
-        yield _frame("hello", {"request": request, "at": now.isoformat()})
+        yield _frame("hello", {"request": request, "at": reference.isoformat()})
 
         waited = 0.0
         while True:
