@@ -7,7 +7,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # verification); the large one is reserved for final synthesis. Pinned to
 # explicit versions rather than "-latest" aliases so eval runs stay
 # reproducible when the provider ships a new model.
-DEFAULT_SMALL_MODEL = "gemini-3.5-flash-lite"
+#
+# The small model is the one every recorded result was produced with. It used
+# to differ from the value in .env, which meant a fresh clone reproduced
+# neither the corpus nor the numbers -- the opposite of what pinning is for.
+#
+# The large tier is configured and unused: no caller passes tier=LARGE, so
+# every call in this build is the small model. Named here so the two-tier
+# design stays visible, and so the claim can be checked rather than assumed.
+DEFAULT_SMALL_MODEL = "gemini-3.1-flash-lite"
 DEFAULT_LARGE_MODEL = "gemini-3.8-flash"
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
