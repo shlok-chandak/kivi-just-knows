@@ -12,9 +12,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # to differ from the value in .env, which meant a fresh clone reproduced
 # neither the corpus nor the numbers -- the opposite of what pinning is for.
 #
-# The large tier is configured and unused: no caller passes tier=LARGE, so
-# every call in this build is the small model. Named here so the two-tier
-# design stays visible, and so the claim can be checked rather than assumed.
+# The large tier is unused: no caller passes tier=LARGE, so every call in this
+# build is the small model. Named here rather than in .env deliberately --
+# there is no point offering a setting that changes nothing, but the name has
+# to live somewhere for the claim to be checkable rather than assumed.
 DEFAULT_SMALL_MODEL = "gemini-3.1-flash-lite"
 DEFAULT_LARGE_MODEL = "gemini-3.8-flash"
 DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"

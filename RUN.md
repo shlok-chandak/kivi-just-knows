@@ -27,8 +27,8 @@ docker compose exec backend python -m scripts.import_corpus \
 
 The import itself takes under a second — it stores the dictations and
 queues the work. The **worker** then does the slow part: grouping them
-into episodes and reading each one. That is about 145 model calls and
-takes 15–25 minutes at the free tier's rate limit.
+into episodes and reading each one. That is about 135 model calls and
+takes 10–25 minutes at the free tier's rate limit.
 
 Watch it land:
 
@@ -36,7 +36,8 @@ Watch it land:
 curl -N localhost:8000/stream/ingest
 ```
 
-or open the `take` screen, which shows the same thing with counters.
+or open the **talk** screen, which shows the same thing with counters,
+and the **upload corpus** screen, which does the whole thing from the browser.
 
 `--truncate` deletes that user's events, episodes, memories, embeddings,
 traces, jobs and refusal log. It is scoped to one user, so `--user-id`
