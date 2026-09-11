@@ -1,0 +1,35 @@
+/* The profile screen. Layout only; colours from tokens. */
+.profile-screen { max-width: 860px; }
+.profile-head { margin-bottom: 22px; }
+.profile-head p { margin: 10px 0 0; max-width: 60ch; }
+
+.budget-strip { margin-bottom: 30px; }
+.budget-bar {
+  height: 5px; background: var(--surface);
+  border-radius: 999px; overflow: hidden; margin-bottom: 8px;
+}
+.budget-fill { height: 100%; background: var(--green); border-radius: 999px; }
+
+.group-block { margin-bottom: 34px; }
+.group-block .section { margin-bottom: 4px; }
+.blurb { margin: 0 0 12px; max-width: 62ch; }
+
+.entry { gap: 14px; }
+.entry-text { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+.entry-cost { color: var(--muted); flex-shrink: 0; }
+.entry-actions { display: flex; gap: 12px; flex-shrink: 0; }
+.hide { color: var(--muted); }
+
+.rendered { margin-top: 34px; }
+.rendered .heading { display: block; margin-bottom: 4px; }
+.rendered p { margin: 0 0 10px; }
+.rendered pre {
+  font: 12.5px/1.6 var(--font-mono);
+  background: var(--surface); border: 1px solid var(--hairline);
+  border-radius: var(--r-card); padding: 14px 16px;
+  white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted);
+  margin: 0 0 10px;
+}
+.small { font-size: 13px; }
+.idle-note { padding: 16px 0; }
+.error { color: var(--coral); font-size: 13px; }

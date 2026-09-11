@@ -1,0 +1,202 @@
+/* The evaluation screen. Layout only; colours all come from tokens. */
+
+.evaluation {
+  max-width: 1180px;
+}
+.eval-head {
+  margin-bottom: 26px;
+}
+.eval-head p {
+  margin: 10px 0 0;
+  max-width: 58ch;
+}
+
+.eval-body {
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 36px;
+  align-items: start;
+}
+
+.run-list {
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+}
+.run {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  text-align: left;
+  border: none;
+  background: none;
+  border-radius: var(--r-btn);
+  padding: 10px 12px;
+}
+.run:hover:not(:disabled) {
+  background: var(--surface);
+}
+.run.open {
+  background: var(--surface);
+}
+.run-kind {
+  grid-column: 1 / -1;
+}
+.run-when {
+  font-size: 13px;
+}
+.run-score {
+  color: var(--muted);
+}
+.run.open .run-score {
+  color: var(--green);
+}
+
+.heading {
+  display: block;
+  margin: 0 0 12px;
+}
+.rows + .heading,
+.arms + .heading {
+  margin-top: 28px;
+}
+
+/* --- arms ---------------------------------------------------------------- */
+
+.arms {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.arm-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.bar-track {
+  height: 8px;
+  background: var(--surface);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.bar-track .bar {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+/* The no-memory arm is the control, not a result. Muted so the eye does
+ * not read it as a fourth score worth celebrating. */
+.bar.dim {
+  background: var(--surface-hi);
+}
+.arm .small {
+  display: block;
+  margin-top: 5px;
+}
+
+/* --- categories ---------------------------------------------------------- */
+
+.cat {
+  gap: 14px;
+}
+.cat-name {
+  flex: 1;
+  font-size: 14px;
+}
+.bar-track.thin {
+  width: 110px;
+  height: 4px;
+  flex-shrink: 0;
+}
+.cat .mono {
+  color: var(--muted);
+  min-width: 38px;
+  text-align: right;
+}
+
+/* --- questions ----------------------------------------------------------- */
+
+.question {
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+.verdict {
+  flex-shrink: 0;
+  width: 14px;
+  padding-top: 1px;
+}
+.verdict.right {
+  color: var(--green);
+}
+.verdict.wrong {
+  color: var(--coral);
+}
+.q-main {
+  flex: 1;
+  min-width: 0;
+}
+.q-text {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.q-cat {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.q-detail {
+  margin-top: 14px;
+  padding-left: 14px;
+  border-left: 1px solid var(--hairline);
+  cursor: default;
+}
+.q-arm {
+  margin-bottom: 12px;
+}
+.q-arm .micro {
+  display: block;
+  margin-bottom: 3px;
+}
+.q-answer {
+  margin: 0;
+  font-size: 14px;
+}
+.small {
+  font-size: 13px;
+}
+
+.again {
+  margin-top: 6px;
+}
+.again-answer {
+  margin-top: 8px;
+  padding: 11px 14px;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  font-size: 14px;
+}
+.again-answer p {
+  margin: 0;
+}
+.changed-since {
+  display: block;
+  margin-top: 6px;
+  color: var(--green);
+}
+
+.report {
+  font: 13px/1.6 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  margin: 0;
+}
+
+.idle-note {
+  padding: 26px 0;
+}

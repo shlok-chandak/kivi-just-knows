@@ -1,0 +1,66 @@
+/* The corpus upload screen. Layout only; colours from tokens. */
+.upload { max-width: 1100px; }
+.upload-head { margin-bottom: 22px; }
+.upload-head p { margin: 10px 0 0; max-width: 62ch; }
+
+.picker { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.file-btn {
+  border: 1px solid var(--hairline); background: var(--surface);
+  border-radius: var(--r-btn); padding: 8px 14px; cursor: pointer; font-size: 14px;
+}
+.file-btn:hover { background: var(--surface-hi); }
+.file-btn input { display: none; }
+.picked { font-size: 13px; }
+
+.flow { margin-top: 26px; }
+.flow .heading { display: block; margin-bottom: 10px; }
+.note {
+  font-size: 13px; color: var(--muted); line-height: 1.6;
+  max-width: 64ch; margin: 2px 0 8px;
+  padding-left: 12px; border-left: 2px solid var(--hairline);
+}
+
+.watch {
+  display: grid; grid-template-columns: 1fr 230px;
+  gap: 34px; align-items: start; margin-top: 28px;
+}
+.live-feed { max-height: 460px; overflow-y: auto; }
+.line {
+  display: flex; align-items: baseline; gap: 12px;
+  padding: 9px 2px; border-bottom: 1px solid var(--hairline);
+  animation: arrive .18s ease-out;
+}
+@keyframes arrive { from { opacity: 0; transform: translateY(-3px); } }
+.line .tag {
+  font-family: var(--font-mono); font-size: 11px;
+  min-width: 112px; flex-shrink: 0; color: var(--muted);
+}
+.line.kept .tag { color: var(--cream); }
+.line.dropped .tag { color: var(--coral); }
+.line.stage .tag { color: var(--green); }
+.line-text { flex: 1; min-width: 0; font-size: 13.5px; overflow-wrap: anywhere; }
+.line-app { color: var(--muted); flex-shrink: 0; }
+.withheld { font-style: italic; color: var(--muted); }
+
+.tally { position: sticky; top: 0; }
+.tally-row {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--hairline);
+}
+.tally-figure { font-family: var(--font-display); font-size: 21px; }
+.delta { color: var(--green); font-size: 11px; margin-left: 6px; }
+.tally .heading { display: block; margin: 20px 0 8px; }
+.rule {
+  display: flex; justify-content: space-between;
+  padding: 4px 0; font-size: 12.5px; color: var(--muted);
+}
+
+.ended { margin-top: 40px; }
+.ended .section { margin-bottom: 4px; }
+.ended > p { margin: 0 0 12px; }
+.made { gap: 14px; }
+.made.superseded .made-text { color: var(--muted); }
+.made-text { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
+.made-meta { color: var(--muted); flex-shrink: 0; }
+.small { font-size: 13px; }
+.error { color: var(--coral); font-size: 13px; margin-top: 12px; }

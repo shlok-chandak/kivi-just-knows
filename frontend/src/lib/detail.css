@@ -1,0 +1,182 @@
+/* Steps on a rail, and the detail behind each one. */
+
+.step-row {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 12px;
+}
+
+/* A continuous line through the stages, so the flow reads as one thing
+ * happening in order rather than a list of unrelated events. */
+.rail {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.rail::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: -1px;
+  width: 1px;
+  background: var(--hairline);
+}
+.step-row:last-child .rail::before {
+  bottom: auto;
+  height: 18px;
+}
+.node {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--surface-hi);
+  margin-top: 13px;
+}
+.step-row.done .node {
+  background: var(--green);
+}
+.step-row.refused .node {
+  background: var(--coral);
+}
+.step-row.waiting .node {
+  background: var(--surface-hi);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.03);
+}
+.step-row.running .node {
+  background: var(--green);
+  animation: breathe 1.2s ease-in-out infinite;
+}
+
+.step-body {
+  min-width: 0;
+  padding-bottom: 4px;
+}
+.step-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  padding: 9px 0;
+  border-radius: 0;
+}
+.step-head:hover:not(:disabled) {
+  background: none;
+}
+.step-head:not(:disabled) {
+  cursor: pointer;
+}
+.step-head:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.step-label {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.step-summary {
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.disclose {
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+.step-detail {
+  padding: 2px 0 12px;
+}
+
+.json pre {
+  font: 11.5px/1.55 var(--font-mono);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-btn);
+  padding: 11px 13px;
+  margin: 6px 0 0;
+  overflow-x: auto;
+  color: var(--muted);
+  max-height: 420px;
+}
+.json-toggle {
+  font-size: 12px;
+}
+
+/* Click, not hover: a hover tooltip is unreachable on a touch screen and
+ * disappears while you are still reading it. */
+.hint-wrap {
+  position: relative;
+  display: inline-block;
+}
+.hint-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.hint-mark:hover:not(:disabled) {
+  background: none;
+  color: var(--cream);
+}
+.hint-icon {
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  font-size: 10px;
+}
+.hint-body {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 460px;
+  max-width: 70vw;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: 16px 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+.hint-body pre {
+  font: 11.5px/1.5 var(--font-mono);
+  background: var(--ink);
+  border-radius: var(--r-btn);
+  padding: 10px 12px;
+  overflow-x: auto;
+  color: var(--muted);
+}
+.hint-body code {
+  font: 12px var(--font-mono);
+  color: var(--green);
+}
+.hint-body p {
+  margin: 0 0 9px;
+}
+.hint-body dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 3px 14px;
+}
+.hint-body dt {
+  font: 12px var(--font-mono);
+  color: var(--cream);
+}
+.hint-body dd {
+  margin: 0;
+  color: var(--muted);
+}

@@ -1,0 +1,234 @@
+/* The design language, as variables.
+ *
+ * Every colour, face and radius in the app resolves here. Nothing below
+ * this file picks a colour by hand -- if a value is not in this list it
+ * does not belong on screen.
+ *
+ * The defining choice is serif headings against a neutral sans. The serif
+ * carries the whole personality, which is why everything else stays quiet.
+ */
+
+:root {
+  --ink: #0b0e0a;
+  --ink-sidebar: #0c0e0c;
+  --surface: #191b18;
+  --surface-hi: #212420;
+  --hairline: rgba(255, 255, 255, 0.07);
+
+  --cream: #eae8de;
+  --muted: #9aa094;
+
+  --green: #a5d16d;
+  --green-deep: #2d3a1c;
+  --coral: #e5645a;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --r-card: 14px;
+  --r-btn: 10px;
+  --r-pill: 999px;
+
+  --sidebar-w: 270px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--cream);
+  font: 15px/1.55 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The grain is what stops the near-black reading as flat. Subtle enough
+ * that it is felt rather than seen. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  z-index: 9;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.8'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* Page title, section heading, card title. */
+.display {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1.1;
+  font-weight: 600;
+}
+.section {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+}
+
+/* Letterspaced, lowercase, muted. Never all-caps -- that fights the
+ * lowercase system the rest of the chrome uses. */
+.micro {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: lowercase;
+}
+
+.muted {
+  color: var(--muted);
+}
+.mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+/* The marker swipe: a hand-drawn green sweep under the one word in a
+ * heading that matters. Used once per screen, and that restraint is the
+ * point -- it is where the whole design spends its boldness. */
+.swipe {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+.swipe::after {
+  content: "";
+  position: absolute;
+  left: -2%;
+  right: -2%;
+  bottom: 0.02em;
+  height: 0.42em;
+  background: var(--green-deep);
+  border-radius: 60% 40% 55% 45% / 100% 100% 30% 30%;
+  transform: rotate(-0.6deg);
+  z-index: -1;
+}
+.swipe::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 4%;
+  bottom: -0.04em;
+  height: 2px;
+  background: var(--green);
+  border-radius: 2px;
+  transform: rotate(-0.5deg) scaleX(0.97);
+  opacity: 0.85;
+}
+
+/* Grouped rows: one container, hairline dividers. The house pattern --
+ * tidier than a stack of cards, and what makes a dense screen feel calm. */
+.rows {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+.rows > * + * {
+  border-top: 1px solid var(--hairline);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  border-radius: var(--r-btn);
+  padding: 8px 14px;
+}
+button:hover:not(:disabled) {
+  background: var(--surface-hi);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Green text action: retry, replay, reset. No button chrome at all. */
+.action {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--green);
+}
+.action:hover:not(:disabled) {
+  background: none;
+  text-decoration: underline;
+}
+
+/* Segmented pill: the selected option is solid green with dark text.
+ * High commitment, unmissable. */
+.pill {
+  border-radius: var(--r-pill);
+  padding: 6px 14px;
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--cream);
+  font-size: 13px;
+}
+.pill[aria-pressed="true"] {
+  background: var(--green);
+  border-color: var(--green);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+textarea,
+input[type="text"] {
+  font: inherit;
+  width: 100%;
+  color: var(--cream);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: 14px 16px;
+  resize: none;
+}
+textarea:focus,
+input[type="text"]:focus {
+  outline: none;
+  border-color: rgba(165, 209, 109, 0.45);
+}
+::placeholder {
+  color: var(--muted);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--surface-hi);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

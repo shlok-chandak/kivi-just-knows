@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/lib/detail.tsx","./src/lib/stream.ts","./src/screens/evaluation.tsx","./src/screens/ignored.tsx","./src/screens/memory.tsx","./src/screens/profile.tsx","./src/screens/talk.tsx","./src/screens/upload.tsx","./vite.config.ts"],"version":"5.9.3"}

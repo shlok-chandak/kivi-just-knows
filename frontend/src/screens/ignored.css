@@ -1,0 +1,79 @@
+/* The not-kept screen. Layout only; colours all come from tokens. */
+
+.ignored {
+  max-width: 900px;
+}
+.ignored-head {
+  margin-bottom: 24px;
+}
+.ignored-head p {
+  margin: 10px 0 0;
+}
+
+.rule-filters {
+  margin-bottom: 26px;
+}
+
+.dropped {
+  display: flex;
+  flex-direction: column;
+}
+
+.turned {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* A small dot, nothing more. This is the only place coral belongs, and
+ * it is used the way a failed take uses it -- as a marker, never as a
+ * field of colour. */
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex-shrink: 0;
+  margin-top: 8px;
+}
+.dot.private {
+  background: var(--coral);
+}
+
+.turned-main {
+  flex: 1;
+  min-width: 0;
+}
+.turned-text {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The refusal made visible. Italic and muted so it reads as an absence
+ * rather than as content -- because that is exactly what it is. */
+.gap {
+  margin: 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.reason {
+  display: block;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.when {
+  color: var(--muted);
+  flex-shrink: 0;
+  padding-top: 3px;
+}
+
+.idle-note {
+  padding: 26px 0;
+}
+.count {
+  opacity: 0.6;
+}

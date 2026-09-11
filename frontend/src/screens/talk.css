@@ -1,0 +1,191 @@
+/* The one box, and the flow underneath it. */
+
+.talk {
+  max-width: 900px;
+}
+.talk-head {
+  margin-bottom: 24px;
+}
+.talk-head p {
+  margin: 10px 0 0;
+}
+
+.box {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: 14px;
+}
+.box textarea {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 6px 4px;
+}
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.toggle {
+  display: flex;
+  gap: 6px;
+}
+/* Which way the data is about to move. The two modes are opposite halves
+ * of the same system and the arrow is the cheapest way to say so. */
+.direction {
+  margin-left: auto;
+}
+
+.apps {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+  margin-top: 8px;
+}
+.in-app {
+  margin-right: 2px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 14px 0 8px;
+}
+.send {
+  padding: 8px 22px;
+}
+.error {
+  color: var(--coral);
+  font-size: 13px;
+}
+
+.flow {
+  margin-top: 24px;
+}
+.flow .heading {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 64ch;
+  margin: 2px 0 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--hairline);
+}
+
+.timing {
+  color: var(--muted);
+}
+.timing.free {
+  color: var(--green);
+}
+
+.belief {
+  gap: 12px;
+}
+.belief-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.belief-meta {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.cites {
+  margin-top: 8px;
+}
+.cite {
+  align-items: flex-start;
+  gap: 12px;
+}
+.num {
+  color: var(--muted);
+  min-width: 14px;
+  padding-top: 2px;
+}
+.cite-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.cite-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+.replaced {
+  color: var(--muted);
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.changed {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: 11px 14px;
+  margin: 8px 0;
+  font-size: 14px;
+}
+.changed .micro {
+  display: block;
+  margin-bottom: 4px;
+}
+.caveat {
+  font-size: 13px;
+  color: var(--muted);
+  border-left: 2px solid var(--green-deep);
+  padding-left: 12px;
+  margin: 8px 0;
+  max-width: 62ch;
+}
+
+.funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0 4px;
+  max-width: 440px;
+}
+.funnel-step {
+  display: grid;
+  grid-template-columns: 126px 1fr 28px;
+  align-items: center;
+  gap: 10px;
+}
+.funnel .bar-track {
+  height: 5px;
+  background: var(--surface);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.funnel .bar {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: 999px;
+  transition: width 0.35s ease;
+}
+.funnel-step .mono {
+  text-align: right;
+  color: var(--muted);
+}
+.small {
+  font-size: 12.5px;
+}
+

@@ -1,0 +1,138 @@
+/* Sidebar and page frame. Layout only -- every colour comes from tokens. */
+
+.shell {
+  display: grid;
+  /* sidebar · grip · content. The grip is its own column rather than an
+     absolutely positioned overlay, so nothing under it is unclickable. */
+  grid-template-columns: var(--sidebar-w) 0 1fr;
+  height: 100%;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  background: var(--ink-sidebar);
+  border-right: 1px solid var(--hairline);
+  padding: 22px 16px 18px;
+  overflow: hidden;
+}
+
+/* Zero-width in the layout, but a comfortable target to hit. A 1px
+   handle is technically a handle and practically a source of swearing. */
+.grip {
+  position: relative;
+  width: 0;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+}
+.grip::before {
+  content: "";
+  position: absolute;
+  inset: 0 -5px;
+}
+.grip-line {
+  position: absolute;
+  inset-block: 0;
+  left: -1px;
+  width: 2px;
+  background: transparent;
+  transition: background 0.12s ease;
+}
+.grip:hover .grip-line,
+.grip:focus-visible .grip-line,
+body.resizing .grip-line {
+  background: var(--green);
+}
+.grip:focus-visible {
+  outline: none;
+}
+
+/* Held for the whole drag, not just while over the handle: otherwise the
+   cursor flickers and the pointer selects text as it crosses the page. */
+body.resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  padding: 0 10px 26px;
+}
+/* The dots on the i's are green. A quiet fourth use of the accent. */
+.dotted {
+  position: relative;
+}
+.dotted::after {
+  content: "";
+  position: absolute;
+  top: 0.18em;
+  left: 0.28em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+nav {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Generously spaced. The emptiness is the point. */
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: none;
+  border-radius: var(--r-btn);
+  padding: 11px 10px;
+  text-align: left;
+  color: var(--muted);
+  font-size: 14px;
+}
+.nav:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--cream);
+}
+.nav[aria-current="true"] {
+  background: var(--surface);
+  color: var(--cream);
+}
+.nav-icon {
+  font-size: 9px;
+  width: 12px;
+  color: var(--muted);
+}
+.nav[aria-current="true"] .nav-icon {
+  color: var(--green);
+}
+
+.group {
+  padding: 24px 10px 6px;
+}
+.underlined {
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--green);
+}
+
+.grow {
+  flex: 1;
+  min-height: 40px;
+}
+
+.content {
+  overflow-y: auto;
+  padding: 40px 44px 60px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 80px;
+}
