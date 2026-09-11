@@ -94,6 +94,35 @@ class Candidate:
         }
 
 
+# How much a raw record's age discounts it. Halves roughly every month,
+# and never reaches zero -- an old dictation is still the only record of
+# what was said.
+RECENCY_HALF_LIFE_DAYS = 30.0
+RECENCY_FLOOR = 0.6
+
+
+def freshness(occurred_at: datetime | None, now: datetime) -> float:
+    """The quality factor for a raw record: a dictation or an episode.
+
+    Shared by both on purpose. Every kind's score has to be similarity
+    multiplied by something in the same range, or the kinds cannot be
+    compared -- and episodes were the one kind multiplied by nothing,
+    which is not "no opinion", it is a claim of perfect confidence and
+    perfect freshness. A belief scored 0.70 x 0.63 lost to a summary
+    scored 0.57 x 1.0, so the understanding layer was outranked by the
+    transcript it was drawn from on every question.
+
+    Neither kind carries a belief, so age is the only quality signal
+    available for them. Memories use confidence and currency instead,
+    which live in ranking.py and land in the same range.
+    """
+    if occurred_at is None:
+        return RECENCY_FLOOR
+    age_days = max((now - occurred_at).total_seconds() / 86400.0, 0.0)
+    recency = 1.0 / (1.0 + age_days / RECENCY_HALF_LIFE_DAYS)
+    return RECENCY_FLOOR + (1.0 - RECENCY_FLOOR) * recency
+
+
 def _order(candidate: Candidate) -> tuple[float, bool]:
     """By score, with a live belief winning a tie against a replaced one.
 
@@ -368,10 +397,6 @@ def search_events(
         select(Event).where(Event.id.in_(set(hits) | set(lexical)))
     ):
         similarity = max(hits.get(event.id, 0.0), lexical.get(event.id, 0.0))
-        # A raw dictation carries no belief, so recency is the only quality
-        # signal available. Recent wins, gently.
-        age_days = max((now - event.occurred_at).total_seconds() / 86400.0, 0.0)
-        recency = 1.0 / (1.0 + age_days / 30.0)
         candidates.append(
             Candidate(
                 kind="event",
@@ -379,7 +404,7 @@ def search_events(
                 text=event.canonical_text or "",
                 occurred_at=event.occurred_at,
                 similarity=similarity,
-                score=similarity * (0.6 + 0.4 * recency),
+                score=similarity * freshness(event.occurred_at, now),
                 matched_by={arm for arm, found in
                             (("vector", hits), ("lexical", lexical))
                             if event.id in found},
@@ -400,7 +425,13 @@ def search_episodes(
     until: datetime | None = None,
     limit: int = 5,
 ) -> list[Candidate]:
-    """Episode summaries, for questions about a conversation rather than a fact."""
+    """Episode summaries, for questions about a conversation rather than a fact.
+
+    Scored like a dictation rather than like a belief, because that is what
+    a summary is: a record of what was said, not a conclusion drawn from it.
+    A summary of the conversation where a price was set still quotes the old
+    price forever, so it must not outrank the belief that superseded it.
+    """
     allowed = select(Episode.id).where(
         Episode.user_id == user_id, Episode.summary.is_not(None)
     )
@@ -420,7 +451,7 @@ def search_episodes(
             text=episode.summary or "",
             occurred_at=episode.started_at,
             similarity=hits[episode.id],
-            score=hits[episode.id],
+            score=hits[episode.id] * freshness(episode.started_at, now),
             matched_by={"vector"},
         )
         for episode in session.scalars(

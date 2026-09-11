@@ -152,6 +152,49 @@ def test_relevance_leads_and_a_live_belief_wins_a_tie(chain):
     assert ordered[2] is dead_tied
 
 
+def test_every_kind_is_scored_on_the_same_scale():
+    """Episodes were multiplied by nothing, which is not neutrality.
+
+    Memories are discounted by confidence and currency, dictations by age.
+    An episode multiplied by 1.0 claims perfect confidence and perfect
+    freshness, so summaries outranked the beliefs drawn from them -- a
+    belief at 0.70 similarity lost to a summary at 0.57, and the whole
+    understanding layer was overridden at the final sort.
+    """
+    old = NOW - timedelta(days=80)
+
+    # A belief, discounted the way ranking.py discounts one.
+    belief = retrieval.Candidate(
+        kind="memory", id=uuid.uuid4(), text="The price is 349.",
+        occurred_at=old, similarity=0.695, score=0.695 * 0.634,
+    )
+    # A less relevant summary of the conversation it came from.
+    summary = retrieval.Candidate(
+        kind="episode", id=uuid.uuid4(), text="...lowered the price to 299...",
+        occurred_at=old, similarity=0.570,
+        score=0.570 * retrieval.freshness(old, NOW),
+    )
+
+    assert belief.score > summary.score, (
+        "a more relevant belief must not lose to a less relevant summary"
+    )
+
+
+def test_age_discounts_a_record_without_ever_erasing_it():
+    """An old dictation is still the only record of what was said."""
+    fresh = retrieval.freshness(NOW, NOW)
+    old = retrieval.freshness(NOW - timedelta(days=365), NOW)
+
+    assert fresh == pytest.approx(1.0)
+    assert retrieval.RECENCY_FLOOR <= old < fresh
+    assert old > 0
+
+
+def test_a_record_with_no_date_is_discounted_rather_than_favoured(chain):
+    """Missing a timestamp must not score as though it were new."""
+    assert retrieval.freshness(None, NOW) == retrieval.RECENCY_FLOOR
+
+
 def test_the_whole_search_reaches_history(chain):
     """The end-to-end path, which is where the exclusion actually lived."""
     session, _, dead = chain
