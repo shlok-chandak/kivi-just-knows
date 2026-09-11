@@ -6,6 +6,8 @@ would plausibly get wrong in a way nothing downstream could detect.
 
 from datetime import datetime, timedelta, timezone
 
+import pytest
+
 from app.services.timeref import CLOCK_WINDOW, resolve
 
 # A Wednesday, deliberately: weekday arithmetic is where off-by-one lives.
@@ -161,3 +163,91 @@ def test_an_impossible_range_is_refused_rather_than_returned():
     assert _checked(Range(NOW, NOW, "empty")) is None
     assert _checked(Range(None, NOW, "open start")) is not None
     assert _checked(Range(NOW, None, "open end")) is not None
+
+
+# --- months -----------------------------------------------------------------
+#
+# The module knew weekdays and relative spans but no month at all, so "in
+# June" resolved to nothing and the question searched the whole corpus
+# unfiltered. These test the rule, not the phrasings that exposed it.
+
+
+def test_a_bare_month_is_the_whole_of_that_month():
+    span = resolve("in June", now=NOW)
+    assert span.start == datetime(2026, 6, 1, tzinfo=timezone.utc)
+    assert span.end == datetime(2026, 7, 1, tzinfo=timezone.utc)
+
+
+def test_a_month_still_to_come_means_last_year():
+    """Same rule as a bare weekday: the most recent one already past.
+
+    Looking forward would answer a question about the past with a range
+    that has not happened yet.
+    """
+    span = resolve("December", now=NOW)
+    assert span.start == datetime(2025, 12, 1, tzinfo=timezone.utc)
+    assert span.end == datetime(2026, 1, 1, tzinfo=timezone.utc)
+
+
+def test_december_rolls_the_year_over_rather_than_overflowing():
+    span = resolve("december", now=datetime(2026, 12, 20, tzinfo=timezone.utc))
+    assert span.start == datetime(2026, 12, 1, tzinfo=timezone.utc)
+    assert span.end == datetime(2027, 1, 1, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize(
+    "phrasing", ["the 23rd of June", "June 23", "23 June", "jun 23", "23rd jun"]
+)
+def test_a_month_with_a_day_is_that_day(phrasing):
+    span = resolve(phrasing, now=NOW)
+    assert span.start == datetime(2026, 6, 23, tzinfo=timezone.utc)
+    assert span.end == datetime(2026, 6, 24, tzinfo=timezone.utc)
+
+
+def test_an_impossible_day_falls_back_to_the_month_rather_than_inventing_one():
+    """Clamping to the 30th would answer about a date nobody named.
+
+    Widening to the month searches too much, which is visible and
+    recoverable -- the trade this module makes everywhere else too.
+    """
+    span = resolve("31 June", now=NOW)
+    assert span.start == datetime(2026, 6, 1, tzinfo=timezone.utc)
+    assert span.end == datetime(2026, 7, 1, tzinfo=timezone.utc)
+
+
+def test_a_word_that_merely_starts_like_a_month_is_not_one():
+    """The prefix mistake, which claim comparison already made once."""
+    for text in ("decided", "the deck", "margin", "junior", "marching"):
+        assert resolve(text, now=NOW) is None
+
+
+def test_an_anchor_still_shapes_a_month():
+    since = resolve("since June", now=NOW)
+    assert since.start == datetime(2026, 6, 1, tzinfo=timezone.utc)
+    assert since.end == NOW
+
+    before = resolve("before June", now=NOW)
+    assert before.start is None
+    assert before.end == datetime(2026, 6, 1, tzinfo=timezone.utc)
+
+
+# --- spans said the way people say them -------------------------------------
+
+
+@pytest.mark.parametrize(
+    "phrasing,days",
+    [
+        ("two weeks ago", 14),
+        ("2 weeks ago", 14),
+        ("three days ago", 3),
+        ("a month back", 30),
+        ("last 3 days", 3),
+        ("last two weeks", 14),
+    ],
+)
+def test_a_span_counts_back_from_now_however_it_is_worded(phrasing, days):
+    """Spoken counts are words far more often than digits, and "ago" is the
+    commonest phrasing of all -- it resolved to nothing before."""
+    span = resolve(phrasing, now=NOW)
+    assert span.end == NOW
+    assert span.start == NOW - timedelta(days=days)
