@@ -83,6 +83,46 @@
   font-size: 13px;
 }
 
+/* --- the answer ----------------------------------------------------------
+ *
+ * The one thing on this screen that is the product rather than an
+ * explanation of it. It used to sit inside the timeline as a step summary,
+ * in the same muted 13px as a latency figure -- which put the output on a
+ * level with the instrumentation around it. Serif, full size, and above the
+ * flow instead of inside it.
+ */
+.answered {
+  margin: 26px 0 8px;
+  padding: 22px 24px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--green);
+  border-radius: var(--r-card);
+  max-width: 720px;
+}
+/* An abstention is also an answer, but it is not a finding. */
+.answered.declined {
+  border-left-color: var(--coral);
+}
+.answer-text {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 23px;
+  line-height: 1.4;
+  color: var(--cream);
+}
+.answered.declined .answer-text {
+  font-size: 19px;
+  color: var(--muted);
+}
+.answered .heading {
+  display: block;
+  margin: 20px 0 8px;
+}
+.answered .json {
+  margin-top: 14px;
+}
+
 .flow {
   margin-top: 24px;
 }
@@ -173,36 +213,6 @@
   max-width: 62ch;
 }
 
-.funnel {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 6px 0 4px;
-  max-width: 440px;
-}
-.funnel-step {
-  display: grid;
-  grid-template-columns: 126px 1fr 28px;
-  align-items: center;
-  gap: 10px;
-}
-.funnel .bar-track {
-  height: 5px;
-  background: var(--surface);
-  border-radius: 999px;
-  overflow: hidden;
-}
-.funnel .bar {
-  display: block;
-  height: 100%;
-  background: var(--green);
-  border-radius: 999px;
-  transition: width 0.35s ease;
-}
-.funnel-step .mono {
-  text-align: right;
-  color: var(--muted);
-}
 .small {
   font-size: 12.5px;
 }

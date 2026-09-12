@@ -58,6 +58,10 @@ LEXICAL_LIMIT = 20
 LEXICAL_SIMILARITY = 0.35
 MIN_TRIGRAM = 0.3
 
+# How many matched items are kept for inspection. Capped so a broad question
+# does not carry hundreds of rows into every trace that is written.
+MATCHED_DETAIL = 50
+
 
 @dataclass
 class Candidate:
@@ -154,6 +158,11 @@ class Retrieved:
     # answers to "why did it say that".
     considered: int = 0
     by_kind: dict[str, int] = field(default_factory=dict)
+
+    # Everything that matched, in rank order, not only the slice that
+    # survived the cut. The count alone cannot answer "what did you drop
+    # and why" -- and that is the question a wrong answer raises first.
+    matched: list[Candidate] = field(default_factory=list)
 
     @property
     def empty(self) -> bool:
@@ -546,6 +555,7 @@ def search(
         candidates=found[:limit],
         considered=len(found),
         by_kind=by_kind,
+        matched=found[:MATCHED_DETAIL],
         widened=widened,
         filters_applied={
             "since": since.isoformat() if since else None,

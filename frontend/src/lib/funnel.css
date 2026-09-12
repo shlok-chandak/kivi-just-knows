@@ -1,0 +1,118 @@
+/* The three bars, and the rows that open under them. */
+
+.funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0 4px;
+  max-width: 620px;
+}
+
+.funnel-step {
+  display: grid;
+  grid-template-columns: 126px 1fr 28px 14px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  border-radius: 0;
+}
+.funnel-step:hover:not(:disabled) {
+  background: none;
+}
+.funnel-step:hover:not(:disabled) .bar {
+  background: var(--cream);
+}
+.funnel-step:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.funnel .bar-track {
+  height: 5px;
+  background: var(--surface);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.funnel .bar {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: 999px;
+  transition: width 0.35s ease, background 0.15s ease;
+}
+.funnel-step .mono {
+  text-align: right;
+  color: var(--muted);
+}
+
+/* Indented under its bar, so which number was opened stays obvious. */
+.funnel-rows {
+  margin: 4px 0 10px 136px;
+  border-left: 1px solid var(--hairline);
+  padding-left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.retrieved {
+  display: flex;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: var(--r-btn);
+}
+.retrieved + .retrieved {
+  border-top: 1px solid var(--hairline);
+}
+.retrieved.cited {
+  background: var(--surface);
+}
+.retrieved .num {
+  color: var(--muted);
+  padding-top: 2px;
+  min-width: 18px;
+}
+.retrieved.cited .num {
+  color: var(--green);
+}
+.retrieved-body {
+  min-width: 0;
+}
+.retrieved-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.retrieved-meta {
+  margin: 4px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--muted);
+}
+.retrieved-meta .kind {
+  color: var(--cream);
+}
+.retrieved-meta .flag {
+  color: var(--cream);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+}
+.retrieved-meta .replaced {
+  color: var(--coral);
+  border-color: rgba(229, 100, 90, 0.35);
+}
+.retrieved-meta .used {
+  color: var(--green);
+  border-color: rgba(165, 209, 109, 0.35);
+}
+
+.funnel-rows .cap {
+  margin: 6px 0 0;
+  max-width: 56ch;
+}

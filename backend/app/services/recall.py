@@ -53,6 +53,37 @@ class Source:
     occurred_at: datetime | None
     superseded: bool = False
 
+    # Why this one ranked where it did. Not shown to the model -- scores are
+    # the system's own bookkeeping and would read as evidence -- but shown to
+    # the person, because "why was that retrieved" has no answer without it.
+    similarity: float = 0.0
+    score: float = 0.0
+    matched_by: tuple[str, ...] = ()
+    memory_type: str | None = None
+    confidence: float | None = None
+    stale: bool = False
+
+    def as_dict(self, *, cited: bool = False) -> dict[str, Any]:
+        return {
+            "number": self.number,
+            "kind": self.kind,
+            "id": str(self.id),
+            "text": self.text[:300],
+            "occurred_at": (
+                self.occurred_at.isoformat() if self.occurred_at else None
+            ),
+            "superseded": self.superseded,
+            "stale": self.stale,
+            "similarity": round(self.similarity, 3),
+            "score": round(self.score, 3),
+            "matched_by": list(self.matched_by),
+            "memory_type": self.memory_type,
+            "confidence": (
+                round(self.confidence, 3) if self.confidence is not None else None
+            ),
+            "cited": cited,
+        }
+
     def rendered(self) -> str:
         """The line shown to the model.
 
@@ -83,6 +114,11 @@ class Answer:
     called_model: bool = False
     usage: Any = None
 
+    # Matched, ranked, and cut before the model saw it. Kept so the funnel
+    # can be opened: a wrong answer is often a right source sitting one
+    # place below the line, and a count never shows that.
+    not_shown: list[Source] = field(default_factory=list)
+
     # How the field narrowed: matched, shown to the model, actually cited.
     # "Answered from 3 sources" does not distinguish three out of three from
     # three out of thirty, and only one of those is a confident answer.
@@ -93,28 +129,25 @@ class Answer:
             "question": self.question,
             "answered": self.answered,
             "answer": self.text,
-            "citations": [
-                {
-                    "number": source.number,
-                    "kind": source.kind,
-                    "id": str(source.id),
-                    "text": source.text[:300],
-                    "occurred_at": (
-                        source.occurred_at.isoformat() if source.occurred_at else None
-                    ),
-                    "superseded": source.superseded,
-                }
-                for source in self.citations
-            ],
+            "citations": [source.as_dict(cited=True) for source in self.citations],
             "superseded_note": self.superseded_note,
             "considered": len(self.considered),
+            # The funnel, opened. Same three tiers as the bars above it, so a
+            # bar and the list under it can never disagree.
+            "shown": [
+                source.as_dict(cited=source in self.citations)
+                for source in self.considered
+            ],
+            "not_shown": [source.as_dict() for source in self.not_shown],
             "widened": self.widened,
             "filters_not_applied": self.filters_not_applied,
             "funnel": self.funnel,
         }
 
 
-def to_sources(candidates: Sequence[retrieval.Candidate]) -> list[Source]:
+def to_sources(
+    candidates: Sequence[retrieval.Candidate], *, start: int = 1
+) -> list[Source]:
     """Number the retrieved items for citation, and label what they are.
 
     REPLACED means replaced. It used to be fed from staleness, which is a
@@ -131,8 +164,14 @@ def to_sources(candidates: Sequence[retrieval.Candidate]) -> list[Source]:
             text=candidate.text,
             occurred_at=candidate.occurred_at,
             superseded=candidate.superseded,
+            similarity=candidate.similarity,
+            score=candidate.score,
+            matched_by=tuple(sorted(candidate.matched_by)),
+            memory_type=candidate.memory_type,
+            confidence=candidate.confidence,
+            stale=candidate.stale,
         )
-        for position, candidate in enumerate(candidates, start=1)
+        for position, candidate in enumerate(candidates, start=start)
     ]
 
 
@@ -177,6 +216,10 @@ def answer(
     )
     sources = to_sources(found.candidates[:CONTEXT_SIZE])
 
+    # Numbering continues past the cut rather than restarting, so a row in
+    # the dropped list cannot be mistaken for a source the model was given.
+    not_shown = to_sources(found.matched[CONTEXT_SIZE:], start=CONTEXT_SIZE + 1)
+
     def funnel(cited: int) -> dict[str, Any]:
         """The narrowing, reported the same way on every path out of here.
 
@@ -203,6 +246,7 @@ def answer(
             widened=found.widened,
             filters_not_applied=found.filters_not_applied,
             funnel=funnel(0),
+            not_shown=not_shown,
         )
 
     resident = profile_service.load(session, user_id, now=now)
@@ -235,6 +279,7 @@ def answer(
             called_model=True,
             usage=completion.usage,
             funnel=funnel(0),
+            not_shown=not_shown,
         )
 
     _count_uses(session, citations)
@@ -251,6 +296,7 @@ def answer(
         called_model=True,
         usage=completion.usage,
         funnel=funnel(len(citations)),
+        not_shown=not_shown,
     )
 
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Json, Step } from "../lib/Detail";
+import { Funnel } from "../lib/Funnel";
 import { api, useEventStream, type Frame } from "../lib/stream";
 import "./talk.css";
 
@@ -552,6 +553,60 @@ function Asking() {
         {failed && <span className="error">{failed}</span>}
       </div>
 
+      {answer && (
+        <section className={`answered${answer.answered ? "" : " declined"}`}>
+          <p className="answer-text">{answer.answer}</p>
+
+          {!answer.answered && (
+            <p className="note">
+              Saying nothing is a result. The sources found were on the topic
+              but did not contain the answer, and a fluent reply assembled
+              from them would be indistinguishable from a real one.
+            </p>
+          )}
+          {answer.superseded_note && (
+            <p className="changed">
+              <span className="micro">what changed</span>
+              {answer.superseded_note}
+            </p>
+          )}
+          {answer.filters_not_applied?.length > 0 && (
+            <p className="caveat">
+              {answer.filters_not_applied.join(", ")} — asked for, but not
+              applied, so the answer is not narrowed by it.
+            </p>
+          )}
+
+          {citations.length > 0 && (
+            <>
+              <h3 className="micro heading">
+                said because you said {citations.length === 1 ? "this" : "these"}
+              </h3>
+              <div className="rows cites">
+                {citations.map((source: any) => (
+                  <div className="row cite" key={source.number}>
+                    <span className="mono num">{source.number}</span>
+                    <span className="cite-text">
+                      {source.text}
+                      <span className="cite-meta">
+                        {source.kind}
+                        {source.occurred_at &&
+                          ` · ${new Date(source.occurred_at).toLocaleDateString(
+                            undefined,
+                            { day: "numeric", month: "short", year: "numeric" },
+                          )}`}
+                      </span>
+                    </span>
+                    {source.superseded && <span className="mono replaced">replaced</span>}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          <Json value={answer} label="the full answer payload" />
+        </section>
+      )}
+
       {(steps.length > 0 || result) && (
         <section className="flow">
           <h2 className="micro heading">how kivi worked it out</h2>
@@ -573,7 +628,13 @@ function Asking() {
               }
               detail={step}
             >
-              {step.output?.funnel && <Funnel funnel={step.output.funnel} />}
+              {step.output?.funnel && (
+                <Funnel
+                  funnel={step.output.funnel}
+                  shown={step.output.shown}
+                  notShown={step.output.not_shown}
+                />
+              )}
             </Step>
           ))}
 
@@ -583,52 +644,13 @@ function Asking() {
             <Step
               label={answer.answered ? "answered" : "declined"}
               status={answer.answered ? "done" : "refused"}
-              summary={answer.answer}
+              summary={
+                answer.answered
+                  ? `from ${citations.length} source${citations.length === 1 ? "" : "s"} — above`
+                  : "nothing found to answer from"
+              }
               detail={result}
-            >
-              {!answer.answered && (
-                <p className="note">
-                  Saying nothing is a result. The sources found were on the
-                  topic but did not contain the answer, and a fluent reply
-                  assembled from them would be indistinguishable from a real
-                  one.
-                </p>
-              )}
-              {answer.superseded_note && (
-                <p className="changed">
-                  <span className="micro">what changed</span>
-                  {answer.superseded_note}
-                </p>
-              )}
-              {answer.filters_not_applied?.length > 0 && (
-                <p className="caveat">
-                  {answer.filters_not_applied.join(", ")} — asked for, but not
-                  applied, so the answer is not narrowed by it.
-                </p>
-              )}
-              {citations.length > 0 && (
-                <div className="rows cites">
-                  {citations.map((source: any) => (
-                    <div className="row cite" key={source.number}>
-                      <span className="mono num">{source.number}</span>
-                      <span className="cite-text">
-                        {source.text}
-                        <span className="cite-meta">
-                          {source.kind}
-                          {source.occurred_at &&
-                            ` · ${new Date(source.occurred_at).toLocaleDateString(
-                              undefined,
-                              { day: "numeric", month: "short" },
-                            )}`}
-                        </span>
-                      </span>
-                      {source.superseded && <span className="mono replaced">replaced</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Json value={answer} label="the full answer payload" />
-            </Step>
+            />
           )}
         </section>
       )}
@@ -645,37 +667,3 @@ const STAGE_NAMES: Record<string, string> = {
   draft: "composed",
   memory_control: "edited memory",
 };
-
-function Funnel({ funnel }: { funnel: any }) {
-  const stages = [
-    { label: "matched", value: funnel.matched },
-    { label: "shown to the model", value: funnel.shown },
-    { label: "actually cited", value: funnel.cited },
-  ];
-  const widest = Math.max(...stages.map((s) => s.value), 1);
-  return (
-    <div className="funnel">
-      {stages.map((stage) => (
-        <div className="funnel-step" key={stage.label}>
-          <span className="muted small">{stage.label}</span>
-          <span className="bar-track">
-            <span
-              className="bar"
-              style={{ width: `${Math.max((stage.value / widest) * 100, 3)}%` }}
-            />
-          </span>
-          <span className="mono">{stage.value}</span>
-        </div>
-      ))}
-      {funnel.by_kind && (
-        <p className="small muted">
-          {Object.entries(funnel.by_kind)
-            .map(([kind, n]) => `${n} ${kind}${Number(n) === 1 ? "" : "s"}`)
-            .join(", ")}
-          {funnel.replaced_shown > 0 &&
-            ` · ${funnel.replaced_shown} shown as history, labelled replaced`}
-        </p>
-      )}
-    </div>
-  );
-}

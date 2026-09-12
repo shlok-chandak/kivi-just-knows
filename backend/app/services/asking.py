@@ -306,4 +306,13 @@ def _summarise(result: dict) -> dict:
     for key in ("citations", "found", "memories"):
         if key in result:
             small[f"{key}_count"] = len(result[key])
+
+    # The funnel's own rows, trimmed. Counts alone cannot be checked after
+    # the fact, and a trace that cannot be checked is a claim. Text is cut
+    # and the dropped tier capped so this stays a summary, not a second copy
+    # of the corpus.
+    for key, cap in (("shown", 8), ("not_shown", 12)):
+        rows = result.get(key)
+        if rows:
+            small[key] = [{**row, "text": row["text"][:160]} for row in rows[:cap]]
     return small

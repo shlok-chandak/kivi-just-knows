@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Json } from "../lib/Detail";
 import { api } from "../lib/stream";
+import { Funnel } from "../lib/Funnel";
 import "./reasoning.css";
 
 /* Why it answered that, for anything it has ever answered.
@@ -198,7 +199,13 @@ function Steps({ id, kind }: { id: string; kind: string }) {
             </div>
             {step.decision && <p className="decided">{step.decision}</p>}
             {step.rationale && <p className="note">{step.rationale}</p>}
-            {step.output?.funnel && <Funnel funnel={step.output.funnel} />}
+            {step.output?.funnel && (
+              <Funnel
+                funnel={step.output.funnel}
+                shown={step.output.shown}
+                notShown={step.output.not_shown}
+              />
+            )}
             {step.output?.filters_not_applied?.length > 0 && (
               <p className="note warn">
                 asked for a filter it cannot apply:{" "}
@@ -256,36 +263,3 @@ function Steps({ id, kind }: { id: string; kind: string }) {
 /* The narrowing, as a shape. Three numbers in a row are hard to compare;
    three bars are not. Scaled to the widest stage because a funnel is only
    ever read as a proportion of what came before it. */
-function Funnel({ funnel }: { funnel: any }) {
-  const stages = [
-    { label: "found", value: funnel.matched ?? 0 },
-    { label: "shown to the model", value: funnel.shown ?? 0 },
-    { label: "actually used", value: funnel.cited ?? 0 },
-  ];
-  const widest = Math.max(...stages.map((s) => s.value), 1);
-  return (
-    <div className="funnel">
-      {stages.map((stage) => (
-        <div className="funnel-step" key={stage.label}>
-          <span className="muted small">{stage.label}</span>
-          <span className="bar-track">
-            <span
-              className="bar"
-              style={{ width: `${Math.max((stage.value / widest) * 100, 3)}%` }}
-            />
-          </span>
-          <span className="mono">{stage.value}</span>
-        </div>
-      ))}
-      {funnel.by_kind && (
-        <p className="small muted">
-          {Object.entries(funnel.by_kind)
-            .map(([k, n]) => `${n} ${k}${Number(n) === 1 ? "" : "s"}`)
-            .join(", ")}
-          {funnel.replaced_shown > 0 &&
-            ` · ${funnel.replaced_shown} of them history, labelled replaced`}
-        </p>
-      )}
-    </div>
-  );
-}
