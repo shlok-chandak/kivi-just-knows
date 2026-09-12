@@ -364,10 +364,23 @@ function Tally({
 function FeedLine({ frame }: { frame: Frame }) {
   const { event, data } = frame;
   if (event === "event") {
+    // Stored either way. "skipped" means it was left out of the index, so it
+    // can still be found by time and app but never by meaning -- which is a
+    // different fate from "kept", and was being reported as the same one.
+    const skipped = data.status === "ignored";
     return (
-      <div className="line kept">
-        <span className="tag">kept</span>
-        <span className="line-text">{data.text}</span>
+      <div className={`line ${skipped ? "unindexed" : "kept"}`}>
+        <span className="tag">{skipped ? "skipped" : "kept"}</span>
+        <span className="line-text">
+          {data.text}
+          {skipped && (
+            <span className="claim-why">
+              {" "}
+              — {String(data.ignore_reason ?? "not worth indexing").replace(/_/g, " ")},
+              stored but not searchable by meaning
+            </span>
+          )}
+        </span>
         <span className="mono line-app">{data.app}</span>
       </div>
     );
@@ -386,17 +399,68 @@ function FeedLine({ frame }: { frame: Frame }) {
       </div>
     );
   }
+  // Read once, and what came out of it. "generated" and "skipped" are
+  // verdicts, and a verdict with nothing under it cannot be checked -- so
+  // the rationale and the claims themselves go on the line.
+  const claims: any[] = data.claims ?? [];
   return (
     <div className="line stage">
-      <span className="tag">{data.stage?.replace(/_/g, " ")}</span>
-      <span className="line-text">
-        {data.decision}
-        {data.created ? ` · ${data.created} new` : ""}
-        {data.reinforced ? ` · ${data.reinforced} reinforced` : ""}
-      </span>
+      <div className="stage-line">
+        <span className="tag">{data.stage?.replace(/_/g, " ")}</span>
+        <span className="line-text">
+          {VERDICTS[data.decision] ?? data.decision}
+          {data.dictations ? ` · ${data.dictations} read` : ""}
+        </span>
+      </div>
+
+      {data.title && (
+        <p className="stage-title">
+          {data.title}
+          {data.topic_tags?.length > 0 && (
+            <span className="mono stage-tags">{data.topic_tags.join(" · ")}</span>
+          )}
+        </p>
+      )}
+      {data.summary && data.summary !== data.title && (
+        <p className="stage-summary">{data.summary}</p>
+      )}
+
+      {data.rationale && <p className="stage-why">{data.rationale}</p>}
+
+      {claims.length > 0 && (
+        <div className="claims">
+          {claims.map((claim, i) => (
+            <p className={`claim ${claim.outcome}`} key={i}>
+              <span className="mono claim-mark">{MARKS[claim.outcome] ?? "·"}</span>
+              <span>
+                {claim.withheld ? (
+                  <em className="withheld">content withheld</em>
+                ) : (
+                  claim.text
+                )}
+                {claim.why && <span className="claim-why"> — {claim.why}</span>}
+              </span>
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+
+/* The stored verdict is one word. These say what the word meant. */
+const VERDICTS: Record<string, string> = {
+  generated: "read and understood",
+  verbatim: "kept as said, too short to summarise",
+  skipped: "read, nothing worth keeping",
+};
+
+const MARKS: Record<string, string> = {
+  created: "+",
+  reinforced: "=",
+  superseded: "~",
+  refused: "×",
+};
 
 /* The format, documented where somebody uploading will actually see it. */
 function FormatHelp() {

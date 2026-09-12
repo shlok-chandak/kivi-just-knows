@@ -138,3 +138,83 @@
 .formed-none {
   margin: 0;
 }
+
+/* --- what a stage actually did ------------------------------------------
+ *
+ * The feed used to print the verdict alone: "generated", "skipped". Both are
+ * true and neither can be checked, which is the opposite of what this screen
+ * is for. The reason and the claims themselves belong on the line. */
+.line.stage {
+  display: block;
+}
+.stage-line {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+.stage-why {
+  margin: 5px 0 0 0;
+  padding-left: 2px;
+  font-size: 12.5px;
+  color: var(--muted);
+  max-width: 70ch;
+}
+.claims {
+  margin-top: 7px;
+  border-left: 1px solid var(--hairline);
+  padding-left: 11px;
+}
+.claim {
+  display: flex;
+  gap: 9px;
+  margin: 0 0 3px;
+  font-size: 13px;
+  max-width: 74ch;
+}
+.claim-mark {
+  flex-shrink: 0;
+  width: 10px;
+}
+.claim.created .claim-mark,
+.claim.superseded .claim-mark {
+  color: var(--green);
+}
+.claim.refused .claim-mark {
+  color: var(--coral);
+}
+.claim.refused {
+  color: var(--muted);
+}
+.claim-why {
+  color: var(--muted);
+}
+
+/* The title and summary the model wrote. These are what consolidation is
+ * for, so they lead -- the verdict and the timing sit under them. */
+.stage-title {
+  margin: 6px 0 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+.stage-tags {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+.stage-summary {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  max-width: 72ch;
+}
+
+/* Stored, but not indexed. Neither kept nor refused, and it used to render
+ * as the first of those. */
+.line.unindexed .tag {
+  color: var(--muted);
+}
+.line.unindexed .line-text {
+  color: var(--muted);
+}

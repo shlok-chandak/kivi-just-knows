@@ -4,6 +4,7 @@ The provider is always stubbed. These tests assert which branch was taken and
 what was written, never what a model returns.
 """
 
+import json
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -16,9 +17,11 @@ from app.models.episode import Episode
 from app.models.event import Event
 from app.models.memory import Memory, MemoryEvidence
 from app.models.rejected import RejectedCandidate
+from app.models.trace import TraceStep
 from app.schemas.consolidation import ConsolidationOut
 from app.schemas.extraction import MemoryCandidateOut
 from app.services import consolidate as consolidate_module
+from app.services import tracing
 from app.services.consolidate import RULE_NOTHING_TO_EXTRACT, consolidate_episode
 from app.services.consolidate import SENSITIVE_ON_REVIEW
 from tests.conftest import TEST_USER
@@ -178,6 +181,33 @@ def test_content_the_model_flags_as_sensitive_is_deleted(world):
 
     assert db.get(Event, drop.id) is None
     assert db.get(Event, keep.id) is not None
+
+
+def test_a_claim_from_purged_content_is_traced_without_its_text(world):
+    """The trace is displayed, so a claim drawn from deleted content stays out of it.
+
+    Deleting the dictation is not enough on its own. The claim the model
+    proposed from it can carry the same detail, and the trace is read back
+    and rendered in the upload feed.
+    """
+    db, episode, install = world
+    install(out([claim("Mum's biopsy came back clear.", "biopsy", indexes=(2,))]))
+    event(db, episode, "We decided \u20b9299 for the Pro tier.", minutes=0)
+    event(db, episode, "Mum's biopsy results came back today.", minutes=4)
+
+    consolidate_module.get_client().value.sensitive_indexes = [2]
+    recorder = tracing.start_ingest_trace(
+        db, user_id=episode.user_id, subject_key=str(episode.id)
+    )
+    consolidate_episode(db, episode.id, recorder=recorder)
+    recorder.close("answered")
+    db.flush()
+
+    written = json.dumps(
+        [step.output_summary for step in db.scalars(select(TraceStep))]
+    )
+    assert "biopsy" not in written
+    assert "withheld" in written
 
 
 def test_a_purge_is_logged_without_the_content(world):

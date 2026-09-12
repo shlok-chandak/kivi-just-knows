@@ -125,6 +125,9 @@ def consolidate_episode(
     purged = _purge_sensitive(session, episode, result.sensitive_indexes, citable)
 
     created = reinforced = refused = superseded = 0
+    # The counts say how much happened; these say what. A feed reporting
+    # "generated - 1 new" cannot be checked by the person reading it.
+    outcomes: list[dict[str, str]] = []
     for candidate in result.memories:
         # Claims cite dictations by position, so `citable` must keep its shape
         # even after a purge -- removing an entry would silently renumber
@@ -135,6 +138,16 @@ def consolidate_episode(
             # survives: the claim can carry the very detail that was refused.
             logger.warning("dropping claim drawn from purged content")
             refused += 1
+            # The text is withheld, not truncated. It is derived from a
+            # dictation that was just deleted for being sensitive, so writing
+            # it to the trace would preserve the very thing the purge removed
+            # -- and the trace is read back and displayed.
+            outcomes.append({
+                "outcome": "refused",
+                "text": "",
+                "withheld": "yes",
+                "why": "drawn from a dictation that was refused as sensitive",
+            })
             continue
 
         # Rests on nothing but tool instructions. A claim citing an editor
@@ -155,6 +168,11 @@ def consolidate_episode(
                 )
             )
             refused += 1
+            outcomes.append({
+                "outcome": "refused",
+                "text": candidate.content,
+                "why": f"only source is {sources[0].app}, an instruction to a tool",
+            })
             continue
 
         outcome = claims.persist(
@@ -164,6 +182,7 @@ def consolidate_episode(
             citable,
             replaces=_replaced_belief(candidate.replaces, known),
         )
+        outcomes.append({"outcome": outcome, "text": candidate.content, "why": ""})
         if outcome == "created":
             created += 1
         elif outcome == "reinforced":
@@ -215,6 +234,7 @@ def consolidate_episode(
         created=created,
         reinforced=reinforced,
         refused=refused,
+        outcomes=outcomes,
         proposed=len(result.memories),
         sittings=len(sittings),
         usage=completion.usage,
@@ -389,6 +409,7 @@ def _record(
     created: int,
     reinforced: int,
     refused: int = 0,
+    outcomes: list[dict[str, str]] | None = None,
     proposed: int = 0,
     sittings: int = 0,
     usage: Any = None,
@@ -419,5 +440,10 @@ def _record(
             "created": created,
             "reinforced": reinforced,
             "refused": refused,
+            # Capped: a long episode should not copy its whole yield into the
+            # trace, which is a summary and has to stay one.
+            "claims": [
+                {**row, "text": row["text"][:200]} for row in (outcomes or [])[:12]
+            ],
         },
     )

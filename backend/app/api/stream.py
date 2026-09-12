@@ -208,6 +208,15 @@ def _counters(session, user_id: uuid.UUID) -> dict[str, Any]:
     }
 
 
+def _is_uuid(value: str) -> bool:
+    """Not every stage keys on an episode -- the profile rebuild keys on a word."""
+    try:
+        uuid.UUID(value)
+    except (ValueError, AttributeError, TypeError):
+        return False
+    return True
+
+
 def _poll(user_id: uuid.UUID, mark: _Watermark) -> tuple[list[str], bool]:
     """Everything new since the last poll, and whether the queue is idle."""
     frames: list[str] = []
@@ -224,6 +233,10 @@ def _poll(user_id: uuid.UUID, mark: _Watermark) -> tuple[list[str], bool]:
                 "app": row.app,
                 "text": (row.canonical_text or "")[:200],
                 "status": row.ingest_status,
+                # Stored, but deliberately left out of the index. Without the
+                # reason the feed can only say "kept", which is true and
+                # misleading in the same breath.
+                "ignore_reason": row.ignore_reason,
             }))
 
         # Dictations and claims that were not.
@@ -251,18 +264,43 @@ def _poll(user_id: uuid.UUID, mark: _Watermark) -> tuple[list[str], bool]:
         )
         if mark.step:
             query = query.where(TraceStep.created_at > mark.step)
-        for step, trace in session.execute(query.order_by(TraceStep.created_at).limit(50)):
+        steps = list(session.execute(query.order_by(TraceStep.created_at).limit(50)))
+
+        # The title and summary the model wrote for each episode. They are
+        # the readable half of what consolidation produced, and reporting
+        # that it ran without them says a stage happened, not what it made.
+        subjects = {trace.subject_key for _, trace in steps if trace.subject_key}
+        episodes: dict[str, Episode] = {}
+        if subjects:
+            ids = [uuid.UUID(key) for key in subjects if _is_uuid(key)]
+            if ids:
+                episodes = {
+                    str(episode.id): episode
+                    for episode in session.scalars(
+                        select(Episode).where(
+                            Episode.id.in_(ids),
+                            Episode.user_id == user_id,
+                        )
+                    )
+                }
+
+        for step, trace in steps:
             mark.step = step.created_at
             out = step.output_summary or {}
+            episode = episodes.get(trace.subject_key or "")
             frames.append(_frame("stage", {
                 "stage": step.stage,
                 "episode_id": trace.subject_key,
+                "title": episode.title if episode else None,
+                "summary": episode.summary if episode else None,
+                "topic_tags": (episode.topic_tags or []) if episode else [],
                 "decision": step.decision,
                 "rationale": step.rationale,
                 "dictations": (step.input_summary or {}).get("event_count"),
                 "created": out.get("created"),
                 "reinforced": out.get("reinforced"),
                 "refused": out.get("refused"),
+                "claims": out.get("claims") or [],
                 "latency_ms": step.latency_ms,
                 "cost_usd": round(float(step.cost_usd), 6) if step.cost_usd else None,
                 "at": step.created_at.isoformat(),
