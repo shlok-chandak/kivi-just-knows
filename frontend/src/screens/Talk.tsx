@@ -557,7 +557,25 @@ function Asking() {
     setUrl(`/stream/ask?request=${encodeURIComponent(said)}&_=${Date.now()}`);
   };
 
-  const answer = result?.steps?.find((s: any) => s.result?.answer)?.result;
+  // The LAST step that produced something for the person, not the first.
+  // A draft runs recall then draft: recall's summary is only material, and
+  // taking the first match handed that to the screen while the draft itself
+  // was never shown. Tools other than recall put their output in `text`.
+  const produced =
+    result?.steps?.filter((s: any) => s.result?.answer || s.result?.text) ?? [];
+  const last = produced[produced.length - 1];
+  const answer = last && {
+    ...last.result,
+    tool: last.tool,
+    answer: last.result.answer ?? last.result.text,
+    answered: last.result.answered ?? last.result.enough ?? true,
+    // The honesty note is recorded by whichever step searched, so it has to
+    // be carried forward or it vanishes the moment a second step runs.
+    filters_not_applied:
+      last.result.filters_not_applied ??
+      produced.find((s: any) => s.result?.filters_not_applied?.length)?.result
+        .filters_not_applied,
+  };
   const citations = answer?.citations ?? [];
 
   return (
@@ -618,7 +636,9 @@ function Asking() {
           {citations.length > 0 && (
             <>
               <h3 className="micro heading">
-                said because you said {citations.length === 1 ? "this" : "these"}
+                {answer.tool === "recall"
+                  ? `said because you said ${citations.length === 1 ? "this" : "these"}`
+                  : "written only from this"}
               </h3>
               <div className="rows cites">
                 {citations.map((source: any) => (
@@ -686,7 +706,15 @@ function Asking() {
 
           {answer && (
             <Step
-              label={answer.answered ? "answered" : "declined"}
+              label={
+                answer.tool === "recall"
+                  ? answer.answered
+                    ? "answered"
+                    : "declined"
+                  : answer.answered
+                    ? "written"
+                    : "not written"
+              }
               status={answer.answered ? "done" : "refused"}
               summary={
                 answer.answered
