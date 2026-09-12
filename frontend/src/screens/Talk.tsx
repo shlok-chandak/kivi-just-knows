@@ -548,7 +548,14 @@ function Asking() {
 
       <div className="actions">
         <button className="pill send" onClick={ask} disabled={running || !text.trim()}>
-          {running ? "thinking…" : "ask"}
+          {running ? (
+            <>
+              <span className="pulse" />
+              thinking…
+            </>
+          ) : (
+            "ask"
+          )}
         </button>
         {failed && <span className="error">{failed}</span>}
       </div>
@@ -607,7 +614,7 @@ function Asking() {
         </section>
       )}
 
-      {(steps.length > 0 || result) && (
+      {(running || steps.length > 0 || result) && (
         <section className="flow">
           <h2 className="micro heading">how kivi worked it out</h2>
 
@@ -638,7 +645,13 @@ function Asking() {
             </Step>
           ))}
 
-          {running && <Step label="working" status="running" summary="…" />}
+          {running && (
+            <Step
+              label="working"
+              status="running"
+              summary={steps.length ? "still going" : "reading the question"}
+            />
+          )}
 
           {answer && (
             <Step

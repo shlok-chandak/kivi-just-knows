@@ -83,6 +83,25 @@
   font-size: 13px;
 }
 
+/* The same signal on the button itself. The flow below answers "what is it
+ * doing"; this answers "did my click land", which is the question being
+ * asked in the first second. */
+.pulse {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  vertical-align: middle;
+  animation: breathe 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse {
+    animation: none;
+  }
+}
+
 /* --- the answer ----------------------------------------------------------
  *
  * The one thing on this screen that is the product rather than an
