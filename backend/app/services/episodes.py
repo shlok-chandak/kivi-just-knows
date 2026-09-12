@@ -98,6 +98,11 @@ def _episode_for(
             Episode.user_id == user_id,
             Episode.started_at - IDLE_GAP <= occurred_at,
             Episode.ended_at + IDLE_GAP >= occurred_at,
+            # A stretch closed by hand stays closed. The time rules still
+            # absorb a late take, because a client flushing its queue is
+            # describing when things happened; a person clicking "finish"
+            # is saying that stretch is over.
+            Episode.closed_by.is_distinct_from("hand"),
         )
         .order_by(Episode.started_at.desc())
         .limit(1)
@@ -135,13 +140,20 @@ def _refresh(session: Session, episode: Episode) -> None:
     episode.event_count = count
 
 
-def _should_close(episode: Episode, now: datetime) -> bool:
-    """Whether the user has stopped, or the stretch has run long enough."""
+def _should_close(episode: Episode, now: datetime) -> str | None:
+    """Which rule closes this episode, if any.
+
+    Returns the reason rather than a bool so it can be stored: an episode
+    that ran out of room and one the user walked away from are different
+    facts, and only the record distinguishes them afterwards.
+    """
     if episode.event_count >= MAX_EVENTS_PER_EPISODE:
-        return True
+        return "full"
     if episode.ended_at - episode.started_at >= MAX_SPAN:
-        return True
-    return now - episode.ended_at > IDLE_GAP
+        return "span"
+    if now - episode.ended_at > IDLE_GAP:
+        return "idle"
+    return None
 
 
 def assign_events(
@@ -215,8 +227,10 @@ def assign_events(
     for episode in session.scalars(
         select(Episode).where(Episode.user_id == user_id, Episode.status == "open")
     ):
-        if _should_close(episode, now):
+        reason = _should_close(episode, now)
+        if reason:
             episode.status = "closed"
+            episode.closed_by = reason
             closed_count += 1
             if episode.summary_status is None:
                 needs_consolidation.append(episode.id)

@@ -1,0 +1,192 @@
+{
+  "sections": {
+    "routing": [
+      {
+        "request": "what rate did we agree with Lumen",
+        "expected": "recall",
+        "got": "recall",
+        "correct": true
+      },
+      {
+        "request": "find the message I sent about the gateway yesterday",
+        "expected": "find_dictation",
+        "got": "find_dictation",
+        "correct": true
+      },
+      {
+        "request": "draft a note to ABC about the pricing",
+        "expected": "draft",
+        "got": "draft",
+        "correct": true
+      },
+      {
+        "request": "forget everything about the nav redesign",
+        "expected": "memory_control",
+        "got": "recall",
+        "correct": false
+      },
+      {
+        "request": "rewrite this for the team channel",
+        "expected": "restyle",
+        "got": "restyle",
+        "correct": true
+      },
+      {
+        "request": "find what I dictated on Monday and make it formal",
+        "expected": "find_dictation",
+        "got": "find_dictation",
+        "correct": true
+      }
+    ],
+    "find": [
+      {
+        "id": "find-01",
+        "request": "what did I dictate yesterday",
+        "found": 1,
+        "widened": [],
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "find-02",
+        "request": "what did I say about the gateway settlement",
+        "found": 10,
+        "widened": [],
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "find-03",
+        "request": "what did I dictate in linear",
+        "found": 10,
+        "widened": [],
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "find-04",
+        "request": "find the message about margin coming back better",
+        "found": 10,
+        "widened": [],
+        "correct": true,
+        "why": ""
+      }
+    ],
+    "restyle": [
+      {
+        "id": "style-01",
+        "before": "349 now. Margin came back better than we thought at the higher tier.",
+        "after": "The price is now 349 rupees. The margin at the higher tier exceeded ou",
+        "trustworthy": true,
+        "dropped": [],
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "style-02",
+        "before": "Locking the 18th.",
+        "after": "I am locking the 18th for our launch party. Please note that we are ke",
+        "trustworthy": true,
+        "dropped": [],
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "style-03",
+        "before": "Settlement is T+3 with them, which kills the refund flow. Switching to",
+        "after": "Settlement is T+3, hindering refund flow. Switching to Cashfree.",
+        "trustworthy": true,
+        "dropped": [],
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "style-04",
+        "before": "ABC came back on price. They're anchored around 250.",
+        "after": "ABC has returned with a price update. 1. The proposed figure is 250 ru",
+        "trustworthy": true,
+        "dropped": [],
+        "correct": true,
+        "why": ""
+      }
+    ],
+    "draft": [
+      {
+        "id": "draft-01",
+        "request": "draft a short note to the team about where the Pro t",
+        "enough": true,
+        "citations": 3,
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "draft-02",
+        "request": "draft an update on the SOC2 audit",
+        "enough": true,
+        "citations": 6,
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "draft-03",
+        "request": "draft a note explaining our AWS bill this quarter",
+        "enough": false,
+        "citations": 0,
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "draft-04",
+        "request": "draft a summary of our maternity leave policy",
+        "enough": false,
+        "citations": 0,
+        "correct": true,
+        "why": ""
+      }
+    ],
+    "memory": [
+      {
+        "id": "mem-01",
+        "action": "show",
+        "topic": "the Pro tier price",
+        "detail": "11 memories",
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "mem-02",
+        "action": "show",
+        "topic": "",
+        "detail": "50 memories",
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "mem-03",
+        "action": "forget",
+        "topic": "",
+        "detail": "refused: Say what to forget. Deleting everything is a sep",
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "mem-04",
+        "action": "forget",
+        "topic": "something nobody ever dictated about",
+        "detail": "refused: Nothing remembered about something nobody ever d",
+        "correct": true,
+        "why": ""
+      },
+      {
+        "id": "mem-05",
+        "action": "forget",
+        "topic": "the Pro tier price",
+        "detail": "deleted 1",
+        "correct": true,
+        "why": ""
+      }
+    ]
+  },
+  "correct": 22,
+  "total": 23
+}

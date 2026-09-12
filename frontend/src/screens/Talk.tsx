@@ -76,6 +76,9 @@ export function Talk() {
 function Dictation() {
   const [text, setText] = useState("");
   const [app, setApp] = useState("slack");
+  // Bumped whenever something lands, so the panel refreshes at once rather
+  // than up to a poll late -- the gap reads as the click not working.
+  const [pulse, setPulse] = useState(0);
 
   const [sending, setSending] = useState(false);
   const [refused, setRefused] = useState<any>(null);
@@ -123,8 +126,13 @@ function Dictation() {
           committed_text: text,
         }),
       });
-      if (body.id) setEventId(body.id);
-      else setRefused(body);
+      if (body.id) {
+        setEventId(body.id);
+        // Emptied so the next one can be said immediately. Several takes
+        // then one close is the normal shape of a sitting.
+        setText("");
+      } else setRefused(body);
+      setPulse((n) => n + 1);
     } catch (problem: any) {
       setError(problem.message ?? "could not send that");
     } finally {
@@ -140,6 +148,9 @@ function Dictation() {
           value={text}
           placeholder="say something, the way you would into any app…"
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={(e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") send();
+          }}
         />
         <div className="apps">
           <span className="micro in-app">in</span>
@@ -163,13 +174,156 @@ function Dictation() {
           disabled={sending || !text.trim()}
         >
           {sending ? "sending\u2026" : "dictate"}
+          {/* On the button rather than beside it. The same action named
+              twice, side by side, reads as two different actions. */}
+          {!sending && <kbd className="keys">⌘↩</kbd>}
         </button>
         {error && <span className="error">{error}</span>}
       </div>
 
+      <Sitting pulse={pulse} onChange={() => setPulse((n) => n + 1)} />
+
       {refused && <RefusedFlow refused={refused} />}
       {journey && <JourneyFlow journey={journey} />}
     </>
+  );
+}
+
+/* --- the sitting you are in ---------------------------------------------- */
+/*
+ * An episode closes after twenty minutes of quiet, which is right for a
+ * working day and useless while someone is watching. So this shows what is
+ * still open, what the queue owes, and offers to close it now.
+ */
+
+function Sitting({ pulse, onChange }: { pulse: number; onChange: () => void }) {
+  const [live, setLive] = useState<any>(null);
+  const [closing, setClosing] = useState(false);
+  const [said, setSaid] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const tick = async () => {
+      try {
+        const body = await api("/episodes/live");
+        if (alive) setLive(body);
+      } catch {
+        /* the API restarting should not blank the panel */
+      }
+    };
+    tick();
+    const timer = setInterval(tick, 2000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [pulse]);
+
+  const finish = async () => {
+    setClosing(true);
+    setSaid(null);
+    try {
+      const body = await api<any>("/episodes/close-open", { method: "POST" });
+      setSaid(
+        body.closed
+          ? "closed — reading it now"
+          : body.reason ?? "nothing was waiting",
+      );
+      onChange();
+    } finally {
+      setClosing(false);
+    }
+  };
+
+  if (!live) return null;
+
+  const open = live.open;
+  const working = live.queue.filter((j: any) => j.stage !== "profile_refresh");
+  const busy = working.length > 0 || live.unassigned > 0;
+
+  return (
+    <section className="sitting">
+      <div className="sitting-head">
+        <span className="micro heading">what is still in flight</span>
+        <button
+          className="pill finish"
+          onClick={finish}
+          disabled={closing || (!open && !busy)}
+        >
+          {closing ? "closing…" : "finish this episode now"}
+        </button>
+      </div>
+
+      {said && <p className="note">{said}</p>}
+
+      {open ? (
+        <div className="stretch">
+          <p className="small">
+            <Countdown closes={open.closes} count={open.event_count} />
+          </p>
+          <div className="rows">
+            {open.takes?.map((take: any) => (
+              <div className="row take" key={take.id}>
+                <span className="take-text">{take.text}</span>
+                <span className="mono take-meta">
+                  {take.app ?? "—"}
+                  {take.ingest_status === "ignored" &&
+                    ` · not kept (${take.ignore_reason?.replace(/_/g, " ")})`}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="muted small">
+          {busy
+            ? "nothing open — the queue is still working through what you said"
+            : "nothing open. the next thing you say starts a new stretch."}
+        </p>
+      )}
+
+      {live.unassigned > 0 && (
+        <p className="muted small">
+          {live.unassigned} take{live.unassigned === 1 ? "" : "s"} not filed
+          into a stretch yet — closing will file them first, so nothing is
+          left behind.
+        </p>
+      )}
+
+      {working.length > 0 && (
+        <div className="rows queue">
+          {working.map((job: any) => (
+            <div className="row job" key={job.id}>
+              <span className="tag">{job.stage.replace(/_/g, " ")}</span>
+              <span className="job-about">
+                {job.about ?? job.status}
+                {job.due_in_seconds > 0 && ` · waiting ${job.due_in_seconds}s`}
+                {job.attempts > 0 && ` · attempt ${job.attempts + 1}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {live.finished?.length > 0 && (
+        <div className="rows done">
+          {live.finished.map((ep: any) => (
+            <div className="row ended-row" key={ep.id}>
+              <span className="ended-title">
+                {ep.title ?? (ep.waiting_to_be_read ? "not read yet" : "—")}
+              </span>
+              <span className="mono ended-meta">
+                {ep.event_count} take{ep.event_count === 1 ? "" : "s"}
+                {ep.beliefs > 0 && ` · ${ep.beliefs} belief${ep.beliefs === 1 ? "" : "s"}`}
+                {ep.closed_by === "hand" && " · you ended it"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Json value={live} label="the whole thing as JSON" />
+    </section>
   );
 }
 

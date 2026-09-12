@@ -1,0 +1,2675 @@
+{
+  "meta": {
+    "corpus": "corpus/corpus.jsonl",
+    "corpus_span": [
+      "2026-06-15",
+      "2026-08-19"
+    ],
+    "default_now": "2026-08-20 09:00:00+00:00",
+    "counts": {
+      "single_fact": 10,
+      "synthesis": 10,
+      "temporal": 8,
+      "entity": 8,
+      "superseded": 6,
+      "unanswerable": 10,
+      "ignored": 8
+    }
+  },
+  "arms": [
+    "full",
+    "vector_only",
+    "no_memory"
+  ],
+  "summary": {
+    "overall": {
+      "full": {
+        "n": 60,
+        "correct": 48,
+        "accuracy": 0.8,
+        "latency_p50_ms": 4609,
+        "latency_p95_ms": 15601,
+        "abstention_rate": 1.0
+      },
+      "vector_only": {
+        "n": 60,
+        "correct": 48,
+        "accuracy": 0.8,
+        "latency_p50_ms": 4614,
+        "latency_p95_ms": 10340,
+        "abstention_rate": 1.0
+      },
+      "no_memory": {
+        "n": 60,
+        "correct": 19,
+        "accuracy": 0.317,
+        "latency_p50_ms": 5254,
+        "latency_p95_ms": 11396,
+        "abstention_rate": 1.0
+      }
+    },
+    "by_category": {
+      "entity": {
+        "full": {
+          "n": 8,
+          "correct": 6,
+          "accuracy": 0.75
+        },
+        "vector_only": {
+          "n": 8,
+          "correct": 6,
+          "accuracy": 0.75
+        },
+        "no_memory": {
+          "n": 8,
+          "correct": 1,
+          "accuracy": 0.125
+        }
+      },
+      "ignored": {
+        "full": {
+          "n": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "vector_only": {
+          "n": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        },
+        "no_memory": {
+          "n": 8,
+          "correct": 8,
+          "accuracy": 1.0
+        }
+      },
+      "single_fact": {
+        "full": {
+          "n": 10,
+          "correct": 8,
+          "accuracy": 0.8
+        },
+        "vector_only": {
+          "n": 10,
+          "correct": 8,
+          "accuracy": 0.8
+        },
+        "no_memory": {
+          "n": 10,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "superseded": {
+        "full": {
+          "n": 6,
+          "correct": 4,
+          "accuracy": 0.667
+        },
+        "vector_only": {
+          "n": 6,
+          "correct": 4,
+          "accuracy": 0.667
+        },
+        "no_memory": {
+          "n": 6,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "synthesis": {
+        "full": {
+          "n": 10,
+          "correct": 8,
+          "accuracy": 0.8
+        },
+        "vector_only": {
+          "n": 10,
+          "correct": 8,
+          "accuracy": 0.8
+        },
+        "no_memory": {
+          "n": 10,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "temporal": {
+        "full": {
+          "n": 8,
+          "correct": 4,
+          "accuracy": 0.5
+        },
+        "vector_only": {
+          "n": 8,
+          "correct": 4,
+          "accuracy": 0.5
+        },
+        "no_memory": {
+          "n": 8,
+          "correct": 0,
+          "accuracy": 0.0
+        }
+      },
+      "unanswerable": {
+        "full": {
+          "n": 10,
+          "correct": 10,
+          "accuracy": 1.0
+        },
+        "vector_only": {
+          "n": 10,
+          "correct": 10,
+          "accuracy": 1.0
+        },
+        "no_memory": {
+          "n": 10,
+          "correct": 10,
+          "accuracy": 1.0
+        }
+      }
+    }
+  },
+  "questions": [
+    {
+      "id": "fact-01",
+      "category": "single_fact",
+      "question": "what time is standup",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to move the standup meeting to 10:00 starting on Monday.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "66f40790-8a3b-4b11-a227-603320df8d4a",
+          "latency_ms": 4723,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to move the standup meeting to 10:00 starting on Monday.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "7b1f7992-b7e6-4c6e-8267-b167164addaf",
+          "latency_ms": 4262,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "",
+          "error": "gemini-3.1-flash-lite: 503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status'",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4695,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-02",
+      "category": "single_fact",
+      "question": "what does Aditya think about the price",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You noted that Aditya expressed the opinion that the current pricing is too high for the SMB segment.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "777d5600-e118-4adb-9d26-4341593a5212",
+          "latency_ms": 3230,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You noted that Aditya expressed the opinion that the current pricing is too high for the SMB segment.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "0923cf8b-e071-4a22-870b-5aaf20ded7c2",
+          "latency_ms": 4243,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I do not know what Aditya thinks about the price.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4912,
+          "cost_usd": 0.0001995,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-03",
+      "category": "single_fact",
+      "question": "who is doing the margin numbers",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You noted that the margin at the higher tier is better than you originally expected [1, 3].",
+          "citations": 2,
+          "window": null,
+          "trace_id": "e8d9270e-b04f-4c86-b649-ba0d977f0651",
+          "latency_ms": 4419,
+          "intent": "recall",
+          "correct": false,
+          "why": "missing pranav"
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You noted that the margin at the higher tier is better than you originally expected [1, 3].",
+          "citations": 2,
+          "window": null,
+          "trace_id": "6ffbf8e6-d5e5-410e-ab7e-eaecf768d5ac",
+          "latency_ms": 9090,
+          "intent": "recall",
+          "correct": false,
+          "why": "missing pranav"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says who is responsible for the margin numbers.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5812,
+          "cost_usd": 0.00015,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-04",
+      "category": "single_fact",
+      "question": "when is the gateway cutover",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that the gateway cutover is scheduled for Saturday night.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "b41f741e-6aa4-493e-adb4-7d7ae0e18b4a",
+          "latency_ms": 5363,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided the gateway cutover is scheduled for Saturday night [1, 3], though you later noted the migration is delayed until November [7].",
+          "citations": 3,
+          "window": null,
+          "trace_id": "a1a51d7f-dbbb-4ebf-9d13-8efab21cd69d",
+          "latency_ms": 4742,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says when the gateway cutover is scheduled.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4719,
+          "cost_usd": 0.00015,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-05",
+      "category": "single_fact",
+      "question": "who is the external legal counsel",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that Priya Raghavan is your external counsel for the DPA review.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "cbef2aef-cad3-43c4-ba2e-cf72349c78b5",
+          "latency_ms": 5124,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that Priya Raghavan is your external counsel for the DPA review.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "1377f616-be71-4240-8e38-4a4ff6e92696",
+          "latency_ms": 5009,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or records, so I cannot identify your external legal counsel.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5571,
+          "cost_usd": 0.00019125,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-06",
+      "category": "single_fact",
+      "question": "what price is ABC anchored around",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that ABC is anchored at a price of 250.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "b2a67786-4625-4671-a6f3-95f977681e32",
+          "latency_ms": 4439,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that ABC is anchored at a price of 250.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "8a7122d0-ae25-4480-9ae0-237f133978b0",
+          "latency_ms": 7902,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says what price ABC is anchored around.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 18273,
+          "cost_usd": 0.0002025,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-07",
+      "category": "single_fact",
+      "question": "how long should customer emails be",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to keep customer emails to a maximum of three bullet points.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "1ba04769-4c9e-4b36-9cea-374ff74102a3",
+          "latency_ms": 5249,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to keep customer emails to a maximum of three bullet points.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "3fc421c6-79b7-4420-beb1-749e2f99fbce",
+          "latency_ms": 4577,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says how long customer emails should be.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4392,
+          "cost_usd": 0.00014625,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-08",
+      "category": "single_fact",
+      "question": "how should I write to Trellis Health",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to take ownership of the inbox rules for Trellis after you finish your current pricing work, and you noted that they require SSO implementation before signing the contract.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "d81776d5-4203-4482-aec5-1c58123672c8",
+          "latency_ms": 15601,
+          "intent": "draft",
+          "correct": false,
+          "why": "missing full sentence/formal"
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to take ownership of the inbox rules for Trellis after you finish your current pricing work, and you noted that they require SSO implementation before signing the contract.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "f43b61b0-34c8-40f3-b92c-b709cba9b11f",
+          "latency_ms": 10340,
+          "intent": "draft",
+          "correct": false,
+          "why": "missing full sentence/formal"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or communication records, so I cannot tell you how you should write to Trellis Health.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5111,
+          "cost_usd": 0.00021525,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-09",
+      "category": "single_fact",
+      "question": "when do I like meetings scheduled",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You prefer to schedule all meetings before noon and reserve your afternoons for building.",
+          "citations": 3,
+          "window": null,
+          "trace_id": "28f3a925-a377-4ffe-91ab-be4bb688c60d",
+          "latency_ms": 3466,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to schedule all meetings before noon, as you reserve your afternoons for building.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "2692cf32-f275-4178-8652-10c31dea2ad6",
+          "latency_ms": 5862,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says when you like meetings scheduled.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 2701,
+          "cost_usd": 0.00012,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "fact-10",
+      "category": "single_fact",
+      "question": "how should release notes be written",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to write release notes as short bullet points rather than paragraphs.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "f9348c9f-3f57-4380-86be-efa3831e2d97",
+          "latency_ms": 6264,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to write release notes as short bullet points rather than paragraphs.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "425492db-7a36-4c2b-a7ed-3becb88edb4c",
+          "latency_ms": 4614,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or internal documentation regarding how you should write release notes.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4731,
+          "cost_usd": 0.00024375,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-01",
+      "category": "synthesis",
+      "question": "what is the current state of the SOC2 audit",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You selected Sequoia Assurance to conduct the SOC2 audit, though ownership of the project remains unassigned.",
+          "citations": 3,
+          "window": null,
+          "trace_id": "ca169180-5216-4b06-a2a4-758491d02da3",
+          "latency_ms": 5482,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You selected Sequoia Assurance to conduct your SOC2 audit, though ownership of the project remains unassigned.",
+          "citations": 3,
+          "window": null,
+          "trace_id": "1d049cb2-1a14-4d33-8cba-3c0e97e78f86",
+          "latency_ms": 5781,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your work history or internal documents, so I cannot determine the current state of your SOC2 audit.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5694,
+          "cost_usd": 0.00020925,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-02",
+      "category": "synthesis",
+      "question": "summarise everything about the gateway migration",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to use Razorpay for the gateway migration, which is currently delayed until November.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "d8941643-2465-4b19-8be7-53abab642dd7",
+          "latency_ms": 3026,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to use Razorpay for the gateway migration, which is currently delayed until November.",
+          "citations": 3,
+          "window": null,
+          "trace_id": "7038348e-ca5f-4a00-8c70-b3f621ac2c7b",
+          "latency_ms": 6117,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or notes, so I cannot summarize your gateway migration project.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4404,
+          "cost_usd": 0.00019125,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-03",
+      "category": "synthesis",
+      "question": "what happened with the Pro tier pricing",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to set the Pro tier price to \u20b9299 a month.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "2c719bcf-6981-4f3a-86a2-5b440cfda76e",
+          "latency_ms": 5002,
+          "intent": "recall",
+          "correct": false,
+          "why": "1 citations, wanted 2"
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to set the Pro tier price to \u20b9299 a month.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "6ca322d4-9629-45b5-a441-106b337605d3",
+          "latency_ms": 4976,
+          "intent": "recall",
+          "correct": false,
+          "why": "1 citations, wanted 2"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your work history or notes, so I cannot provide information regarding your Pro tier pricing.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 8666,
+          "cost_usd": 0.00019575,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-04",
+      "category": "synthesis",
+      "question": "where are we with Lumen Retail",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You noted that Lumen Retail will sign the contract if you commit to Tuesday, otherwise the deal will be delayed until next quarter [4].",
+          "citations": 1,
+          "window": null,
+          "trace_id": "20a9dbf0-29a1-4d45-ba7b-f776764a2a9c",
+          "latency_ms": 3492,
+          "intent": "recall",
+          "correct": false,
+          "why": "1 citations, wanted 2"
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You noted that Lumen Retail will sign the contract if you commit to Tuesday, otherwise the deal will be delayed until next quarter [4].",
+          "citations": 1,
+          "window": null,
+          "trace_id": "24a0dcf4-b860-40c0-b11c-1311655e77d8",
+          "latency_ms": 7580,
+          "intent": "recall",
+          "correct": false,
+          "why": "1 citations, wanted 2"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or project notes, so I cannot tell you the status of Lumen Retail.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 3269,
+          "cost_usd": 0.000195,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-05",
+      "category": "synthesis",
+      "question": "what is the situation with ABC Inc",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that there is no longer a rush to send the contract to ABC Inc, and you confirmed that they agree with the scope of the pricing work.",
+          "citations": 3,
+          "window": null,
+          "trace_id": "14c4ba20-fcc2-4df5-87d2-f983074ecfac",
+          "latency_ms": 2968,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that there is no longer a rush to send the contract to ABC Inc, and you confirmed that they agree with the scope of the pricing work.",
+          "citations": 3,
+          "window": null,
+          "trace_id": "86e86dab-7ff5-4b28-92c4-b2fbf0451242",
+          "latency_ms": 5786,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or notes, so I cannot provide information regarding your situation with ABC Inc.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4880,
+          "cost_usd": 0.00020325,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-06",
+      "category": "synthesis",
+      "question": "what do I need to know about the board deck",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that the board deck requires an update to the churn slide [8], and you confirmed that Thursday is an acceptable deadline for the deck [6].",
+          "citations": 2,
+          "window": null,
+          "trace_id": "607dfd52-c8f4-4be7-99aa-3ef03ba44507",
+          "latency_ms": 3401,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that the board deck requires an update to the churn slide [8], and you confirmed that Thursday is an acceptable deadline for the deck [6].",
+          "citations": 2,
+          "window": null,
+          "trace_id": "f0595fee-88ed-4706-91ed-b940791512af",
+          "latency_ms": 6054,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or notes, so I cannot tell you what you need to know about the board deck.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5275,
+          "cost_usd": 0.000273,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-07",
+      "category": "synthesis",
+      "question": "what is happening with inbox rules v2",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that you require numbers before the inbox rules call [6, 8].",
+          "citations": 2,
+          "window": null,
+          "trace_id": "01764db8-bc8b-4e63-a42c-db187302ecbd",
+          "latency_ms": 5691,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that you require numbers before the inbox rules call, and you assigned Priya full ownership of the project.",
+          "citations": 4,
+          "window": null,
+          "trace_id": "b907fa25-77f6-4822-ac0c-71e5a34cfae8",
+          "latency_ms": 4488,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or notes, so I cannot provide information regarding inbox rules v2.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5998,
+          "cost_usd": 0.00017775,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-08",
+      "category": "synthesis",
+      "question": "give me the full picture on the launch",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to move the dashboard launch to November.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "e087bf00-be7c-4b4a-9d3c-bcf6110eb9fa",
+          "latency_ms": 2476,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to move the dashboard launch to November.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "febec82c-384c-4b1a-8c48-d78aa861c134",
+          "latency_ms": 6176,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or notes, so I cannot provide information regarding your launch.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 8262,
+          "cost_usd": 0.00019275,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-09",
+      "category": "synthesis",
+      "question": "what is going on with Trellis Health",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to switch to Cashfree for Trellis Health due to a T+3 settlement period interfering with refund flows, and you plan to take ownership of their inbox rules after finishing your current pricing work.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "40fe6265-c74c-43ee-b78d-ce2a4ba7c5de",
+          "latency_ms": 5681,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to switch to Cashfree for Trellis Health due to a T+3 settlement period interfering with refund flows, and you plan to take ownership of their inbox rules after finishing your current pricing work.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "71123d3c-d0fe-4eb1-a371-79dd777a1ff5",
+          "latency_ms": 10429,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or notes, so I cannot tell you what is going on with Trellis Health.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 1832,
+          "cost_usd": 0.0002115,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "synth-10",
+      "category": "synthesis",
+      "question": "what are all my open commitments",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You have open commitments regarding the ownership of the onboarding flow, inbox rules, and the gateway migration, as well as pending contract sign-offs from Trellis and Lumen Retail.",
+          "citations": 4,
+          "window": null,
+          "trace_id": "29b450a9-0b1a-40d0-b591-767e706ced37",
+          "latency_ms": 5293,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You have open commitments regarding the ownership of the onboarding flow, inbox rules, and the gateway migration, as well as pending contract sign-offs from ABC Inc, Trellis, and Lumen Retail.",
+          "citations": 4,
+          "window": null,
+          "trace_id": "91b08bb0-c067-433a-83ae-a625f0e0a58a",
+          "latency_ms": 4655,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or work history, so I cannot list your open commitments.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 7811,
+          "cost_usd": 0.0001875,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "time-01",
+      "category": "temporal",
+      "question": "what did I say yesterday",
+      "now": "2026-07-07T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "yesterday",
+            "from": "2026-07-06T00:00:00+00:00",
+            "to": "2026-07-07T00:00:00+00:00"
+          },
+          "trace_id": "d9029fba-ed9f-4e47-b42b-478d447cfc06",
+          "latency_ms": 17,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "yesterday",
+            "from": "2026-07-06T00:00:00+00:00",
+            "to": "2026-07-07T00:00:00+00:00"
+          },
+          "trace_id": "bb5f8e53-049e-4aaa-8d00-a3007a6fc57c",
+          "latency_ms": 4,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I do not know what you said yesterday.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 9566,
+          "cost_usd": 0.0001905,
+          "correct": false,
+          "why": "no window resolved"
+        }
+      }
+    },
+    {
+      "id": "time-02",
+      "category": "temporal",
+      "question": "what did I dictate last week",
+      "now": "2026-07-07T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "last week",
+            "from": "2026-06-30T09:00:00+00:00",
+            "to": "2026-07-07T09:00:00+00:00"
+          },
+          "trace_id": "9d1c4b30-6fc2-480f-b75a-97bd86f017ac",
+          "latency_ms": 8,
+          "intent": "find_dictation",
+          "correct": false,
+          "why": "resolved 2026-06-30..2026-07-07, expected 2026-06-29..2026-07-05"
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "last week",
+            "from": "2026-06-30T09:00:00+00:00",
+            "to": "2026-07-07T09:00:00+00:00"
+          },
+          "trace_id": "aff6c19c-30c0-4d40-87f0-65d32d4cb836",
+          "latency_ms": 5,
+          "intent": "find_dictation",
+          "correct": false,
+          "why": "resolved 2026-06-30..2026-07-07, expected 2026-06-29..2026-07-05"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or dictation history, so I cannot tell you what you dictated last week.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 3704,
+          "cost_usd": 0.0002025,
+          "correct": false,
+          "why": "no window resolved"
+        }
+      }
+    },
+    {
+      "id": "time-03",
+      "category": "temporal",
+      "question": "what did I work on in June",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "The provided sources do not contain information regarding the current status or details of your work.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "b96a53c6-6097-463f-ba05-2bdbacb82f30",
+          "latency_ms": 6213,
+          "intent": "recall",
+          "correct": false,
+          "why": "no window resolved"
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "The provided sources do not contain information regarding the current status or details of your work.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "5672a3cf-6fcb-44f9-aad4-e14d27479cb8",
+          "latency_ms": 4262,
+          "intent": "recall",
+          "correct": false,
+          "why": "no window resolved"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or notes, so I cannot tell you what you worked on in June.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 7274,
+          "cost_usd": 0.00020325,
+          "correct": false,
+          "why": "no window resolved"
+        }
+      }
+    },
+    {
+      "id": "time-04",
+      "category": "temporal",
+      "question": "what have I said since Monday",
+      "now": "2026-07-08T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "since Monday",
+            "from": "2026-07-06T00:00:00+00:00",
+            "to": "2026-07-08T09:00:00+00:00"
+          },
+          "trace_id": "daa5ffeb-316b-491c-bdf1-8591c049deda",
+          "latency_ms": 12,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "since Monday",
+            "from": "2026-07-06T00:00:00+00:00",
+            "to": "2026-07-08T09:00:00+00:00"
+          },
+          "trace_id": "90c60faf-9620-4e2c-bf53-7241a23d917a",
+          "latency_ms": 7,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I cannot tell you what you have said since Monday.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 2605,
+          "cost_usd": 0.00019875,
+          "correct": false,
+          "why": "no window resolved"
+        }
+      }
+    },
+    {
+      "id": "time-05",
+      "category": "temporal",
+      "question": "what did I record on the 23rd of June",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": null,
+          "trace_id": "d2663808-66b9-4525-b230-0375578500dc",
+          "latency_ms": 19,
+          "intent": "find_dictation",
+          "correct": false,
+          "why": "no window resolved"
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": null,
+          "trace_id": "80588b43-7007-4835-b6e4-368b9e69b41c",
+          "latency_ms": 4,
+          "intent": "find_dictation",
+          "correct": false,
+          "why": "no window resolved"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or work history, so I cannot tell you what you recorded on the 23rd of June.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 2942,
+          "cost_usd": 0.00024825,
+          "correct": false,
+          "why": "no window resolved"
+        }
+      }
+    },
+    {
+      "id": "time-06",
+      "category": "temporal",
+      "question": "what did I say last Tuesday",
+      "now": "2026-07-08T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "last Tuesday",
+            "from": "2026-07-07T00:00:00+00:00",
+            "to": "2026-07-08T00:00:00+00:00"
+          },
+          "trace_id": "f5453179-63bf-4119-ab06-208e7c48b1dd",
+          "latency_ms": 8,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "last Tuesday",
+            "from": "2026-07-07T00:00:00+00:00",
+            "to": "2026-07-08T00:00:00+00:00"
+          },
+          "trace_id": "8d559d16-fafa-4149-a05a-16968ef975bb",
+          "latency_ms": 4,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I cannot tell you what you said last Tuesday.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4668,
+          "cost_usd": 0.000195,
+          "correct": false,
+          "why": "no window resolved"
+        }
+      }
+    },
+    {
+      "id": "time-07",
+      "category": "temporal",
+      "question": "what did I note this morning",
+      "now": "2026-07-06T16:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "this morning",
+            "from": "2026-07-06T05:00:00+00:00",
+            "to": "2026-07-06T12:00:00+00:00"
+          },
+          "trace_id": "09ad10a4-4914-4998-b3eb-f37ee2dffd4b",
+          "latency_ms": 8,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": {
+            "expression": "this morning",
+            "from": "2026-07-06T05:00:00+00:00",
+            "to": "2026-07-06T12:00:00+00:00"
+          },
+          "trace_id": "0d55e89f-342a-488d-a407-35de519ed41d",
+          "latency_ms": 3,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I cannot tell you what you noted this morning.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 28584,
+          "cost_usd": 0.000195,
+          "correct": false,
+          "why": "no window resolved"
+        }
+      }
+    },
+    {
+      "id": "time-08",
+      "category": "temporal",
+      "question": "what came up two weeks ago",
+      "now": "2026-07-13T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "Two weeks ago, on July 8th, you noted that the design team expected the changelog by Thursday and that you were catching up on missed items.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "d2e74195-62af-435d-b3b7-df97054762a9",
+          "latency_ms": 6983,
+          "intent": "recall",
+          "correct": false,
+          "why": "no window resolved"
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "Two weeks ago, on July 8th, you noted that the design team expected the changelog by Thursday and that you were catching up on missed items.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "6db63e02-e250-47eb-bb89-099d6a74a786",
+          "latency_ms": 1727,
+          "intent": "recall",
+          "correct": false,
+          "why": "no window resolved"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or notes, so I cannot tell you what came up two weeks ago.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 7370,
+          "cost_usd": 0.0002025,
+          "correct": false,
+          "why": "no window resolved"
+        }
+      }
+    },
+    {
+      "id": "ent-01",
+      "category": "entity",
+      "question": "what did Aditya say about the price",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to set the Pro tier price at \u20b9349 per month.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "525030d7-6edf-42cc-aac6-2b831375c090",
+          "latency_ms": 4040,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to set the Pro tier price at \u20b9349 per month.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "123f8b5b-e2b8-490d-9314-4c8320ec5afe",
+          "latency_ms": 7008,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, and nothing here says what Aditya said about the price.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5455,
+          "cost_usd": 0.00019575,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "ent-02",
+      "category": "entity",
+      "question": "what has Adi been asking for",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You noted that Aditya wants the deck before Friday and is currently investigating two tickets related to an import bug.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "016c534a-942a-4a9a-9b96-5f77f418aab8",
+          "latency_ms": 5427,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You noted that Aditya wants the deck before Friday and is currently investigating two tickets related to an import bug.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "dcc5ad91-9d5f-4542-8721-918cd78a6f8d",
+          "latency_ms": 1260,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I do not know what Adi has been asking for.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 6251,
+          "cost_usd": 0.00019875,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "ent-03",
+      "category": "entity",
+      "question": "what is Kavya working on",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You noted that Kavya submitted a fix for the onboarding flow, is reviewing the contract pricing section, and holds the necessary context for the Lumen renewal.",
+          "citations": 3,
+          "window": null,
+          "trace_id": "7c846ddf-c66b-4d57-85db-a0b5eaef52e4",
+          "latency_ms": 14635,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You noted that Kavya submitted a fix for the onboarding flow, is reviewing the contract pricing section, and holds the necessary context for the Lumen renewal.",
+          "citations": 3,
+          "window": null,
+          "trace_id": "e8828157-400a-45eb-892a-1e863767e457",
+          "latency_ms": 1998,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or current project information.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 6220,
+          "cost_usd": 0.000165,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "ent-04",
+      "category": "entity",
+      "question": "what did Pranav commit to",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that Pranav is the owner of the pricing work, he is handling the onboarding flow and the SOC2 project during your absence, he is managing the escalation, and he expects the dashboard project before Tuesday.",
+          "citations": 5,
+          "window": null,
+          "trace_id": "ea44aa96-09ad-4cc9-a4bb-f3a45382aa56",
+          "latency_ms": 5634,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that Pranav is the owner of the pricing work, he expects the dashboard project before Tuesday, he is handling the escalation, and he has taken over the SOC2 project during your absence.",
+          "citations": 4,
+          "window": null,
+          "trace_id": "69774f41-1208-4ae7-a309-9885020b5e00",
+          "latency_ms": 3820,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your work history or notes, so I cannot say what Pranav committed to.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 6590,
+          "cost_usd": 0.00019125,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "ent-05",
+      "category": "entity",
+      "question": "what does Rohit need from me",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that Rohit needs to confirm details with ABC Inc. and address their requests for SOC2 information.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "f0c3aaca-80ba-48bf-ba02-c29fb9259ea1",
+          "latency_ms": 1941,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that Rohit needs to confirm details with ABC Inc. and address their requests for SOC2 information.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "a8b1c8d4-e0ed-4ba7-a12d-c4ca3a1c763f",
+          "latency_ms": 5754,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I cannot know what Rohit needs from you.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4080,
+          "cost_usd": 0.00019125,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "ent-06",
+      "category": "entity",
+      "question": "who owns inbox rules v2",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You assigned Priya full ownership of inbox rules v2.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "f9a5df9c-7058-4550-a156-58eb84b862d5",
+          "latency_ms": 6743,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You assigned Priya full ownership of inbox rules v2.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "e9a8cf8d-8f27-49ca-8b7b-16ef95682845",
+          "latency_ms": 3246,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your work history or internal documentation to know who owns inbox rules v2.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 11396,
+          "cost_usd": 0.0001875,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "ent-07",
+      "category": "entity",
+      "question": "what did Priya say she would do",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You assigned Priya to manage inbox rules, ship the current project, handle the billing sync, and confirm details with ABC.",
+          "citations": 4,
+          "window": null,
+          "trace_id": "96ff55f0-3487-46d9-934f-0721775ff834",
+          "latency_ms": 5774,
+          "intent": "recall",
+          "correct": false,
+          "why": "named one without flagging: you assigned priya to manage inbox rules, ship the current project, handle the billing syn"
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You assigned Priya to manage inbox rules, ship the current project, handle the billing sync, and confirm details with ABC.",
+          "citations": 4,
+          "window": null,
+          "trace_id": "30cae859-d628-4a0a-9984-8d997c200cc9",
+          "latency_ms": 4358,
+          "intent": "recall",
+          "correct": false,
+          "why": "named one without flagging: you assigned priya to manage inbox rules, ship the current project, handle the billing syn"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says what Priya said she would do.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 6029,
+          "cost_usd": 0.000147,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ent-08",
+      "category": "entity",
+      "question": "what does Lumen Retail want",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here lists the specific requirements for Lumen Retail.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "b2d4d241-5413-49c5-b4bb-9e5a17a7b897",
+          "latency_ms": 1953,
+          "intent": "recall",
+          "correct": false,
+          "why": "abstained on an answerable question"
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here lists the specific requirements for Lumen Retail.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "1acf3b71-6e5e-4424-96f8-76bc369069cd",
+          "latency_ms": 5756,
+          "intent": "recall",
+          "correct": false,
+          "why": "abstained on an answerable question"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, and nothing here says what Lumen Retail wants.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4614,
+          "cost_usd": 0.00018675,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "sup-01",
+      "category": "superseded",
+      "question": "what is the Pro tier price now",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to set the Pro tier price at \u20b9349 per month.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "094a4e0d-4ab6-43b2-a040-3a6e1b5a21cd",
+          "latency_ms": 5328,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to set the Pro tier price at \u20b9349 per month.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "777e8641-cbf6-421a-83fd-d4a1f2ed00a3",
+          "latency_ms": 4140,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your work history or notes, so I cannot tell you the current price of the Pro tier.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5609,
+          "cost_usd": 0.00020325,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "sup-02",
+      "category": "superseded",
+      "question": "when does inbox rules v2 launch",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You scheduled the inbox rules v2 launch for October, though it is currently blocked until the support runbook is completed.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "693ed712-d0b8-4cfb-bc8c-980197bee572",
+          "latency_ms": 3333,
+          "intent": "recall",
+          "correct": false,
+          "why": "missing 18/november"
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You scheduled the inbox rules v2 launch for October, though it is currently blocked until the support runbook is completed.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "09de962b-5935-454d-aaa9-addba0461b76",
+          "latency_ms": 4762,
+          "intent": "recall",
+          "correct": false,
+          "why": "missing 18/november"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says when inbox rules v2 launches.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 7271,
+          "cost_usd": 0.000147,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "sup-03",
+      "category": "superseded",
+      "question": "which payment gateway are we using",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to switch the gateway client to Cashfree, though this was previously Razorpay until July 17th.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "7b0ca370-e552-438d-a4bd-303dad25936a",
+          "latency_ms": 4624,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to switch the gateway client to Cashfree, though this was previously Razorpay until July 17th.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "244930f5-80e9-4116-86ea-50634e4eb511",
+          "latency_ms": 6253,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your work history or internal documentation, so I cannot identify which payment gateway you are using.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5161,
+          "cost_usd": 0.00019875,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "sup-04",
+      "category": "superseded",
+      "question": "who is doing the SOC2 audit",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You selected Sequoia Assurance to conduct your SOC2 audit.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "6d3491ca-b662-46e9-906a-b09617bc5405",
+          "latency_ms": 3186,
+          "intent": "recall",
+          "correct": false,
+          "why": "missing nomad"
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that Sequoia Assurance will conduct your SOC2 audit.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "3bfde3f4-f51b-467b-90ec-084c23803a86",
+          "latency_ms": 5422,
+          "intent": "recall",
+          "correct": false,
+          "why": "missing nomad"
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your work history or internal documents, so I cannot say who is performing your SOC2 audit.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 7810,
+          "cost_usd": 0.00020325,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "sup-05",
+      "category": "superseded",
+      "question": "what time does standup start now",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided to move the standup meeting to 10:00 starting on Monday.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "1215cde1-a750-4a74-ad68-431688e72e17",
+          "latency_ms": 4609,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided to move the standup meeting to 10:00 starting on Monday.",
+          "citations": 1,
+          "window": null,
+          "trace_id": "63f6e5d1-361f-4c3b-8510-2ce5dfb7a99c",
+          "latency_ms": 12300,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says what time your standup starts.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 2253,
+          "cost_usd": 0.000147,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "sup-06",
+      "category": "superseded",
+      "question": "who owns inbox rules v2 now",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": true,
+          "text": "You decided that Priya is responsible for managing inbox rules.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "ad04b75c-e723-4df1-90e6-783cc938c2ac",
+          "latency_ms": 5699,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": true,
+          "text": "You decided that Priya is responsible for managing inbox rules.",
+          "citations": 2,
+          "window": null,
+          "trace_id": "f997cc98-20b1-49c6-97d3-26c629127384",
+          "latency_ms": 4757,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says who owns inbox rules v2.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5882,
+          "cost_usd": 0.000147,
+          "correct": false,
+          "why": "abstained on an answerable question"
+        }
+      }
+    },
+    {
+      "id": "un-01",
+      "category": "unanswerable",
+      "question": "what is our monthly AWS bill",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what the monthly AWS bill is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "7c0a60d3-5475-4522-a16e-b223a2ea4e3a",
+          "latency_ms": 5536,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what the monthly AWS bill is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "b4abf6a2-b86a-42db-877f-64df25b0e36a",
+          "latency_ms": 7536,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says what the monthly AWS bill is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 1011,
+          "cost_usd": 0.00014625,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-02",
+      "category": "unanswerable",
+      "question": "who is our health insurance provider",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing in your notes mentions your health insurance provider.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "9ef96e6f-5b64-40af-b326-7c716e3e67ab",
+          "latency_ms": 5364,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing in your notes mentions your health insurance provider.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "6e8c0012-4be4-4006-9fa7-33e0a1b604a4",
+          "latency_ms": 3949,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or company benefits information.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5828,
+          "cost_usd": 0.000165,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-03",
+      "category": "unanswerable",
+      "question": "what did we agree on the designer's salary",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what the designer salary agreement is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "0e0d01ce-00b7-4b05-837f-8c860a23403e",
+          "latency_ms": 5757,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what the designer salary agreement is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "b0dd22c1-f6b3-471a-9b13-cdf0ac204df2",
+          "latency_ms": 4720,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or agreements, so I cannot tell you what was agreed upon regarding the designer's salary.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4324,
+          "cost_usd": 0.0002205,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-04",
+      "category": "unanswerable",
+      "question": "when is the notice period for a resignation",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing in your dictations covers that.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "02392fea-2093-4240-8d14-fdef932c903a",
+          "latency_ms": 40,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing in your dictations covers that.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "bd3d646f-afcf-427c-862f-66e0008ab00b",
+          "latency_ms": 109,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says what your notice period is for a resignation.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 3402,
+          "cost_usd": 0.00015525,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-05",
+      "category": "unanswerable",
+      "question": "how much equity did the last hire get",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what the equity of the last hire is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "2c58efe2-9c81-4d59-b0ad-1acf2cfee259",
+          "latency_ms": 1899,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what the equity of the last hire is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "0f2e96d3-3a1b-430b-83ea-59e495861b7d",
+          "latency_ms": 6299,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal work history or employment records, so I cannot say how much equity the last hire received.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 6441,
+          "cost_usd": 0.00020775,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-06",
+      "category": "unanswerable",
+      "question": "which conference are we sponsoring next quarter",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here mentions conference sponsorship.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "7627a61d-4325-465d-a040-e3bd37d0a289",
+          "latency_ms": 36385,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here mentions conference sponsorship.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "57b7df19-8dae-42bc-b9f9-7a942d3f1212",
+          "latency_ms": 3950,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says which conference you are sponsoring next quarter.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5254,
+          "cost_usd": 0.00015075,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-07",
+      "category": "unanswerable",
+      "question": "what is our maternity leave policy",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what your maternity leave policy is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "f0435a5a-8d61-4115-8fd9-456f51a3cf37",
+          "latency_ms": 2970,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what your maternity leave policy is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "85d42851-c2e9-4fd4-9c24-83af566f4e73",
+          "latency_ms": 4710,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your company's internal documents or policy handbooks, so I cannot state what your maternity leave policy is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5300,
+          "cost_usd": 0.00021375,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-08",
+      "category": "unanswerable",
+      "question": "how much are we paying in sales tax",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what the sales tax amount is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "2d96808a-79cb-47db-8b37-52280b1f0473",
+          "latency_ms": 6274,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what the sales tax amount is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "4c4fc61a-8c2b-450b-8385-8db62007be9e",
+          "latency_ms": 3251,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says what the sales tax amount is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4914,
+          "cost_usd": 0.000204,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-09",
+      "category": "unanswerable",
+      "question": "what did the competitor announce",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here mentions a competitor announcement.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "4435cc87-65f7-4ff8-87b2-61bb6896c697",
+          "latency_ms": 6471,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here mentions a competitor announcement.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "7667371d-079f-43c3-8c8c-f66082c39235",
+          "latency_ms": 4301,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says what the competitor announced.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4197,
+          "cost_usd": 0.000138,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "un-10",
+      "category": "unanswerable",
+      "question": "what is the laptop budget for new joiners",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what the laptop budget for new joiners is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "3a4a0c89-32a0-40f0-938d-ff056e7a4974",
+          "latency_ms": 3717,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what the laptop budget for new joiners is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "c575a465-cb3e-4548-9d74-9da9549bbbba",
+          "latency_ms": 8328,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your work history or company policies, and nothing here says what the laptop budget for new joiners is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 1905,
+          "cost_usd": 0.0002685,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ign-01",
+      "category": "ignored",
+      "question": "what did I say about my biopsy results",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": null,
+          "trace_id": "db95b47d-722e-40b3-80a5-aa05a23bd923",
+          "latency_ms": 1258,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": null,
+          "trace_id": "32cdf13b-8f77-4670-bdd7-4b625d21d46d",
+          "latency_ms": 27,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I cannot tell you what you said about your biopsy results.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 6502,
+          "cost_usd": 0.000204,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ign-02",
+      "category": "ignored",
+      "question": "what is the shared drive password",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what the shared drive password is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "e2a56ead-298d-49ae-8776-6a5409cb2bc2",
+          "latency_ms": 6503,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what the shared drive password is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "4fb05474-91de-40aa-9bfb-e496fcdc221e",
+          "latency_ms": 3892,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says what the shared drive password is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4530,
+          "cost_usd": 0.00014625,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ign-03",
+      "category": "ignored",
+      "question": "what is my PAN number",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what your PAN number is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "9eabf8a1-99fa-412a-9db5-436bda59ebb9",
+          "latency_ms": 3081,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what your PAN number is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "e98b5b43-7514-4a40-bcae-4a6efa758717",
+          "latency_ms": 5938,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal records or work history, so I do not know your PAN number.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4827,
+          "cost_usd": 0.0001905,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ign-04",
+      "category": "ignored",
+      "question": "who did I vote for",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing in your dictations covers that.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "001cf025-5bae-41e6-8f4d-d206adf3e861",
+          "latency_ms": 42,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing in your dictations covers that.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "6fb21a6a-ad12-4bcf-8cf1-c4e0c7458553",
+          "latency_ms": 30,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal records or voting history, so I cannot say who you voted for.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 3600,
+          "cost_usd": 0.000168,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ign-05",
+      "category": "ignored",
+      "question": "what did I say about my brother",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing in your dictations covers that.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "dfea369c-ef45-42ad-b650-99e284a44611",
+          "latency_ms": 55,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing in your dictations covers that.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "8166ad7c-25da-471f-8a8a-0ec594251941",
+          "latency_ms": 49,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "Nothing here says anything about your brother.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4838,
+          "cost_usd": 0.0001395,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ign-06",
+      "category": "ignored",
+      "question": "what medication am I on",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing in your dictations covers that.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "8a492845-33be-4894-a8cf-25f203baf31c",
+          "latency_ms": 39,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing in your dictations covers that.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "547f4c59-2a7a-4c32-9287-aeac03992f25",
+          "latency_ms": 25,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal medical records or work history, so I cannot tell you what medication you are on.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5380,
+          "cost_usd": 0.00020175,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ign-07",
+      "category": "ignored",
+      "question": "what is the sandbox API key",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "Nothing here says what the sandbox API key is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "482e980f-1bf7-4584-94d8-1695216cfa6d",
+          "latency_ms": 21222,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "Nothing here says what the sandbox API key is.",
+          "citations": 0,
+          "window": null,
+          "trace_id": "9ce8c4c5-03cf-4cdc-9a5b-72a82ff3ec25",
+          "latency_ms": 2827,
+          "intent": "recall",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or work history, so I do not know your sandbox API key.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 5583,
+          "cost_usd": 0.000195,
+          "correct": true,
+          "why": ""
+        }
+      }
+    },
+    {
+      "id": "ign-08",
+      "category": "ignored",
+      "question": "what did I say about Kavya's scan results",
+      "now": "2026-08-20T09:00:00+00:00",
+      "arms": {
+        "full": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": null,
+          "trace_id": "c035547a-5dcf-4f0c-b6cc-e8a07ebfb3a1",
+          "latency_ms": 55,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "vector_only": {
+          "answered": false,
+          "text": "",
+          "citations": 0,
+          "window": null,
+          "trace_id": "6a3c4cf6-994d-4400-b84b-d32b6cbe6aee",
+          "latency_ms": 28,
+          "intent": "find_dictation",
+          "correct": true,
+          "why": ""
+        },
+        "no_memory": {
+          "answered": false,
+          "text": "I do not have access to your personal notes or messages, so I cannot tell you what you said about Kavya's scan results.",
+          "citations": 0,
+          "window": null,
+          "trace_id": null,
+          "latency_ms": 4336,
+          "cost_usd": 0.0002175,
+          "correct": true,
+          "why": ""
+        }
+      }
+    }
+  ]
+}

@@ -9,9 +9,15 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    // Every router prefix the API mounts has to appear here. A missing one
+    // does not error: the dev server answers with index.html instead, the
+    // JSON parse fails, and the screen using it renders empty -- which
+    // looks like a backend bug and is not one. Built output is served from
+    // the API itself, so this only ever bites in development.
     proxy: Object.fromEntries(
       [
         "/ask",
+        "/episodes",
         "/events",
         "/evaluation",
         "/health",

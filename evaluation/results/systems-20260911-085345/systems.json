@@ -1,0 +1,153 @@
+{
+  "measured_at": "2026-09-11T08:53:41.554407+00:00",
+  "corpus": {
+    "events": 484,
+    "memories": 196
+  },
+  "model_usage": {
+    "ingest": {
+      "traces": 152,
+      "model_calls": 135,
+      "input_tokens": 148174,
+      "output_tokens": 40238,
+      "cost_usd": 0.0974
+    },
+    "query": {
+      "traces": 131,
+      "model_calls": 236,
+      "input_tokens": 125271,
+      "output_tokens": 16736,
+      "cost_usd": 0.0564
+    },
+    "per_event_ingested": {
+      "events": 484,
+      "model_calls": 0.279,
+      "cost_usd": 0.000201
+    },
+    "per_query": {
+      "model_calls": 1.8,
+      "cost_usd": 0.000431
+    },
+    "models_used": [
+      "gemini-3.1-flash-lite"
+    ]
+  },
+  "latency": {
+    "ingest_end_to_end_ms": {
+      "n": 152,
+      "p50": 4894.0,
+      "p95": 5932.0,
+      "mean": 4577.6
+    },
+    "query_end_to_end_ms": {
+      "n": 131,
+      "p50": 4920.0,
+      "p95": 6112.0,
+      "mean": 4035.4
+    },
+    "by_stage_ms": {
+      "draft": {
+        "n": 2,
+        "p50": 1060.0,
+        "p95": 1060.0,
+        "mean": 1054.5
+      },
+      "episode_consolidate": {
+        "n": 135,
+        "p50": 1932.0,
+        "p95": 3288.0,
+        "mean": 2177.7
+      },
+      "parse": {
+        "n": 131,
+        "p50": 1127.0,
+        "p95": 2803.0,
+        "mean": 1479.8
+      },
+      "recall": {
+        "n": 103,
+        "p50": 1063.0,
+        "p95": 2226.0,
+        "mean": 1251.8
+      }
+    }
+  },
+  "retrieval_only_ms": {
+    "n": 60,
+    "p50": 41.1,
+    "p95": 75.4,
+    "mean": 57.3
+  },
+  "throughput": {
+    "episode_consolidate": {
+      "jobs": 146,
+      "wall_seconds": 3177.2,
+      "busy_seconds": 684.0,
+      "jobs_per_second": null
+    },
+    "embed": {
+      "jobs": 4,
+      "wall_seconds": 3185.8,
+      "busy_seconds": 11.8,
+      "jobs_per_second": null
+    },
+    "episode_assign": {
+      "jobs": 1,
+      "wall_seconds": 0.4,
+      "busy_seconds": 0.4,
+      "jobs_per_second": 2.272
+    },
+    "events_per_second_end_to_end": 0.15
+  },
+  "storage": {
+    "events": 484,
+    "total_bytes": 8511488,
+    "total_bytes_per_event": 17585.7,
+    "by_table": {
+      "embeddings": {
+        "bytes": 5005312,
+        "bytes_per_event": 10341.6
+      },
+      "events": {
+        "bytes": 1228800,
+        "bytes_per_event": 2538.8
+      },
+      "trace_steps": {
+        "bytes": 557056,
+        "bytes_per_event": 1150.9
+      },
+      "episodes": {
+        "bytes": 319488,
+        "bytes_per_event": 660.1
+      },
+      "memory_evidence": {
+        "bytes": 319488,
+        "bytes_per_event": 660.1
+      },
+      "jobs": {
+        "bytes": 286720,
+        "bytes_per_event": 592.4
+      },
+      "traces": {
+        "bytes": 286720,
+        "bytes_per_event": 592.4
+      },
+      "memories": {
+        "bytes": 237568,
+        "bytes_per_event": 490.8
+      },
+      "rejected_candidates": {
+        "bytes": 147456,
+        "bytes_per_event": 304.7
+      },
+      "profile_entries": {
+        "bytes": 98304,
+        "bytes_per_event": 203.1
+      },
+      "alembic_version": {
+        "bytes": 24576,
+        "bytes_per_event": 50.8
+      }
+    }
+  }
+}

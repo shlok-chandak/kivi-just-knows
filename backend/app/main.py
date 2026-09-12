@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import (
     ask,
+    episodes,
     evaluation,
     events,
     health,
@@ -33,6 +34,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(ask.router)
+app.include_router(episodes.router)
 app.include_router(evaluation.router)
 app.include_router(events.router)
 app.include_router(ignored.router)

@@ -21,6 +21,12 @@ from app.models.base import Base, UserOwnedMixin
 
 EPISODE_STATUSES = ("open", "closed")
 
+# Why an episode closed. The three time rules absorb a late-arriving take
+# the way they always have -- an offline client flushing its queue belongs
+# in the stretch it happened in. 'hand' does not: somebody said that stretch
+# was finished, and reopening it would make their decision meaningless.
+CLOSED_BY = ("idle", "span", "full", "hand")
+
 # 'withheld' means the episode was sensitive and the user has not opted into
 # remembering such content: the events remain, the summary is deliberately
 # absent so nothing derived becomes searchable.
@@ -59,6 +65,10 @@ class Episode(UserOwnedMixin, Base):
     event_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     status: Mapped[str] = mapped_column(Text, nullable=False, default="open")
+
+    # Null on episodes closed before this was recorded, which is why the
+    # assignment check asks "is not hand" rather than "is a time rule".
+    closed_by: Mapped[str | None] = mapped_column(Text)
 
     __table_args__ = (
         Index("ix_episodes_user_started", "user_id", started_at.desc()),

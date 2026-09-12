@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>nothing here — kivi</title>
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" />
+    <link rel="icon" href="/favicon-512.png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;450&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Standalone: this page has to render when the bundle is the thing
+         that could not be found, so it carries its own tokens. -->
+    <style>
+      :root {
+        --ink: #0b0e0a;
+        --surface: #191b18;
+        --hairline: rgba(255, 255, 255, 0.07);
+        --cream: #eae8de;
+        --muted: #9aa094;
+        --green: #a5d16d;
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--ink);
+        color: var(--cream);
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+      main {
+        max-width: 46ch;
+      }
+      .wordmark {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 26px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin-bottom: 40px;
+        position: relative;
+        display: inline-block;
+      }
+      /* The dot on the i is green, the same quiet accent as the sidebar. */
+      .wordmark span {
+        position: relative;
+      }
+      .wordmark span::after {
+        content: "";
+        position: absolute;
+        top: 0.18em;
+        left: 0.28em;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: var(--green);
+      }
+      h1 {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 40px;
+        font-weight: 400;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        margin: 0 0 14px;
+      }
+      .swipe {
+        color: var(--green);
+      }
+      p {
+        color: var(--muted);
+        line-height: 1.65;
+        margin: 0 0 28px;
+      }
+      a {
+        display: inline-block;
+        color: var(--cream);
+        text-decoration: none;
+        background: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: 999px;
+        padding: 9px 20px;
+      }
+      a:hover {
+        border-color: var(--green);
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 12.5px;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="wordmark">kiv<span>i</span></div>
+      <h1>kivi doesn't <span class="swipe">know this one.</span></h1>
+      <p>
+        There is no page at <code id="where"></code>. Nothing was stored and
+        nothing was looked up — the address simply does not exist.
+      </p>
+      <a href="/">back to talking</a>
+    </main>
+    <script>
+      // textContent, never innerHTML: the path is attacker-supplied.
+      document.getElementById("where").textContent = location.pathname;
+    </script>
+  </body>
+</html>
