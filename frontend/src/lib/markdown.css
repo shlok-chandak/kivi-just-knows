@@ -1,0 +1,94 @@
+/* Generated write-ups, set in the app's own voice.
+ *
+ * The tables are the point. Numbers are right-aligned and set in the mono
+ * face so digits line up in a column, which is the whole reason for reading
+ * one of these -- a p95 that doubled should be visible without arithmetic.
+ */
+
+.md {
+  max-width: 760px;
+}
+
+.md-h1,
+.md-h2 {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: lowercase;
+  font-family: var(--font-body);
+  font-weight: 500;
+  margin: 28px 0 10px;
+}
+.md > .md-h1:first-child,
+.md > .md-h2:first-child {
+  margin-top: 0;
+}
+.md-h2 {
+  color: var(--cream);
+}
+
+.md-p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 64ch;
+  margin: 0 0 12px;
+}
+
+.md-list {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--muted);
+  max-width: 64ch;
+}
+.md-list li {
+  margin-bottom: 4px;
+}
+
+/* Wide tables scroll inside their own box rather than widening the page. */
+.md-table-wrap {
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  margin: 0 0 16px;
+}
+.md-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.md-table th,
+.md-table td {
+  padding: 9px 16px;
+  text-align: right;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.md-table th {
+  color: var(--muted);
+  font-weight: 400;
+  border-bottom: 1px solid var(--hairline);
+}
+.md-table tbody tr + tr td {
+  border-top: 1px solid var(--hairline);
+}
+
+/* The first column names the row, so it reads as words, not a figure. */
+.md-table .md-label {
+  text-align: left;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--cream);
+  width: 1%;
+}
+.md-table th.md-label {
+  color: var(--muted);
+}
+
+.md code {
+  color: var(--green);
+}

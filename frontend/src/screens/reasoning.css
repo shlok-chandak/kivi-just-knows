@@ -5,7 +5,7 @@
   max-width: 900px;
 }
 .reasoning-head {
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 .reasoning-head p {
   margin: 10px 0 0;
@@ -16,9 +16,6 @@
   padding-top: 0;
   margin-bottom: 18px;
 }
-.idle-note {
-  padding-top: 40px;
-}
 
 .trace {
   cursor: pointer;
@@ -28,7 +25,7 @@
   min-width: 0;
 }
 .trace-answer {
-  font-size: 13.5px;
+  font-size: 13px;
   margin: 5px 0 8px;
   overflow-wrap: anywhere;
 }
@@ -54,7 +51,7 @@
   position: relative;
   padding-left: 4px;
 }
-.stage {
+.reasoning .stage {
   display: flex;
   gap: 14px;
   padding-bottom: 18px;
@@ -62,7 +59,7 @@
 }
 /* The rail joins the dots, and stops at the last one rather than running
    into the button underneath. */
-.stage:not(:last-child)::before {
+.reasoning .stage:not(:last-child)::before {
   content: "";
   position: absolute;
   left: 4px;
@@ -71,7 +68,7 @@
   width: 1px;
   background: var(--hairline);
 }
-.stage .dot {
+.reasoning .stage .dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -82,7 +79,7 @@
   position: relative;
   z-index: 1;
 }
-.stage-body {
+.reasoning .stage-body {
   flex: 1;
   min-width: 0;
 }
@@ -93,7 +90,7 @@
   flex-wrap: wrap;
 }
 .reasoning .stage-name {
-  font-size: 13.5px;
+  font-size: 13px;
 }
 .model {
   color: var(--muted);
@@ -104,7 +101,7 @@
   margin: 4px 0 0;
   overflow-wrap: anywhere;
 }
-.stage .note {
+.reasoning .stage .note {
   margin-top: 5px;
 }
 .note.warn {

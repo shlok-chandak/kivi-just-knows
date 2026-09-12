@@ -191,7 +191,7 @@ export function Memory() {
             </p>
           )}
 
-          <div className="cards">
+          <div className="rows cards">
             {listing?.memories.map((row) => (
               <article
                 key={row.id}

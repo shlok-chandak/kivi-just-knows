@@ -8,6 +8,10 @@
 }
 .memory-head p {
   margin: 10px 0 0;
+  max-width: 62ch;
+}
+.memory-head p {
+  margin: 10px 0 0;
 }
 
 .controls {
@@ -42,24 +46,24 @@
   display: block;
   margin-bottom: 12px;
 }
-.idle-note {
-  padding: 26px 0;
-}
 
 .cards {
   display: flex;
   flex-direction: column;
 }
 
-/* Style-card treatment: serif claim, sans description beneath, arrow
- * right. Not boxed -- grouped rows with hairlines are the house pattern,
- * and a hundred cards would be a hundred competing rectangles. */
+/* Serif claim, sans description beneath, arrow right.
+ *
+ * One container, hairline dividers -- a hundred separate rectangles would be
+ * a hundred competing edges, which is why these are rows inside a panel
+ * rather than cards. The panel itself comes from `.rows`, so the divider and
+ * the left inset match every other list in the app instead of being set here
+ * to a value nothing else uses. */
 .card {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 14px;
-  padding: 16px 4px;
-  border-bottom: 1px solid var(--hairline);
+  padding: 15px 16px;
   cursor: pointer;
 }
 .card:hover {
@@ -176,9 +180,6 @@
 .profile-text {
   flex: 1;
   min-width: 0;
-  font-size: 13.5px;
-  overflow-wrap: anywhere;
-}
-.small {
   font-size: 13px;
+  overflow-wrap: anywhere;
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Trouble } from "../lib/Detail";
+import { Markdown } from "../lib/Markdown";
 import { api, useEventStream, type Frame } from "../lib/stream";
 import "./evaluation.css";
 
@@ -102,8 +103,13 @@ export function Evaluation() {
         <section className="run-detail">
           {!run && openId && <p className="muted">opening…</p>}
           {run?.kind === "questions" && <Questions run={run} />}
-          {run && run.kind !== "questions" && (
-            <pre className="report">{run.report_md ?? "no write-up recorded."}</pre>
+          {run?.kind === "tools" && <Tools run={run} />}
+          {run && run.kind !== "questions" && run.kind !== "tools" && (
+            run.report_md ? (
+              <Markdown text={run.report_md} />
+            ) : (
+              <p className="muted idle-note">no write-up recorded.</p>
+            )
           )}
         </section>
       </div>
@@ -119,6 +125,116 @@ function summarise(row: RunRow): string {
   }
   if (row.kind === "tools") return `${row.headline.correct}/${row.headline.total}`;
   return `${row.headline.events ?? "—"} takes`;
+}
+
+/* The four abilities other than answering.
+ *
+ * This ran, was scored, and was written to disk, and the screen showed
+ * "no write-up recorded." for it -- because tools runs produce no markdown,
+ * only JSON. A fifth of what the system can do was measured and invisible.
+ */
+const TOOL_SECTIONS: Record<string, string> = {
+  routing: "sending the request to the right tool",
+  find: "finding a dictation again",
+  restyle: "rewriting without inventing",
+  memory: "forgetting on request",
+};
+
+function Tools({ run }: { run: any }) {
+  const sections: Record<string, any[]> = run.data?.sections ?? {};
+  const incomplete: Record<string, string> = run.data?.incomplete ?? {};
+
+  return (
+    <>
+      <h2 className="micro heading">what was checked</h2>
+      <div className="rows">
+        {Object.entries(sections).map(([name, rows]) => {
+          const right = rows.filter((row) => row.correct).length;
+          return (
+            <div className="row cat" key={name}>
+              <span className="cat-name">{TOOL_SECTIONS[name] ?? name}</span>
+              <span className="bar-track thin">
+                <span
+                  className="bar"
+                  style={{ width: `${(right / (rows.length || 1)) * 100}%` }}
+                />
+              </span>
+              <span className="mono">
+                {right}/{rows.length}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* A check that never ran is not a check that passed. The provider
+          failed mid-run, and the score below is out of what completed. */}
+      {Object.keys(incomplete).length > 0 && (
+        <p className="note warn">
+          {Object.entries(incomplete).map(([name, why]) => (
+            <span key={name}>
+              <strong>{name}</strong> did not finish, so it is not counted:{" "}
+              {String(why).split(".")[0]}.
+            </span>
+          ))}
+        </p>
+      )}
+
+      {Object.entries(sections).map(([name, rows]) => (
+        <div key={name}>
+          <h2 className="micro heading">{TOOL_SECTIONS[name] ?? name}</h2>
+          <div className="rows">
+            {rows.map((row, i) => (
+              <div className="row question" key={i}>
+                <span className={`verdict ${row.correct ? "right" : "wrong"}`}>
+                  {row.correct ? "✓" : "✗"}
+                </span>
+                <div className="q-main">
+                  {/* Each section names its subject differently: a request,
+                      a topic, or the text that was handed over to rewrite. */}
+                  <span className="q-text">
+                    {row.request ?? row.topic ?? row.before ?? "—"}
+                  </span>
+                  {name === "restyle" && row.after && (
+                    <p className="small tool-after">{row.after}</p>
+                  )}
+                  <p className="muted small tool-why">{toolDetail(name, row)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
+  );
+}
+
+/* Each section was scored on a different thing, so each says its own. */
+function toolDetail(section: string, row: any): string {
+  if (section === "routing") {
+    return row.correct
+      ? `sent to ${row.got}`
+      : `expected ${row.expected}, sent to ${row.got}`;
+  }
+  if (section === "find") {
+    return [row.found ? "found it" : "did not find it", row.widened && "after widening the search", row.why]
+      .filter(Boolean)
+      .join(" · ");
+  }
+  if (section === "restyle") {
+    return (
+      [
+        row.trustworthy === false && "changed a fact",
+        row.dropped?.length ? `dropped: ${row.dropped.join(", ")}` : null,
+        row.why,
+      ]
+        .filter(Boolean)
+        .join(" · ") || "rewritten, every fact intact"
+    );
+  }
+  return (
+    [row.action, row.detail, row.why].filter(Boolean).join(" · ") || "—"
+  );
 }
 
 function Questions({ run }: { run: any }) {

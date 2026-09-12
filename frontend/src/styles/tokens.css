@@ -99,6 +99,55 @@ h3 {
 .muted {
   color: var(--muted);
 }
+
+/* Secondary text, one step below body. Five screens used this before it was
+ * defined anywhere, each declaring its own copy -- which is how one of them
+ * ended up at 12.5px and lost to the other four at load order. */
+.small {
+  font-size: 13px;
+}
+
+/* The label above a group. Lives here rather than in a screen file, because
+ * every screen uses it and the first one to define it was setting the rule
+ * for the other six by accident. */
+.heading {
+  display: block;
+  margin: 0 0 12px;
+}
+.rows + .heading,
+.arms + .heading {
+  margin-top: 28px;
+}
+
+/* An empty list says so in the same voice everywhere. */
+.idle-note {
+  padding: 26px 0;
+}
+
+/* Something went wrong, stated the same way on every screen. */
+.error {
+  color: var(--coral);
+  font-size: 13px;
+}
+
+/* An aside that explains a decision. */
+.note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 64ch;
+  margin: 2px 0 8px;
+  padding-left: 12px;
+  border-left: 2px solid var(--green-deep);
+}
+
+/* A stage list, wherever one appears. */
+.flow {
+  margin-top: 26px;
+}
+.flow .heading {
+  margin-bottom: 10px;
+}
 .mono {
   font-family: var(--font-mono);
   font-size: 12px;

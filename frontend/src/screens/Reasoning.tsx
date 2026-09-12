@@ -122,7 +122,7 @@ export function Reasoning() {
         </p>
       )}
 
-      <div className="cards">
+      <div className="rows cards">
         {rows?.map((row) => (
           <article
             key={row.id}

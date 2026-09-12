@@ -8,6 +8,10 @@
 }
 .ignored-head p {
   margin: 10px 0 0;
+  max-width: 62ch;
+}
+.ignored-head p {
+  margin: 10px 0 0;
 }
 
 .rule-filters {
@@ -23,8 +27,7 @@
   display: flex;
   align-items: flex-start;
   gap: 13px;
-  padding: 14px 2px;
-  border-bottom: 1px solid var(--hairline);
+  padding: 14px 16px;
 }
 
 /* A small dot, nothing more. This is the only place coral belongs, and
@@ -71,9 +74,6 @@
   padding-top: 3px;
 }
 
-.idle-note {
-  padding: 26px 0;
-}
 .count {
   opacity: 0.6;
 }

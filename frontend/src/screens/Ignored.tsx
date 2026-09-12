@@ -105,7 +105,7 @@ export function Ignored() {
         </p>
       )}
 
-      <div className="dropped">
+      <div className="rows dropped">
         {data?.ignored.map((row) => (
           <article className="turned" key={row.id}>
             <span className={`dot ${row.withheld ? "private" : ""}`} />

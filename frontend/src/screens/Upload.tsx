@@ -315,7 +315,7 @@ export function Upload() {
 
       {memories && (
         <section className="ended">
-          <h2 className="section">what kivi believes now</h2>
+          <h2 className="micro heading">what kivi believes now</h2>
           <p className="muted small">
             everything held after this corpus, newest first. history is
             included and marked.

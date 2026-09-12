@@ -143,7 +143,7 @@ function Group({
 }) {
   return (
     <section className="group-block">
-      <h2 className="section">{title}</h2>
+      <h2 className="micro heading">{title}</h2>
       <p className="muted small blurb">{blurb}</p>
 
       {entries.length === 0 ? (

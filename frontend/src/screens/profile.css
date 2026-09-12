@@ -1,7 +1,7 @@
 /* The profile screen. Layout only; colours from tokens. */
 .profile-screen { max-width: 860px; }
-.profile-head { margin-bottom: 22px; }
-.profile-head p { margin: 10px 0 0; max-width: 60ch; }
+.profile-head { margin-bottom: 24px; }
+.profile-head p { margin: 10px 0 0; max-width: 62ch; }
 
 .budget-strip { margin-bottom: 30px; }
 .budget-bar {
@@ -24,12 +24,9 @@
 .rendered .heading { display: block; margin-bottom: 4px; }
 .rendered p { margin: 0 0 10px; }
 .rendered pre {
-  font: 12.5px/1.6 var(--font-mono);
+  font: 12px/1.6 var(--font-mono);
   background: var(--surface); border: 1px solid var(--hairline);
   border-radius: var(--r-card); padding: 14px 16px;
   white-space: pre-wrap; overflow-wrap: anywhere; color: var(--muted);
   margin: 0 0 10px;
 }
-.small { font-size: 13px; }
-.idle-note { padding: 16px 0; }
-.error { color: var(--coral); font-size: 13px; }

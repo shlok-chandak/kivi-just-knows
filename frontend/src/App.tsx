@@ -1,4 +1,9 @@
 import { useCallback, useRef, useState } from "react";
+// The design language comes first, so a screen can refine a shared rule.
+// Imported last, tokens won every tie instead -- which silently killed the
+// alignment and padding each screen set on its own rows.
+import "./styles/tokens.css";
+import "./styles/shell.css";
 import { Evaluation } from "./screens/Evaluation";
 import { Ignored } from "./screens/Ignored";
 import { Memory } from "./screens/Memory";
@@ -6,8 +11,6 @@ import { Profile } from "./screens/Profile";
 import { Reasoning } from "./screens/Reasoning";
 import { Talk } from "./screens/Talk";
 import { Upload } from "./screens/Upload";
-import "./styles/tokens.css";
-import "./styles/shell.css";
 
 /* The frame every screen sits in.
  *

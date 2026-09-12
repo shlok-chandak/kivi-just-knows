@@ -4,11 +4,11 @@
   max-width: 1180px;
 }
 .eval-head {
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 .eval-head p {
   margin: 10px 0 0;
-  max-width: 58ch;
+  max-width: 62ch;
 }
 
 .eval-body {
@@ -53,14 +53,6 @@
   color: var(--green);
 }
 
-.heading {
-  display: block;
-  margin: 0 0 12px;
-}
-.rows + .heading,
-.arms + .heading {
-  margin-top: 28px;
-}
 
 /* --- arms ---------------------------------------------------------------- */
 
@@ -88,10 +80,14 @@
   border-radius: 999px;
   transition: width 0.4s ease;
 }
-/* The no-memory arm is the control, not a result. Muted so the eye does
- * not read it as a fourth score worth celebrating. */
+/* The no-memory arm is the control, not a result -- so it is not green.
+ *
+ * It was --surface-hi, four hex points from the --surface track behind it,
+ * which made the bar invisible rather than quiet. That reads as a score of
+ * zero, and this arm scoring 19/60 rather than 0 is the entire point of
+ * showing it: the gap is what memory is worth. */
 .bar.dim {
-  background: var(--surface-hi);
+  background: var(--muted);
 }
 .arm .small {
   display: block;
@@ -107,7 +103,7 @@
   flex: 1;
   font-size: 14px;
 }
-.bar-track.thin {
+.evaluation .bar-track.thin {
   width: 110px;
   height: 4px;
   flex-shrink: 0;
@@ -166,9 +162,6 @@
   margin: 0;
   font-size: 14px;
 }
-.small {
-  font-size: 13px;
-}
 
 .again {
   margin-top: 6px;
@@ -197,6 +190,24 @@
   margin: 0;
 }
 
-.idle-note {
-  padding: 26px 0;
+
+/* The four abilities other than answering. Each row says what was asked and
+ * what the system did with it, since a tick alone is not evidence. */
+.tool-why {
+  margin: 3px 0 0;
+  overflow-wrap: anywhere;
+}
+.evaluation .note.warn {
+  border-left-color: var(--coral);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 16px 0 4px;
+}
+.tool-after {
+  margin: 5px 0 0;
+  padding-left: 11px;
+  border-left: 2px solid var(--green-deep);
+  white-space: pre-line;
+  color: var(--cream);
 }

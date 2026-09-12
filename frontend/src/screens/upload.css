@@ -1,6 +1,6 @@
 /* The corpus upload screen. Layout only; colours from tokens. */
 .upload { max-width: 1100px; }
-.upload-head { margin-bottom: 22px; }
+.upload-head { margin-bottom: 24px; }
 .upload-head p { margin: 10px 0 0; max-width: 62ch; }
 
 .picker { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -12,13 +12,6 @@
 .file-btn input { display: none; }
 .picked { font-size: 13px; }
 
-.flow { margin-top: 26px; }
-.flow .heading { display: block; margin-bottom: 10px; }
-.note {
-  font-size: 13px; color: var(--muted); line-height: 1.6;
-  max-width: 64ch; margin: 2px 0 8px;
-  padding-left: 12px; border-left: 2px solid var(--hairline);
-}
 
 .watch {
   display: grid; grid-template-columns: 1fr 230px;
@@ -38,7 +31,7 @@
 .line.kept .tag { color: var(--cream); }
 .line.dropped .tag { color: var(--coral); }
 .line.stage .tag { color: var(--green); }
-.line-text { flex: 1; min-width: 0; font-size: 13.5px; overflow-wrap: anywhere; }
+.line-text { flex: 1; min-width: 0; font-size: 13px; overflow-wrap: anywhere; }
 .line-app { color: var(--muted); flex-shrink: 0; }
 .withheld { font-style: italic; color: var(--muted); }
 
@@ -52,7 +45,7 @@
 .tally .heading { display: block; margin: 20px 0 8px; }
 .rule {
   display: flex; justify-content: space-between;
-  padding: 4px 0; font-size: 12.5px; color: var(--muted);
+  padding: 4px 0; font-size: 13px; color: var(--muted);
 }
 
 .ended { margin-top: 40px; }
@@ -62,8 +55,6 @@
 .made.superseded .made-text { color: var(--muted); }
 .made-text { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }
 .made-meta { color: var(--muted); flex-shrink: 0; }
-.small { font-size: 13px; }
-.error { color: var(--coral); font-size: 13px; margin-top: 12px; }
 
 /* --- what the upload actually became ------------------------------------
  *
@@ -128,7 +119,7 @@
 .formed .belief-text {
   flex: 1;
   min-width: 0;
-  font-size: 13.5px;
+  font-size: 13px;
   overflow-wrap: anywhere;
 }
 .formed .belief-conf {
@@ -212,7 +203,7 @@
 }
 .line.stage .stage-why {
   margin: 16px 0 0;
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--muted);
   max-width: 64ch;
   line-height: 1.5;
@@ -226,7 +217,7 @@
   gap: 11px;
   margin: 0;
   padding: 7px 0;
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.5;
   max-width: 68ch;
 }
