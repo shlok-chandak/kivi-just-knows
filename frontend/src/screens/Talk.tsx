@@ -307,19 +307,41 @@ function Sitting({ pulse, onChange }: { pulse: number; onChange: () => void }) {
       )}
 
       {live.finished?.length > 0 && (
-        <div className="rows done">
-          {live.finished.map((ep: any) => (
-            <div className="row ended-row" key={ep.id}>
-              <span className="ended-title">
-                {ep.title ?? (ep.waiting_to_be_read ? "not read yet" : "—")}
-              </span>
-              <span className="mono ended-meta">
-                {ep.event_count} take{ep.event_count === 1 ? "" : "s"}
-                {ep.beliefs > 0 && ` · ${ep.beliefs} belief${ep.beliefs === 1 ? "" : "s"}`}
-                {ep.closed_by === "hand" && " · you ended it"}
-              </span>
-            </div>
-          ))}
+        <div className="ended">
+          <span className="micro heading">just finished</span>
+          <div className="rows done">
+            {live.finished.map((ep: any) => (
+              <div className="row ended-row" key={ep.id}>
+                <span className={`dot ${ep.waiting_to_be_read ? "pending" : "read"}`} />
+                <span className="ended-body">
+                  <span className="ended-title">
+                    {ep.title ?? (ep.waiting_to_be_read ? "not read yet" : "no title")}
+                  </span>
+                  <span className="mono ended-meta">
+                    {ep.event_count} take{ep.event_count === 1 ? "" : "s"}
+                    {" · "}
+                    {ep.waiting_to_be_read
+                      ? "still being read"
+                      : ep.beliefs > 0
+                        ? `${ep.beliefs} belief${ep.beliefs === 1 ? "" : "s"} kept`
+                        : "nothing new to keep"}
+                    {" · "}
+                    {CLOSED_BECAUSE[ep.closed_by] ?? "closed"}
+                    {ep.ended_at &&
+                      ` · ${new Date(ep.ended_at).toLocaleDateString(undefined, {
+                        day: "numeric",
+                        month: "short",
+                      })}`}
+                  </span>
+                </span>
+              </div>
+            ))}
+          </div>
+          <p className="muted small">
+            An episode that kept nothing is not a failure. Most of what a
+            person says restates something already known, and forming a
+            second belief from it would be the bug.
+          </p>
         </div>
       )}
 
@@ -327,6 +349,15 @@ function Sitting({ pulse, onChange }: { pulse: number; onChange: () => void }) {
     </section>
   );
 }
+
+/* Why a stretch ended. The stored value is the rule that fired; these are
+ * the same four facts in the words someone would actually use. */
+const CLOSED_BECAUSE: Record<string, string> = {
+  idle: "went quiet",
+  span: "ran too long",
+  full: "filled up",
+  hand: "you ended it",
+};
 
 function RefusedFlow({ refused }: { refused: any }) {
   return (
