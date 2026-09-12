@@ -120,18 +120,18 @@
   align-items: baseline;
   padding: 10px 13px;
 }
-.belief-type {
+.formed .belief-type {
   color: var(--green);
   min-width: 74px;
   flex-shrink: 0;
 }
-.belief-text {
+.formed .belief-text {
   flex: 1;
   min-width: 0;
   font-size: 13.5px;
   overflow-wrap: anywhere;
 }
-.belief-conf {
+.formed .belief-conf {
   color: var(--muted);
   flex-shrink: 0;
 }
@@ -139,82 +139,127 @@
   margin: 0;
 }
 
-/* --- what a stage actually did ------------------------------------------
+/* --- one episode read, as a row that opens ------------------------------
  *
- * The feed used to print the verdict alone: "generated", "skipped". Both are
- * true and neither can be checked, which is the opposite of what this screen
- * is for. The reason and the claims themselves belong on the line. */
+ * Collapsed it is a single line: what ran, what the episode was called, and
+ * what came of it. Opened it gives the summary, the reasoning, and every
+ * claim. Flat, all of it was on screen at once and none of it was legible.
+ */
 .line.stage {
   display: block;
+  padding: 0;
 }
-.stage-line {
-  display: flex;
-  gap: 12px;
+.line.stage .stage-head {
+  display: grid;
+  grid-template-columns: 118px 1fr auto 14px;
   align-items: baseline;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 11px 4px;
 }
-.stage-why {
-  margin: 5px 0 0 0;
-  padding-left: 2px;
-  font-size: 12.5px;
-  color: var(--muted);
-  max-width: 70ch;
+.line.stage .stage-head:hover:not(:disabled) {
+  background: none;
 }
-.claims {
-  margin-top: 7px;
-  border-left: 1px solid var(--hairline);
-  padding-left: 11px;
-}
-.claim {
-  display: flex;
-  gap: 9px;
-  margin: 0 0 3px;
-  font-size: 13px;
-  max-width: 74ch;
-}
-.claim-mark {
-  flex-shrink: 0;
-  width: 10px;
-}
-.claim.created .claim-mark,
-.claim.superseded .claim-mark {
+.line.stage .stage-head:hover:not(:disabled) .stage-name {
   color: var(--green);
 }
-.claim.refused .claim-mark {
-  color: var(--coral);
+.line.stage .stage-head:disabled {
+  opacity: 1;
+  cursor: default;
 }
-.claim.refused {
+.line.stage .stage-name {
+  font-size: 14px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.12s ease;
+}
+.line.stage .stage-counts,
+.line.stage .stage-head .disclose {
   color: var(--muted);
 }
-.claim-why {
-  color: var(--muted);
+.line.stage.open .stage-name {
+  white-space: normal;
 }
 
-/* The title and summary the model wrote. These are what consolidation is
- * for, so they lead -- the verdict and the timing sit under them. */
-.stage-title {
+/* The opened half. Indented under the title, with the rail the rest of the
+ * app uses for "this belongs to that". */
+.line.stage .stage-open {
+  margin: 0 0 14px 132px;
+  border-left: 1px solid var(--hairline);
+  padding: 2px 0 2px 16px;
+}
+.line.stage .stage-open .micro {
+  display: block;
+  margin-bottom: 5px;
+}
+.line.stage .stage-summary {
   margin: 6px 0 0;
-  font-family: var(--font-display);
-  font-size: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  max-width: 64ch;
 }
-.stage-tags {
+.line.stage .stage-tags {
+  margin: 8px 0 0;
   color: var(--muted);
-  font-size: 11.5px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
 }
-.stage-summary {
-  margin: 4px 0 0;
+.line.stage .stage-why {
+  margin: 16px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  max-width: 64ch;
+  line-height: 1.5;
+}
+
+.line.stage .claims {
+  margin-top: 18px;
+}
+.line.stage .yield {
+  display: flex;
+  gap: 11px;
+  margin: 0;
+  padding: 7px 0;
   font-size: 13.5px;
-  max-width: 72ch;
+  line-height: 1.5;
+  max-width: 68ch;
+}
+.line.stage .yield + .yield {
+  border-top: 1px solid var(--hairline);
+}
+.line.stage .claim-mark {
+  flex-shrink: 0;
+  width: 11px;
+  padding-top: 2px;
+  color: var(--muted);
+}
+.line.stage .yield.created .claim-mark,
+.line.stage .yield.superseded .claim-mark {
+  color: var(--green);
+}
+.line.stage .yield.refused .claim-mark {
+  color: var(--coral);
+}
+.line.stage .yield.refused .yield-text {
+  color: var(--muted);
+}
+.line.stage .yield-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.line.stage .claim-why {
+  color: var(--muted);
 }
 
 /* Stored, but not indexed. Neither kept nor refused, and it used to render
  * as the first of those. */
-.line.unindexed .tag {
-  color: var(--muted);
-}
+.line.unindexed .tag,
 .line.unindexed .line-text {
   color: var(--muted);
 }

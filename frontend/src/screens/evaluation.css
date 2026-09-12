@@ -125,15 +125,15 @@
   gap: 12px;
   cursor: pointer;
 }
-.verdict {
+.evaluation .verdict {
   flex-shrink: 0;
   width: 14px;
   padding-top: 1px;
 }
-.verdict.right {
+.evaluation .verdict.right {
   color: var(--green);
 }
-.verdict.wrong {
+.evaluation .verdict.wrong {
   color: var(--coral);
 }
 .q-main {

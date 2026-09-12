@@ -299,37 +299,37 @@
  * These sat directly under "nothing open", with no heading of their own, so
  * three closed episodes read as an explanation of the empty state instead of
  * a separate list. The heading is the whole fix. */
-.ended {
+.sitting .ended {
   margin-top: 18px;
 }
-.ended > .heading {
+.sitting .ended > .heading {
   display: block;
   margin-bottom: 8px;
 }
 .done {
   opacity: 0.85;
 }
-.ended-row {
+.sitting .ended-row {
   gap: 11px;
   align-items: baseline;
 }
-.ended-body {
+.sitting .ended-body {
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
 }
-.ended-title {
+.sitting .ended-title {
   font-size: 14px;
 }
-.ended-meta {
+.sitting .ended-meta {
   color: var(--muted);
   font-size: 12px;
 }
 
 /* Read or not yet read. A row with no second number used to be silent about
  * which of those it was, and those are different states. */
-.ended-row .dot {
+.sitting .ended-row .dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -337,15 +337,15 @@
   position: relative;
   transform: translateY(-1px);
 }
-.ended-row .dot.read {
+.sitting .ended-row .dot.read {
   background: var(--green-deep);
   box-shadow: 0 0 0 1px rgba(165, 209, 109, 0.35);
 }
-.ended-row .dot.pending {
+.sitting .ended-row .dot.pending {
   background: var(--green);
   animation: breathe 1.4s ease-in-out infinite;
 }
-.ended .small {
+.sitting .ended .small {
   margin: 9px 0 0;
   max-width: 58ch;
 }

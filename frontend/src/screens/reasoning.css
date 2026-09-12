@@ -86,13 +86,13 @@
   flex: 1;
   min-width: 0;
 }
-.stage-head {
+.reasoning .stage-head {
   display: flex;
   align-items: baseline;
   gap: 12px;
   flex-wrap: wrap;
 }
-.stage-name {
+.reasoning .stage-name {
   font-size: 13.5px;
 }
 .model {
@@ -154,7 +154,7 @@
 .replayed .error {
   grid-column: 1 / -1;
 }
-.verdict {
+.reasoning .verdict {
   color: var(--green);
   margin: 0;
 }

@@ -399,49 +399,81 @@ function FeedLine({ frame }: { frame: Frame }) {
       </div>
     );
   }
-  // Read once, and what came out of it. "generated" and "skipped" are
-  // verdicts, and a verdict with nothing under it cannot be checked -- so
-  // the rationale and the claims themselves go on the line.
+  return <StageLine data={data} />;
+}
+
+/* One episode read, as a row that opens.
+ *
+ * Everything this shows was already being shown -- title, summary, rationale,
+ * every claim -- stacked flat, which made a feed of them unreadable. The
+ * shape is the fix, not the content: one line each until you ask for more.
+ */
+function StageLine({ data }: { data: any }) {
+  const [open, setOpen] = useState(false);
   const claims: any[] = data.claims ?? [];
+
+  const counts = [
+    data.created ? `${data.created} new` : null,
+    data.reinforced ? `${data.reinforced} again` : null,
+    data.refused ? `${data.refused} refused` : null,
+  ].filter(Boolean);
+
+  const more = Boolean(data.summary || data.rationale || claims.length);
+
   return (
-    <div className="line stage">
-      <div className="stage-line">
+    <div className={`line stage${open ? " open" : ""}`}>
+      <button
+        className="stage-head"
+        onClick={() => more && setOpen(!open)}
+        disabled={!more}
+      >
         <span className="tag">{data.stage?.replace(/_/g, " ")}</span>
-        <span className="line-text">
-          {VERDICTS[data.decision] ?? data.decision}
-          {data.dictations ? ` · ${data.dictations} read` : ""}
+        <span className="stage-name">
+          {data.title ?? VERDICTS[data.decision] ?? data.decision}
         </span>
-      </div>
+        <span className="mono stage-counts">
+          {counts.length ? counts.join(" · ") : VERDICTS[data.decision] ?? ""}
+        </span>
+        <span className="mono disclose">{more ? (open ? "−" : "+") : ""}</span>
+      </button>
 
-      {data.title && (
-        <p className="stage-title">
-          {data.title}
+      {open && (
+        <div className="stage-open">
+          {data.summary && <p className="stage-summary">{data.summary}</p>}
+
           {data.topic_tags?.length > 0 && (
-            <span className="mono stage-tags">{data.topic_tags.join(" · ")}</span>
+            <p className="mono stage-tags">{data.topic_tags.join("  ·  ")}</p>
           )}
-        </p>
-      )}
-      {data.summary && data.summary !== data.title && (
-        <p className="stage-summary">{data.summary}</p>
-      )}
 
-      {data.rationale && <p className="stage-why">{data.rationale}</p>}
-
-      {claims.length > 0 && (
-        <div className="claims">
-          {claims.map((claim, i) => (
-            <p className={`claim ${claim.outcome}`} key={i}>
-              <span className="mono claim-mark">{MARKS[claim.outcome] ?? "·"}</span>
-              <span>
-                {claim.withheld ? (
-                  <em className="withheld">content withheld</em>
-                ) : (
-                  claim.text
-                )}
-                {claim.why && <span className="claim-why"> — {claim.why}</span>}
-              </span>
+          {data.rationale && (
+            <p className="stage-why">
+              <span className="micro">how it read</span>
+              {data.rationale}
             </p>
-          ))}
+          )}
+
+          {claims.length > 0 && (
+            <div className="claims">
+              <p className="micro">what came out of it</p>
+              {claims.map((claim, i) => (
+                <p className={`yield ${claim.outcome}`} key={i}>
+                  <span className="mono claim-mark">
+                    {MARKS[claim.outcome] ?? "·"}
+                  </span>
+                  <span className="yield-text">
+                    {claim.withheld ? (
+                      <em className="withheld">content withheld</em>
+                    ) : (
+                      claim.text
+                    )}
+                    {claim.why && (
+                      <span className="claim-why"> — {claim.why}</span>
+                    )}
+                  </span>
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
