@@ -34,6 +34,8 @@ export function Upload() {
   const [feed, setFeed] = useState<any[]>([]);
   const [memories, setMemories] = useState<any[] | null>(null);
   const startedAt = useRef<Counters | null>(null);
+  const uploadedAt = useRef<string | null>(null);
+  const [formed, setFormed] = useState<any>(null);
 
   const onFrame = useCallback((frame: Frame) => {
     if (frame.event === "hello" || frame.event === "progress") {
@@ -52,6 +54,11 @@ export function Upload() {
   useEffect(() => {
     if (!sent || !idle) return;
     api("/memories?status=all&limit=300").then((body: any) => setMemories(body.memories));
+    if (uploadedAt.current) {
+      api(`/episodes/formed?since=${encodeURIComponent(uploadedAt.current)}&limit=40`)
+        .then(setFormed)
+        .catch(() => setFormed(null));
+    }
   }, [sent, idle]);
 
   const choose = async (file: File) => {
@@ -86,6 +93,10 @@ export function Upload() {
     if (!records) return;
     setSending(true);
     setMemories(null);
+    setFormed(null);
+    // A second before the first record lands, so nothing is missed to a
+    // clock that disagrees with the server's by a hair.
+    uploadedAt.current = new Date(Date.now() - 1000).toISOString();
     let stored = 0;
     let refused = 0;
     try {
@@ -192,13 +203,77 @@ export function Upload() {
             status={idle ? "done" : "running"}
             summary={
               idle
-                ? made
-                  ? `${made.episodes} episodes, ${made.memories} beliefs formed`
+                ? formed
+                  // Counted from the server, for this upload. The delta below
+                  // is measured from when the screen was opened, so a second
+                  // upload in the same sitting reported the first one's work
+                  // -- or, if the screen was opened after the fact, zero.
+                  ? `${formed.episodes.length} episode${
+                      formed.episodes.length === 1 ? "" : "s"
+                    }, ${formed.beliefs} belief${
+                      formed.beliefs === 1 ? "" : "s"
+                    } formed`
                   : "finished"
                 : `${counters?.status.phase ?? ""} — ${counters?.status.detail ?? ""}`
             }
             detail={counters?.status}
-          />
+          >
+            {formed?.episodes?.length > 0 && (
+              <div className="formed">
+                <p className="small muted">
+                  Each stretch below was closed, read once, and what it
+                  yielded is underneath it. An episode with no belief restated
+                  something already known.
+                </p>
+                {formed.episodes.map((episode: any) => (
+                  <div className="formed-ep" key={episode.id}>
+                    <p className="formed-title">
+                      {episode.title ?? "not read yet"}
+                      <span className="mono formed-meta">
+                        {episode.event_count} take
+                        {episode.event_count === 1 ? "" : "s"} ·{" "}
+                        {episode.beliefs.length} belief
+                        {episode.beliefs.length === 1 ? "" : "s"}
+                        {episode.topic_tags?.length
+                          ? ` · ${episode.topic_tags.join(", ")}`
+                          : ""}
+                      </span>
+                    </p>
+
+                    <div className="formed-takes">
+                      {episode.takes.map((take: any) => (
+                        <p className="formed-take" key={take.id}>
+                          {take.text}
+                          {take.app && (
+                            <span className="mono formed-app">{take.app}</span>
+                          )}
+                        </p>
+                      ))}
+                    </div>
+
+                    {episode.beliefs.length > 0 ? (
+                      <div className="rows formed-beliefs">
+                        {episode.beliefs.map((belief: any) => (
+                          <div className="row formed-belief" key={belief.id}>
+                            <span className="mono belief-type">{belief.type}</span>
+                            <span className="belief-text">{belief.text}</span>
+                            <span className="mono belief-conf">
+                              {Math.round(belief.confidence * 100)}%
+                              {belief.superseded && " · replaced"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="small muted formed-none">
+                        nothing new drawn from this one
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </Step>
         </section>
       )}
 

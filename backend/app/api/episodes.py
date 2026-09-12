@@ -279,6 +279,86 @@ def _queue_consolidation(
     )
 
 
+@router.get("/formed")
+def formed(
+    since: datetime,
+    limit: int = 25,
+    db: Session = Depends(get_db),
+) -> dict:
+    """What a stretch of ingestion turned into: episodes, and the beliefs each gave.
+
+    Filtered on `created_at`, the row's own insert time, not `started_at`.
+    An upload of last month's dictations produces episodes dated last month,
+    so asking "what did I just import" by the time the dictation happened
+    returns nothing at all.
+    """
+    user_id = settings.default_user_id
+    if since.tzinfo is None:
+        since = since.replace(tzinfo=timezone.utc)
+
+    episodes = list(
+        db.scalars(
+            select(Episode)
+            .where(
+                Episode.user_id == user_id,
+                Episode.created_at >= since,
+            )
+            .order_by(Episode.created_at.desc())
+            .limit(limit)
+        )
+    )
+    if not episodes:
+        return {"since": since.isoformat(), "episodes": [], "beliefs": 0}
+
+    ids = [episode.id for episode in episodes]
+    evidence = list(
+        db.execute(
+            select(MemoryEvidence.episode_id, Memory)
+            .join(Memory, Memory.id == MemoryEvidence.memory_id)
+            .where(MemoryEvidence.episode_id.in_(ids))
+        ).all()
+    )
+
+    beliefs: dict[uuid.UUID, list[dict]] = {}
+    seen: set[tuple[uuid.UUID, uuid.UUID]] = set()
+    for episode_id, memory in evidence:
+        if (episode_id, memory.id) in seen:
+            continue
+        seen.add((episode_id, memory.id))
+        beliefs.setdefault(episode_id, []).append(
+            {
+                "id": str(memory.id),
+                "text": memory.content,
+                "type": memory.type,
+                "status": memory.status,
+                "confidence": memory.posterior_mean,
+                "superseded": memory.superseded_by is not None,
+            }
+        )
+
+    rows = []
+    for episode in episodes:
+        state = episode_state(episode)
+        assert state is not None
+        state["beliefs"] = beliefs.get(episode.id, [])
+        state["takes"] = [
+            {
+                "id": str(event.id),
+                "text": event.canonical_text,
+                "app": event.app,
+                "occurred_at": event.occurred_at.isoformat(),
+            }
+            for event in events_in_episode(db, episode.id)
+        ]
+        rows.append(state)
+
+    return {
+        "since": since.isoformat(),
+        "episodes": rows,
+        "beliefs": sum(len(row["beliefs"]) for row in rows),
+    }
+
+
 @router.post("/close-open")
 def close_open(db: Session = Depends(get_db)) -> dict:
     """Close whatever is open, without naming it.

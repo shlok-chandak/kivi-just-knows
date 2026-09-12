@@ -64,3 +64,77 @@
 .made-meta { color: var(--muted); flex-shrink: 0; }
 .small { font-size: 13px; }
 .error { color: var(--coral); font-size: 13px; margin-top: 12px; }
+
+/* --- what the upload actually became ------------------------------------
+ *
+ * The step used to open onto the queue's status object, which says the work
+ * finished but not what came out of it. This is the answer to the question
+ * an upload is really asking. */
+.formed {
+  margin-top: 4px;
+  max-width: 760px;
+}
+.formed > .small {
+  max-width: 62ch;
+  margin: 0 0 14px;
+}
+.formed-ep {
+  border-left: 2px solid var(--hairline);
+  padding-left: 14px;
+  margin-bottom: 18px;
+}
+.formed-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+}
+.formed-meta {
+  color: var(--muted);
+}
+
+/* What was said, kept visually distinct from what was concluded -- the
+ * difference between those two is the thing this screen is teaching. */
+.formed-takes {
+  margin-bottom: 9px;
+}
+.formed-take {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  gap: 10px;
+}
+.formed-take::before {
+  content: "“";
+  color: var(--green-deep);
+}
+.formed-app {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.formed-belief {
+  gap: 12px;
+  align-items: baseline;
+  padding: 10px 13px;
+}
+.belief-type {
+  color: var(--green);
+  min-width: 74px;
+  flex-shrink: 0;
+}
+.belief-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+.belief-conf {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.formed-none {
+  margin: 0;
+}
