@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Trouble } from "../lib/Detail";
 import { api, useEventStream, type Frame } from "../lib/stream";
 import "./evaluation.css";
 
@@ -27,6 +28,7 @@ const ARM_NAMES: Record<string, string> = {
 
 export function Evaluation() {
   const [runs, setRuns] = useState<RunRow[]>([]);
+  const [trouble, setTrouble] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [run, setRun] = useState<any>(null);
 
@@ -37,7 +39,10 @@ export function Evaluation() {
         const first = body.runs.find((r) => r.kind === "questions");
         if (first) setOpenId(first.id);
       })
-      .catch(() => setRuns([]));
+      .catch((e) => {
+        setRuns([]);
+        setTrouble(String(e?.message ?? e));
+      });
   }, []);
 
   useEffect(() => {
@@ -58,9 +63,14 @@ export function Evaluation() {
         </p>
       </header>
 
-      {runs.length === 0 && (
+      {trouble && <Trouble error={trouble} />}
+
+      {!trouble && runs.length === 0 && (
         <p className="muted idle-note">
-          no runs recorded yet. run <span className="mono">evaluation.run</span>{" "}
+          no runs recorded yet. run{" "}
+          <span className="mono">
+            docker compose exec backend python -m evaluation.run
+          </span>{" "}
           and they will appear here.
         </p>
       )}
@@ -249,6 +259,10 @@ function AskAgain({
     // question, and any difference in the answer would mean nothing.
     const params = new URLSearchParams({ request: question });
     if (now) params.set("now", now);
+    // Without this the second click builds a byte-identical URL, React skips
+    // the state update, the effect never re-runs -- and the answer that was
+    // just cleared never comes back.
+    params.set("_", String(Date.now()));
     setUrl(`/stream/ask?${params}`);
   };
 

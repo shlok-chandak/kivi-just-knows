@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Trouble } from "../lib/Detail";
 import { api } from "../lib/stream";
 import "./ignored.css";
 
@@ -45,12 +46,20 @@ export function Ignored() {
     ignored: Row[];
   } | null>(null);
   const [rule, setRule] = useState<string | null>(null);
+  const [trouble, setTrouble] = useState<string | null>(null);
+  const [again, setAgain] = useState(0);
 
   useEffect(() => {
     const params = new URLSearchParams({ limit: "200" });
     if (rule) params.set("rule", rule);
-    api(`/ignored?${params}`).then(setData).catch(() => setData(null));
-  }, [rule]);
+    setTrouble(null);
+    api(`/ignored?${params}`)
+      .then(setData)
+      .catch((e) => {
+        setData(null);
+        setTrouble(String(e?.message ?? e));
+      });
+  }, [rule, again]);
 
   return (
     <div className="ignored">
@@ -85,6 +94,15 @@ export function Ignored() {
 
       {data?.ignored.length === 0 && (
         <p className="muted idle-note">nothing was turned away.</p>
+      )}
+
+      {trouble && <Trouble error={trouble} retry={() => setAgain((n) => n + 1)} />}
+
+      {!trouble && data?.ignored.length === 0 && (
+        <p className="muted idle-note">
+          nothing was refused. either nothing sensitive has been said, or
+          nothing has been said at all.
+        </p>
       )}
 
       <div className="dropped">

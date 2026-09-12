@@ -30,7 +30,7 @@
 /* A small dot, nothing more. This is the only place coral belongs, and
  * it is used the way a failed take uses it -- as a marker, never as a
  * field of colour. */
-.dot {
+.turned .dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
@@ -38,7 +38,7 @@
   flex-shrink: 0;
   margin-top: 8px;
 }
-.dot.private {
+.turned .dot.private {
   background: var(--coral);
 }
 

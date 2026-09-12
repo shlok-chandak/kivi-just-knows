@@ -170,3 +170,21 @@ def test_what_was_streamed_is_what_was_stored(answered):
 
 def test_an_empty_question_is_refused_before_any_work(answered):
     assert client.get("/stream/ask?request=").status_code == 422
+
+
+def test_a_failed_run_ends_the_stream(answered):
+    """An error frame has to be followed by done, or the question re-runs.
+
+    EventSource reconnects whenever a stream stops without saying it is
+    finished. Returning straight after the error frame therefore did not end
+    the request -- it restarted it, every few seconds, model calls and all,
+    until the reader navigated away.
+    """
+    from unittest.mock import patch
+
+    with patch("app.services.asking.run", side_effect=RuntimeError("quota")):
+        with client.stream("GET", "/stream/ask?request=anything") as response:
+            body = "".join(response.iter_text())
+
+    assert "event: error" in body
+    assert "event: done" in body[body.index("event: error") :]

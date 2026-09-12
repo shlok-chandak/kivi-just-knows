@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Trouble } from "../lib/Detail";
 import { api } from "../lib/stream";
 import "./memory.css";
 
@@ -73,6 +74,7 @@ export function Memory() {
     budget: number;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [trouble, setTrouble] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ status, limit: "200" });
@@ -82,7 +84,11 @@ export function Memory() {
   }, [status, type, q]);
 
   useEffect(() => {
-    load().catch(() => setListing(null));
+    setTrouble(null);
+    load().catch((e) => {
+      setListing(null);
+      setTrouble(String(e?.message ?? e));
+    });
   }, [load]);
 
   useEffect(() => {
@@ -169,7 +175,17 @@ export function Memory() {
             </p>
           )}
 
-          {listing?.memories.length === 0 && (
+          {trouble && (
+            <Trouble
+              error={trouble}
+              retry={() => {
+                setTrouble(null);
+                load().catch((e) => setTrouble(String(e?.message ?? e)));
+              }}
+            />
+          )}
+
+          {!trouble && listing?.memories.length === 0 && (
             <p className="muted idle-note">
               nothing here yet. dictate something and kivi will start listening.
             </p>

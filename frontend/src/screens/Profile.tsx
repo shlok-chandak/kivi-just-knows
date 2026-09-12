@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Json } from "../lib/Detail";
+import { Json, Trouble } from "../lib/Detail";
 import { api } from "../lib/stream";
 import "./profile.css";
 
@@ -33,8 +33,18 @@ export function Profile() {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [trouble, setTrouble] = useState<string | null>(null);
+
   const load = () =>
-    api<Loaded>("/profile").then(setProfile).catch(() => setProfile(null));
+    api<Loaded>("/profile")
+      .then((body) => {
+        setProfile(body);
+        setTrouble(null);
+      })
+      .catch((e) => {
+        setProfile(null);
+        setTrouble(String(e?.message ?? e));
+      });
 
   useEffect(() => {
     load();
@@ -69,6 +79,8 @@ export function Profile() {
           sent with every answer kivi writes.
         </p>
       </header>
+
+      {trouble && <Trouble error={trouble} retry={load} />}
 
       {profile && (
         <div className="budget-strip">

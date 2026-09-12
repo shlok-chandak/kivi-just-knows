@@ -423,6 +423,10 @@ async def ask(
             result = await running
         except Exception as exc:  # noqa: BLE001 - the reader is owed a reason
             yield _frame("error", {"error": f"{type(exc).__name__}: {exc}"})
+            # A stream that stops without saying so reads as a dropped
+            # connection, and EventSource answers that by reconnecting and
+            # running the request again. Say the stream is over.
+            yield _frame("done", {"trace_id": None})
             return
 
         yield _frame("answer", result)

@@ -81,3 +81,24 @@ export function Hint({ title, children }: { title: string; children: ReactNode }
     </span>
   );
 }
+
+/* "Nothing here" and "I could not ask" are different facts, and every screen
+ * was reporting the second as the first -- which, in a project whose whole
+ * claim is showing what actually happened, is the worst available bug. */
+export function Trouble({ error, retry }: { error: string; retry?: () => void }) {
+  return (
+    <div className="trouble">
+      <p>
+        <span className="trouble-mark">!</span>
+        couldn't reach kivi. this is a connection problem, not an empty
+        memory — nothing below is missing, it just did not load.
+      </p>
+      <p className="mono trouble-detail">{error}</p>
+      {retry && (
+        <button className="action" onClick={retry}>
+          try again
+        </button>
+      )}
+    </div>
+  );
+}

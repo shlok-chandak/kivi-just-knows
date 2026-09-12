@@ -71,7 +71,7 @@
   width: 1px;
   background: var(--hairline);
 }
-.dot {
+.stage .dot {
   width: 9px;
   height: 9px;
   border-radius: 50%;

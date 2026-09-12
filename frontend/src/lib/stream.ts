@@ -56,9 +56,17 @@ export function useEventStream(
         } catch {
           return;
         }
-        if (name === "done") {
+        // Both of these end the stream. An `error` frame used to be left
+        // open, and because the server returns straight after sending one,
+        // the browser saw a dropped connection and reconnected -- re-running
+        // the whole question, model calls included, every few seconds until
+        // the screen was left. A terminal frame has to close the source.
+        //
+        // A parse failure above returns early, so the native EventSource
+        // "error" event (which carries no data) never reaches this.
+        if (name === "done" || name === "error") {
           closed = true;
-          setState("closed");
+          setState(name === "done" ? "closed" : "error");
           source.close();
         }
         handler.current({ event: name, data });
@@ -87,9 +95,20 @@ export async function api<T = any>(
     },
   });
   const body = await response.text();
-  const parsed = body ? JSON.parse(body) : null;
+
+  // Parse defensively, and only after the status is known. Parsing first
+  // meant a proxy's HTML 502 threw "Unexpected token '<'" -- a message about
+  // this function rather than about what went wrong, and never the status
+  // line the branch below was written to produce.
+  let parsed: any = null;
+  try {
+    parsed = body ? JSON.parse(body) : null;
+  } catch {
+    if (response.ok) throw new Error(`${path} did not return JSON`);
+  }
+
   if (!response.ok) {
-    throw new Error(parsed?.detail ?? `${response.status} ${path}`);
+    throw new Error(parsed?.detail ?? `${response.status} ${response.statusText} — ${path}`);
   }
   return parsed as T;
 }

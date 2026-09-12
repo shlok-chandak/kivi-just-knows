@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Json } from "../lib/Detail";
+import { Json, Trouble } from "../lib/Detail";
 import { api } from "../lib/stream";
 import { Funnel } from "../lib/Funnel";
 import "./reasoning.css";
@@ -56,6 +56,7 @@ export function Reasoning() {
   const [kind, setKind] = useState("query");
   const [rows, setRows] = useState<Row[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [trouble, setTrouble] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const params = new URLSearchParams({ limit: "40" });
@@ -69,7 +70,11 @@ export function Reasoning() {
   }, [kind]);
 
   useEffect(() => {
-    load().catch(() => setRows([]));
+    setTrouble(null);
+    load().catch((e) => {
+      setRows([]);
+      setTrouble(String(e?.message ?? e));
+    });
   }, [load]);
 
   return (
@@ -101,7 +106,17 @@ export function Reasoning() {
         ))}
       </div>
 
-      {rows?.length === 0 && (
+      {trouble && (
+        <Trouble
+          error={trouble}
+          retry={() => {
+            setTrouble(null);
+            load().catch((e) => setTrouble(String(e?.message ?? e)));
+          }}
+        />
+      )}
+
+      {!trouble && rows?.length === 0 && (
         <p className="muted idle-note">
           nothing yet. ask kivi something and it will appear here.
         </p>
