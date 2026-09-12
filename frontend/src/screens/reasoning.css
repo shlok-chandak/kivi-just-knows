@@ -1,0 +1,160 @@
+/* The trace viewer. A vertical timeline, because a question is a sequence
+ * and anything else makes you reconstruct the order yourself. */
+
+.reasoning {
+  max-width: 900px;
+}
+.reasoning-head {
+  margin-bottom: 22px;
+}
+.reasoning-head p {
+  margin: 10px 0 0;
+  max-width: 62ch;
+}
+.reasoning .apps {
+  border-top: none;
+  padding-top: 0;
+  margin-bottom: 18px;
+}
+.idle-note {
+  padding-top: 40px;
+}
+
+.trace {
+  cursor: pointer;
+}
+.trace-main {
+  flex: 1;
+  min-width: 0;
+}
+.trace-answer {
+  font-size: 13.5px;
+  margin: 5px 0 8px;
+  overflow-wrap: anywhere;
+}
+.trace .when {
+  margin-left: auto;
+}
+
+/* Outcome is the first thing worth knowing, so it is the only colour. */
+.tag.answered {
+  color: var(--green);
+}
+.tag.abstained,
+.tag.refused {
+  color: var(--muted);
+}
+.tag.failed {
+  color: var(--coral);
+}
+
+/* --- the timeline -------------------------------------------------------- */
+
+.timeline {
+  position: relative;
+  padding-left: 4px;
+}
+.stage {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 18px;
+  position: relative;
+}
+/* The rail joins the dots, and stops at the last one rather than running
+   into the button underneath. */
+.stage:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 14px;
+  bottom: 0;
+  width: 1px;
+  background: var(--hairline);
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green-deep);
+  border: 1px solid var(--green);
+  margin-top: 4px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+.stage-body {
+  flex: 1;
+  min-width: 0;
+}
+.stage-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.stage-name {
+  font-size: 13.5px;
+}
+.model {
+  color: var(--muted);
+  margin-left: auto;
+}
+.decided {
+  font-size: 14px;
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.stage .note {
+  margin-top: 5px;
+}
+.note.warn {
+  border-left-color: var(--coral);
+}
+
+/* --- the counterfactual -------------------------------------------------- */
+
+.counterfactual {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hairline);
+}
+.replayed {
+  flex-basis: 100%;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-card);
+  padding: 12px 14px;
+  margin-top: 4px;
+}
+.replayed p {
+  margin: 5px 0 0;
+  font-size: 14px;
+}
+
+/* Two answers side by side. The comparison is the whole point, so they sit
+   next to each other rather than one under a heading. */
+.replayed {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.replayed .side p {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.side.off p {
+  color: var(--muted);
+}
+.replayed .verdict,
+.replayed details,
+.replayed .error {
+  grid-column: 1 / -1;
+}
+.verdict {
+  color: var(--green);
+  margin: 0;
+}

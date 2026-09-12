@@ -476,7 +476,7 @@ table is the index to the answers.
 | How facts, episodes and preferences relate | §3 — beliefs carry a kind (fact, decision, commitment, preference), and each is tied to the episode it came from |
 | How understanding is retrieved | §4 · filter first, then search |
 | How memory changes visible behaviour | §7 — with memory 80%, without it 32%, same questions |
-| How an engineer inspects a result | §4 — every step of every answer is stored as data, and any answer can be replayed with part of the system switched off |
+| How an engineer inspects a result | the **why it said that** screen — every question and ingestion, opened to its steps, with the candidate funnel and a button to re-run it with memory switched off |
 
 ---
 

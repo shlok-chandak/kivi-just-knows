@@ -3,6 +3,7 @@ import { Evaluation } from "./screens/Evaluation";
 import { Ignored } from "./screens/Ignored";
 import { Memory } from "./screens/Memory";
 import { Profile } from "./screens/Profile";
+import { Reasoning } from "./screens/Reasoning";
 import { Talk } from "./screens/Talk";
 import { Upload } from "./screens/Upload";
 import "./styles/tokens.css";
@@ -15,7 +16,14 @@ import "./styles/shell.css";
  * that earns nothing is a dependency that costs a reader time.
  */
 
-type Screen = "talk" | "memory" | "profile" | "ignored" | "upload" | "evaluation";
+type Screen =
+  | "talk"
+  | "memory"
+  | "profile"
+  | "ignored"
+  | "reasoning"
+  | "upload"
+  | "evaluation";
 
 // Saying and being answered -- the two halves of one box.
 const SPEAK: { id: Screen; label: string; icon: string }[] = [
@@ -27,6 +35,7 @@ const KNOWS: { id: Screen; label: string; icon: string }[] = [
   { id: "memory", label: "memory", icon: "◈" },
   { id: "profile", label: "profile", icon: "◑" },
   { id: "ignored", label: "not kept", icon: "○" },
+  { id: "reasoning", label: "why it said that", icon: "◇" },
 ];
 
 // Feeding and measuring the thing.
@@ -164,6 +173,7 @@ export default function App() {
         {screen === "memory" && <Memory />}
         {screen === "profile" && <Profile />}
         {screen === "ignored" && <Ignored />}
+        {screen === "reasoning" && <Reasoning />}
         {screen === "upload" && <Upload />}
         {screen === "evaluation" && <Evaluation />}
       </main>

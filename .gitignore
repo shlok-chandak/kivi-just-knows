@@ -48,3 +48,6 @@ backend/scripts/
 # Rebuild with `npm run build` after changing anything under frontend/src.
 frontend/node_modules/
 frontend/dist/
+# Written on every `tsc` run, so it shows as modified constantly and says
+# nothing about the source.
+frontend/tsconfig.tsbuildinfo
