@@ -492,6 +492,13 @@ off. The real fix is at write time — extraction must keep the subject that
 makes a claim findable — so it was not patched at read time, which would have
 meant tuning against one question we had already looked at.
 
+**A question about the past has to say so.** History is stored and
+retrievable — *"how has the Pro tier price changed over time"* answers with
+the whole chain, ₹499 then ₹299 then ₹349. But *"what was the price before"*
+returns the current price: the question carries no date and no old value, so
+nothing in it marks the request as being about history rather than about now.
+The fix is in how a question is read, not in what is stored.
+
 **Kivi does not know who you were talking to.** Reading the recipient needs
 OS accessibility APIs and per-app window parsers that break on every update,
 and a wrong value would silently return the wrong person's conversation

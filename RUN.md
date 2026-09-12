@@ -82,8 +82,14 @@ the original dictation with its raw transcript. This price was decided four
 times across two months; the earlier three are in history, marked replaced.
 
 ```
-what was the price before
+how has the Pro tier price changed over time
 ```
+
+You get the whole chain in one answer — ₹499, then ₹299 in June, then ₹349
+in August. Asking *"what was it before"* instead returns the current price:
+the question names no time and no old value, so nothing marks it as a
+question about history. That is a real limitation, not a trick phrasing, and
+it is listed in the README's known limits.
 
 **2. Watch a dictation become a belief.** Switch back to **dictation**, say a
 few things (⌘↩ between each), then press **finish this episode now** rather
