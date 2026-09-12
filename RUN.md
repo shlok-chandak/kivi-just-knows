@@ -1,7 +1,24 @@
 # Running Kivi
 
-Everything runs in Docker except the frontend dev server. Postgres holds
-the data, one container serves the API, another drains the work queue.
+## Primary review method
+
+**A containerised application and database, run locally.** Everything —
+Postgres, the API, and the background worker — comes up with
+`docker compose up -d`. The interface is served by the API itself at
+**http://localhost:8000**; no separate frontend process is needed to review
+the product. Nothing is hosted and nothing needs deploying.
+
+### What you need
+
+| | |
+|---|---|
+| Docker Engine | 24 or newer (developed on 29.7) |
+| Docker Compose | v2 or newer, as the `docker compose` subcommand (developed on v5.5) |
+| a Gemini API key | free tier is enough — see `.env.example` |
+
+Nothing else. Python 3.11 and Postgres 16 with `pgvector` are inside the
+images, so no local install of either is required. Node 20+ is needed **only**
+if you want to change the frontend; the built interface is served by the API.
 
 ---
 
@@ -13,7 +30,11 @@ docker compose up -d
 docker compose exec backend alembic upgrade head
 ```
 
-The API is on **http://localhost:8000**, docs at `/docs`.
+`.env` needs exactly one value filled in: `LLM_API_KEY`. Every other variable
+in `.env.example` has a working default and can be left blank.
+
+The API and the interface are both on **http://localhost:8000**; API docs are
+at `/docs`.
 
 Postgres needs `pgvector` and `pg_trgm`; the migrations create both, so
 `alembic upgrade head` is not optional.
@@ -45,7 +66,103 @@ loads a second corpus without destroying the first.
 
 ---
 
-## The frontend
+## What to try
+
+The interface is at **http://localhost:8000**. After the corpus has been read,
+these are the interactions worth doing, in this order.
+
+**1. Ask something the corpus answers.** On **talk**, switch to **hey kivi**:
+
+```
+what is the Pro tier price now
+```
+
+You get ₹349, cited to a dictation from 11 August. Open the citation to see
+the original dictation with its raw transcript. This price was decided four
+times across two months; the earlier three are in history, marked replaced.
+
+```
+what was the price before
+```
+
+**2. Watch a dictation become a belief.** Switch back to **dictation**, say a
+few things (⌘↩ between each), then press **finish this episode now** rather
+than waiting twenty minutes for the stretch to close on its own. The panel
+underneath shows the takes gathering, the queue draining, and the beliefs that
+came out.
+
+**3. Ask something it should refuse.**
+
+```
+what is our office wifi password
+```
+
+Never said, so Kivi says it does not know rather than inventing one.
+
+**4. See what it declined to keep.** The **not kept** screen lists everything
+refused, with the rule that refused it. Sensitive dictations show no content,
+because they were never stored — the screen can say a refusal happened but
+cannot show you what it refused.
+
+**5. See what it believes, and delete something.** The **memory** screen lists
+every belief with its evidence. "history" shows replaced ones. Deleting is
+immediate and permanent.
+
+**6. Read the measurements.** The **evaluation** screen reads the recorded
+runs in `evaluation/results/`.
+
+---
+
+## Importing another corpus
+
+```bash
+docker compose exec backend python -m scripts.import_corpus \
+  /path/to/yours.jsonl --truncate
+```
+
+Mount the file somewhere the container can see it, or drop it in `corpus/`,
+which is already mounted. Then wait for the worker to drain — the **talk**
+screen's panel, or `curl -N localhost:8000/stream/ingest`, both show progress.
+
+**The format.** JSON Lines, one dictation per line, or a single JSON array.
+
+```json
+{"occurred_at": "2026-06-15T09:12:00+05:30",
+ "app": "slack",
+ "raw_asr": "move the standup to ten",
+ "formatted_text": "Move the standup to 10.",
+ "committed_text": "Move the standup to 10."}
+```
+
+| field | |
+|---|---|
+| `occurred_at` | **required.** ISO 8601 **with a timezone** — a naive timestamp is rejected rather than assumed to be UTC. |
+| `formatted_text` | the tidied text. This is what gets read. Required unless `raw_asr` is present. |
+| `raw_asr` | optional. The untidied transcript. |
+| `committed_text` | optional. What was actually sent after any edit. An empty string means it was discarded and nothing is remembered from it. |
+| `app` | optional. Where it was said. Dictation in an editor is treated as an instruction to a tool, so no beliefs are drawn from it. |
+| `external_id` | optional. Your id for the record. Re-importing the same file updates rather than duplicates. |
+| `context_hash` | optional. An opaque id for the window or thread. Only ever compared for equality. |
+| `asr_confidence`, `duration_ms` | optional. Used to spot a transcript the recogniser was guessing at. |
+
+Unknown fields are ignored. Any other shape can be remapped without editing
+the file:
+
+```bash
+docker compose exec backend python -m scripts.import_corpus yours.csv \
+  --mapping '{"timestamp":"occurred_at","transcript":"raw_asr"}'
+```
+
+Add `--dry-run` to validate without writing, or `--strict` to stop on the
+first bad record instead of skipping it.
+
+---
+
+## Changing the frontend
+
+**Not needed to review the product** — the built interface is committed and
+served by the API at http://localhost:8000. This section is only for editing
+it.
 
 ```bash
 cd frontend
@@ -53,18 +170,20 @@ npm install
 npm run dev          # http://localhost:5173
 ```
 
-The dev server proxies the API, so the browser stays on one origin and
-server-sent events are not a CORS problem.
-
-For a single-container deployment:
+Node 20 or newer. The dev server proxies the API, so the browser stays on one
+origin and server-sent events are not a CORS problem. Every router prefix the
+API mounts must be listed in `vite.config.ts`; a missing one silently returns
+the page's own HTML instead of JSON.
 
 ```bash
 npm run build        # writes into backend/app/static/
 ```
 
-The API serves it at `/` once it exists. The build output is gitignored,
-and the API skips the mount entirely when it is absent — so a fresh clone
-runs headless without complaint.
+The build output **is committed**, unusually and deliberately: compose
+bind-mounts `./backend` over `/app`, so anything built inside the image is
+shadowed by the host directory, and without these files a fresh clone would
+serve no interface at all. Rebuild and commit after changing anything under
+`frontend/src`.
 
 ---
 
