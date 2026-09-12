@@ -11,6 +11,8 @@ about it later — and can always show you why it answered that way, and what
 it deliberately chose not to keep. You talk to it by saying **"Hey Kivi"**,
 then asking for what you want in plain words.
 
+**Note:** This product is built specificaly for evaluation purposes such that the evaluator has the detailed information on ingestion & retrival processes. The product which will go out to the user will look much different.
+
 **Three words used throughout:**
 
 | | |
