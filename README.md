@@ -22,8 +22,7 @@ then asking for what you want in plain words.
 The flow is always `dictation → episode → belief`, and §3 follows one all the
 way through.
 
-To run it, see **[RUN.md](RUN.md)**. This was built as a take-home
-assignment; §8 maps the questions it was set to the places they are answered.
+To run it, see **[RUN.md](RUN.md)**.
 
 *On AI use: this codebase was written with Claude Code. Every design decision, the
 schema, the retrieval strategy, what to measure, and what to leave unfixed,
